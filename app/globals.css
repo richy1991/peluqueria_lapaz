@@ -255,6 +255,7 @@ h2 { font-size: clamp(46px, 5.2vw, 72px); line-height: .98; }
 .google-button { width: min(350px, 100%); height: 48px; border: 1px solid #b9b9b4; background: white; cursor: pointer; font-weight: 700; font-size: 12px; }
 .google-button b { color: #4285f4; font-size: 17px; margin-right: 10px; }
 .login-box > small { display: block; color: #999a94; margin-top: 12px; font-size: 9px; }
+.login-box > small.auth-error { color: #a83f35; font-weight: 700; }
 .contact-form { padding: 22px; background: var(--paper); border: 1px solid var(--line); }
 .signed-user { padding-bottom: 16px; margin-bottom: 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; }
 .signed-user > span { width: 38px; height: 38px; display: grid; place-items: center; color: white; background: var(--copper); border-radius: 50%; font-size: 10px; }

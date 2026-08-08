@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -15,8 +15,16 @@ import {
 } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { barbers, services } from "@/lib/demo-data";
+import { createClient } from "@/lib/supabase/client";
 
 const times = ["09:00", "09:45", "10:30", "11:15", "14:00", "14:45", "16:30", "18:00"];
+const pendingBookingKey = "navaja_pending_booking";
+
+type SignedUser = {
+  name: string;
+  email: string;
+  initials: string;
+};
 
 function availableDays() {
   const formatter = new Intl.DateTimeFormat("es-BO", { weekday: "short" });
@@ -41,6 +49,9 @@ export function BookingFlow() {
   const [day, setDay] = useState("");
   const [time, setTime] = useState("");
   const [signedIn, setSignedIn] = useState(false);
+  const [signedUser, setSignedUser] = useState<SignedUser | null>(null);
+  const [authError, setAuthError] = useState(params.get("auth_error") ?? "");
+  const [authLoading, setAuthLoading] = useState(false);
   const [phone, setPhone] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const days = useMemo(() => availableDays(), []);
@@ -48,6 +59,69 @@ export function BookingFlow() {
   const service = services.find((item) => item.id === serviceId);
   const barber = barbers.find((item) => item.id === barberId);
   const selectedDay = days.find((item) => item.id === day);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function restoreSession() {
+      const { data } = await supabase.auth.getUser();
+      const user = data.user;
+
+      if (user) {
+        const name = user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "Cliente";
+        const initials = name
+          .split(" ")
+          .slice(0, 2)
+          .map((part: string) => part[0])
+          .join("")
+          .toUpperCase();
+
+        setSignedUser({ name, email: user.email ?? "", initials });
+        setSignedIn(true);
+      }
+
+      if (params.get("auth") === "complete") {
+        const stored = window.sessionStorage.getItem(pendingBookingKey);
+        if (stored) {
+          const pending = JSON.parse(stored) as {
+            serviceId: string;
+            barberId: string;
+            day: string;
+            time: string;
+          };
+          setServiceId(pending.serviceId);
+          setBarberId(pending.barberId);
+          setDay(pending.day);
+          setTime(pending.time);
+          setStep(4);
+          window.sessionStorage.removeItem(pendingBookingKey);
+        }
+      }
+    }
+
+    void restoreSession();
+  }, [params]);
+
+  async function signInWithGoogle() {
+    setAuthLoading(true);
+    setAuthError("");
+    window.sessionStorage.setItem(
+      pendingBookingKey,
+      JSON.stringify({ serviceId, barberId, day, time }),
+    );
+
+    const supabase = createClient();
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/reservar?auth=complete")}`;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo },
+    });
+
+    if (error) {
+      setAuthError(error.message);
+      setAuthLoading(false);
+    }
+  }
 
   function chooseService(id: string) {
     setServiceId(id);
@@ -197,14 +271,14 @@ export function BookingFlow() {
                 <div className="login-box">
                   <h3>Inicia sesión para reservar</h3>
                   <p>Usaremos tu cuenta únicamente para identificar tus citas y mantenerte informado.</p>
-                  <button className="google-button" onClick={() => setSignedIn(true)}>
-                    <b>G</b> Continuar con Google
+                  <button className="google-button" disabled={authLoading} onClick={signInWithGoogle}>
+                    <b>G</b> {authLoading ? "Conectando…" : "Continuar con Google"}
                   </button>
-                  <small>Demostración: el acceso real se activará al configurar Supabase.</small>
+                  {authError ? <small className="auth-error">{authError}</small> : <small>Acceso protegido mediante Supabase Auth.</small>}
                 </div>
               ) : (
                 <div className="contact-form">
-                  <div className="signed-user"><span>DR</span><p><strong>Diego Rojas</strong><small>diego@example.com · cuenta demo</small></p><Check size={18} /></div>
+                  <div className="signed-user"><span>{signedUser?.initials ?? "OK"}</span><p><strong>{signedUser?.name ?? "Cliente"}</strong><small>{signedUser?.email}</small></p><Check size={18} /></div>
                   <label>Teléfono de contacto<input type="tel" placeholder="Ej. 720 12345" value={phone} onChange={(event) => setPhone(event.target.value)} /></label>
                   <label className="check-label"><input type="checkbox" defaultChecked /> <span>Acepto las condiciones de reserva y cancelación.</span></label>
                   <button disabled={phone.trim().length < 7} className="button button-dark confirm-button" onClick={() => setConfirmed(true)}>Confirmar reserva <CalendarCheck size={17} /></button>
