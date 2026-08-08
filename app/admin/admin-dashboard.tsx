@@ -1,0 +1,266 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ImagePlus, LogOut, PackagePlus, Save, Scissors, Store } from "lucide-react";
+import { Brand } from "@/components/brand";
+import { createClient } from "@/lib/supabase/client";
+
+type Row = Record<string, unknown> & { id: string };
+
+type AdminDashboardProps = {
+  userEmail: string;
+  initialServices: Row[];
+  initialGallery: Row[];
+  initialProducts: Row[];
+  barbers: Row[];
+  initialSettings: Record<string, unknown> | null;
+};
+
+async function optimizeImage(file: File) {
+  if (!file.type.startsWith("image/")) throw new Error("Selecciona una imagen válida.");
+  if (file.size > 8 * 1024 * 1024) throw new Error("La imagen supera el límite de 8 MB.");
+
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => blob ? resolve(blob) : reject(new Error("No se pudo optimizar la imagen.")),
+      "image/webp",
+      0.82,
+    );
+  });
+}
+
+async function uploadImage(file: File, folder: string) {
+  const supabase = createClient();
+  const blob = await optimizeImage(file);
+  const path = `${folder}/${crypto.randomUUID()}.webp`;
+  const { error } = await supabase.storage.from("public-media").upload(path, blob, {
+    contentType: "image/webp",
+    cacheControl: "31536000",
+  });
+  if (error) throw error;
+  return path;
+}
+
+export function AdminDashboard({
+  userEmail,
+  initialServices,
+  initialGallery,
+  initialProducts,
+  barbers,
+  initialSettings,
+}: AdminDashboardProps) {
+  const router = useRouter();
+  const [section, setSection] = useState("negocio");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  function startAction() {
+    setBusy(true);
+    setMessage("");
+    setError("");
+  }
+
+  function finishAction(text: string) {
+    setBusy(false);
+    setMessage(text);
+    window.setTimeout(() => window.location.reload(), 650);
+  }
+
+  function failAction(reason: unknown) {
+    setBusy(false);
+    setError(reason instanceof Error ? reason.message : "No se pudo completar la operación.");
+  }
+
+  async function saveBusiness(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    startAction();
+    const form = new FormData(event.currentTarget);
+    const supabase = createClient();
+    const payload = {
+      business_name: String(form.get("business_name") ?? ""),
+      description: String(form.get("description") ?? ""),
+      address: String(form.get("address") ?? ""),
+      phone: String(form.get("phone") ?? ""),
+      whatsapp: String(form.get("whatsapp") ?? ""),
+      hours_text: String(form.get("hours_text") ?? ""),
+      map_url: String(form.get("map_url") ?? ""),
+      instagram_url: String(form.get("instagram_url") ?? ""),
+      facebook_url: String(form.get("facebook_url") ?? ""),
+      business_status: String(form.get("business_status") ?? "open"),
+      status_message: String(form.get("status_message") ?? ""),
+    };
+    const { error: updateError } = await supabase.from("business_settings").update(payload).eq("id", true);
+    if (updateError) return failAction(updateError);
+    finishAction("Información del negocio actualizada.");
+  }
+
+  async function addService(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    startAction();
+    const form = new FormData(event.currentTarget);
+    const name = String(form.get("name") ?? "").trim();
+    const slug = String(form.get("slug") ?? "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+    const supabase = createClient();
+    const { error: insertError } = await supabase.from("services").insert({
+      name,
+      slug,
+      description: String(form.get("description") ?? ""),
+      category: String(form.get("category") ?? "Servicio"),
+      price: Number(form.get("price")),
+      duration_minutes: Number(form.get("duration_minutes")),
+      grace_minutes: Number(form.get("grace_minutes") ?? 10),
+      status: "active",
+    });
+    if (insertError) return failAction(insertError);
+    finishAction("Servicio publicado.");
+  }
+
+  async function addGalleryPost(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    startAction();
+    try {
+      const form = new FormData(event.currentTarget);
+      const file = form.get("image");
+      if (!(file instanceof File) || !file.size) throw new Error("Selecciona una imagen.");
+      if (form.get("client_consent") !== "on") throw new Error("Debes confirmar la autorización de publicación.");
+      const imagePath = await uploadImage(file, "gallery");
+      const supabase = createClient();
+      const { error: insertError } = await supabase.from("gallery_posts").insert({
+        title: String(form.get("title") ?? "Trabajo destacado"),
+        description: String(form.get("description") ?? ""),
+        image_path: imagePath,
+        status: "published",
+        client_consent: true,
+        consent_date: new Date().toISOString(),
+        featured: form.get("featured") === "on",
+      });
+      if (insertError) throw insertError;
+      finishAction("Imagen optimizada y publicada.");
+    } catch (uploadError) {
+      failAction(uploadError);
+    }
+  }
+
+  async function addProduct(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    startAction();
+    try {
+      const form = new FormData(event.currentTarget);
+      const file = form.get("image");
+      const imagePath = file instanceof File && file.size ? await uploadImage(file, "products") : null;
+      const name = String(form.get("name") ?? "").trim();
+      const slug = String(form.get("slug") || name).trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+      const supabase = createClient();
+      const { error: insertError } = await supabase.from("products").insert({
+        name,
+        slug,
+        description: String(form.get("description") ?? ""),
+        category: String(form.get("category") ?? "Cuidado"),
+        price: Number(form.get("price")),
+        stock: Number(form.get("stock")),
+        image_path: imagePath,
+        status: "active",
+      });
+      if (insertError) throw insertError;
+      finishAction("Producto publicado.");
+    } catch (productError) {
+      failAction(productError);
+    }
+  }
+
+  async function toggleStatus(table: "services" | "gallery_posts" | "products", id: string, nextStatus: string) {
+    startAction();
+    const supabase = createClient();
+    const { error: updateError } = await supabase.from(table).update({ status: nextStatus }).eq("id", id);
+    if (updateError) return failAction(updateError);
+    finishAction("Estado actualizado.");
+  }
+
+  async function logout() {
+    await createClient().auth.signOut();
+    router.push("/");
+    router.refresh();
+  }
+
+  const settings = initialSettings ?? {};
+
+  return (
+    <main className="admin-shell">
+      <header className="admin-header">
+        <Brand />
+        <div><span>{userEmail}</span><button onClick={logout}><LogOut size={16} /> Salir</button></div>
+      </header>
+      <div className="admin-layout">
+        <aside className="admin-nav">
+          <p>GESTIÓN</p>
+          {[
+            ["negocio", "Negocio"],
+            ["servicios", "Servicios"],
+            ["galeria", "Galería"],
+            ["productos", "Productos"],
+            ["equipo", "Equipo"],
+          ].map(([id, label]) => <button className={section === id ? "active" : ""} key={id} onClick={() => setSection(id)}>{label}</button>)}
+          <Link href="/" target="_blank">Ver sitio público ↗</Link>
+        </aside>
+        <section className="admin-content">
+          {message && <p className="admin-message">{message}</p>}
+          {error && <p className="admin-error">{error}</p>}
+
+          {section === "negocio" && <div className="admin-panel">
+            <div className="admin-title"><Store /><div><p>CONFIGURACIÓN PÚBLICA</p><h1>Información del negocio</h1></div></div>
+            <form className="admin-form" onSubmit={saveBusiness}>
+              <label>Nombre<input name="business_name" required defaultValue={String(settings.business_name ?? "Navaja")} /></label>
+              <label>Estado<select name="business_status" defaultValue={String(settings.business_status ?? "open")}><option value="open">Abierto</option><option value="appointment_only">Solo con reserva</option><option value="closed">Cerrado</option><option value="emergency_closed">Cierre de emergencia</option></select></label>
+              <label className="wide">Descripción<textarea name="description" defaultValue={String(settings.description ?? "")} /></label>
+              <label className="wide">Mensaje de estado<input name="status_message" defaultValue={String(settings.status_message ?? "")} /></label>
+              <label className="wide">Dirección<input name="address" defaultValue={String(settings.address ?? "")} /></label>
+              <label>Teléfono<input name="phone" defaultValue={String(settings.phone ?? "")} /></label>
+              <label>WhatsApp sin +<input name="whatsapp" defaultValue={String(settings.whatsapp ?? "")} /></label>
+              <label className="wide">Horario informativo<input name="hours_text" defaultValue={String(settings.hours_text ?? "")} /></label>
+              <label className="wide">Enlace de Google Maps<input name="map_url" type="url" defaultValue={String(settings.map_url ?? "")} /></label>
+              <label>Instagram<input name="instagram_url" defaultValue={String(settings.instagram_url ?? "")} /></label>
+              <label>Facebook<input name="facebook_url" defaultValue={String(settings.facebook_url ?? "")} /></label>
+              <button className="button button-dark wide" disabled={busy}><Save size={17} /> Guardar cambios</button>
+            </form>
+          </div>}
+
+          {section === "servicios" && <div className="admin-panel">
+            <div className="admin-title"><Scissors /><div><p>CATÁLOGO</p><h1>Servicios</h1></div></div>
+            <form className="admin-form compact-form" onSubmit={addService}>
+              <label>Nombre<input name="name" required /></label><label>Identificador<input name="slug" required placeholder="corte-clasico" /></label>
+              <label className="wide">Descripción<input name="description" /></label><label>Categoría<input name="category" /></label>
+              <label>Precio Bs<input name="price" type="number" min="0" step="0.5" required /></label><label>Duración (min)<input name="duration_minutes" type="number" min="5" required /></label><label>Gracia (min)<input name="grace_minutes" type="number" min="0" defaultValue="10" /></label>
+              <button className="button button-dark wide" disabled={busy}>Agregar servicio</button>
+            </form>
+            <div className="admin-list">{initialServices.map((item) => <article key={item.id}><div><strong>{String(item.name)}</strong><span>Bs {String(item.price)} · {String(item.duration_minutes)} min · {String(item.status)}</span></div><button onClick={() => toggleStatus("services", item.id, item.status === "active" ? "inactive" : "active")}>{item.status === "active" ? "Desactivar" : "Activar"}</button></article>)}</div>
+          </div>}
+
+          {section === "galeria" && <div className="admin-panel">
+            <div className="admin-title"><ImagePlus /><div><p>CONTENIDO</p><h1>Galería de trabajos</h1></div></div>
+            <form className="admin-form" onSubmit={addGalleryPost}><label>Título<input name="title" required /></label><label>Imagen<input name="image" type="file" accept="image/jpeg,image/png,image/webp" required /></label><label className="wide">Descripción<input name="description" /></label><label className="check-label wide"><input type="checkbox" name="client_consent" /> Confirmo que existe autorización del cliente.</label><label className="check-label wide"><input type="checkbox" name="featured" /> Marcar como destacada.</label><button className="button button-dark wide" disabled={busy}>Optimizar y publicar</button></form>
+            <div className="admin-list">{initialGallery.map((item) => <article key={item.id}><div><strong>{String(item.title)}</strong><span>{String(item.status)} · consentimiento: {item.client_consent ? "sí" : "no"}</span></div><button onClick={() => toggleStatus("gallery_posts", item.id, item.status === "published" ? "hidden" : "published")}>{item.status === "published" ? "Ocultar" : "Publicar"}</button></article>)}</div>
+          </div>}
+
+          {section === "productos" && <div className="admin-panel">
+            <div className="admin-title"><PackagePlus /><div><p>CATÁLOGO</p><h1>Productos</h1></div></div>
+            <form className="admin-form" onSubmit={addProduct}><label>Nombre<input name="name" required /></label><label>Identificador<input name="slug" placeholder="se genera del nombre" /></label><label className="wide">Descripción<input name="description" /></label><label>Categoría<input name="category" /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" required /></label><label>Stock<input name="stock" type="number" min="0" required /></label><label className="wide">Imagen<input name="image" type="file" accept="image/jpeg,image/png,image/webp" /></label><button className="button button-dark wide" disabled={busy}>Publicar producto</button></form>
+            <div className="admin-list">{initialProducts.map((item) => <article key={item.id}><div><strong>{String(item.name)}</strong><span>Bs {String(item.price)} · stock {String(item.stock)} · {String(item.status)}</span></div><button onClick={() => toggleStatus("products", item.id, item.status === "active" ? "inactive" : "active")}>{item.status === "active" ? "Desactivar" : "Activar"}</button></article>)}</div>
+          </div>}
+
+          {section === "equipo" && <div className="admin-panel"><div className="admin-title"><Scissors /><div><p>PERSONAL</p><h1>Equipo actual</h1></div></div><p className="admin-help">La edición avanzada de horarios y perfiles se incorporará en la siguiente etapa. Estos profesionales ya se cargan desde Supabase.</p><div className="admin-list">{barbers.map((item) => <article key={item.id}><div><strong>{String(item.display_name)}</strong><span>{item.active ? "Activo" : "Inactivo"} · {Array.isArray(item.specialties) ? item.specialties.join(", ") : ""}</span></div></article>)}</div></div>}
+        </section>
+      </div>
+    </main>
+  );
+}

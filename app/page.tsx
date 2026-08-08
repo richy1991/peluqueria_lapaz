@@ -12,18 +12,33 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { barbers, gallery, services } from "@/lib/demo-data";
+import { ProductCatalog } from "@/components/product-catalog";
+import { getPublicData } from "@/lib/public-data";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const { services, barbers, gallery, products, business } = await getPublicData();
+  const isOpen = business.status === "open" || business.status === "appointment_only";
+  const statusText = isOpen
+    ? business.status === "appointment_only" ? "Atención solo con reserva" : "Abierto hoy"
+    : business.status === "emergency_closed" ? "Cerrado por emergencia" : "Cerrado temporalmente";
+
   return (
     <>
       <SiteHeader />
       <main>
         <section className="hero">
-          <div className="hero-photo" aria-hidden="true" />
+          <div
+            className="hero-photo"
+            aria-hidden="true"
+            style={business.coverImage ? { backgroundImage: `url(${business.coverImage})` } : undefined}
+          />
           <div className="hero-shade" />
           <div className="container hero-content">
-            <div className="open-pill"><span /> Abierto hoy · hasta las 20:00</div>
+            <div className={`open-pill ${isOpen ? "" : "closed-pill"}`}>
+              <span /> {statusText}{business.statusMessage ? ` · ${business.statusMessage}` : ""}
+            </div>
             <p className="eyebrow light">OFICIO · DETALLE · ACTITUD</p>
             <h1>Tu estilo.<br /><em>Bien hecho.</em></h1>
             <p className="hero-copy">
@@ -38,8 +53,8 @@ export default function HomePage() {
           </div>
           <div className="container hero-facts">
             <div><Star size={17} fill="currentColor" /><strong>4.9</strong><span>clientes felices</span></div>
-            <div><Clock3 size={18} /><strong>Mar — Dom</strong><span>09:00 a 20:00</span></div>
-            <div><MapPin size={18} /><strong>Sopocachi</strong><span>La Paz</span></div>
+            <div><Clock3 size={18} /><strong>Horario</strong><span>{business.hours}</span></div>
+            <div><MapPin size={18} /><strong>La Paz</strong><span>{business.address}</span></div>
           </div>
         </section>
 
@@ -133,16 +148,29 @@ export default function HomePage() {
               <a className="text-link" href="#">Síguenos en Instagram <ArrowRight size={16} /></a>
             </div>
             <div className="gallery-grid">
-              {gallery.map((image, index) => (
+              {gallery.slice(0, 4).map((item, index) => (
                 <div
                   className={`gallery-item gallery-${index + 1}`}
-                  key={image}
-                  style={{ backgroundImage: `url(${image})` }}
-                  aria-label={`Trabajo destacado ${index + 1}`}
+                  key={item.id}
+                  style={{ backgroundImage: `url(${item.image})` }}
+                  aria-label={item.title}
                   role="img"
                 />
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="section products-section" id="productos">
+          <div className="container">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">PRODUCTOS</p>
+                <h2>Cuidado profesional,<br /><em>también en casa.</em></h2>
+              </div>
+              <p>Productos seleccionados por el equipo. Consulta disponibilidad y apártalos por 24 horas.</p>
+            </div>
+            <ProductCatalog products={products} />
           </div>
         </section>
 
@@ -152,13 +180,13 @@ export default function HomePage() {
             <p className="eyebrow">VISÍTANOS</p>
             <h2>Tu próximo corte<br /><em>empieza aquí.</em></h2>
             <div className="visit-details">
-              <div><MapPin /><p><strong>Av. 6 de Agosto 2145</strong><span>Sopocachi, La Paz</span></p></div>
-              <div><Clock3 /><p><strong>Martes a domingo</strong><span>09:00 — 20:00</span></p></div>
-              <div><MessageCircle /><p><strong>+591 720 12345</strong><span>Escríbenos por WhatsApp</span></p></div>
+              <div><MapPin /><p><strong>{business.address}</strong><span>La Paz, Bolivia</span></p></div>
+              <div><Clock3 /><p><strong>Horario de atención</strong><span>{business.hours}</span></p></div>
+              <div><MessageCircle /><p><strong>{business.phone}</strong><span>Escríbenos por WhatsApp</span></p></div>
             </div>
             <div className="visit-actions">
               <Link className="button button-dark" href="/reservar">Reservar ahora</Link>
-              <a className="button button-outline" href="https://maps.google.com" target="_blank" rel="noreferrer">Cómo llegar</a>
+              <a className="button button-outline" href={business.mapUrl} target="_blank" rel="noreferrer">Cómo llegar</a>
             </div>
           </div>
         </section>
@@ -170,7 +198,7 @@ export default function HomePage() {
           <Link className="button" href="/reservar">Ver horarios disponibles <Sparkles size={17} /></Link>
         </section>
       </main>
-      <SiteFooter />
+      <SiteFooter business={business} />
       <Link className="mobile-book-bar" href="/reservar">Reservar una cita <ArrowRight size={18} /></Link>
     </>
   );

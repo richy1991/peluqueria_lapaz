@@ -14,8 +14,8 @@ import {
   UserRound,
 } from "lucide-react";
 import { Brand } from "@/components/brand";
-import { barbers, services } from "@/lib/demo-data";
 import { createClient } from "@/lib/supabase/client";
+import type { PublicBarber, PublicService } from "@/lib/public-data";
 
 const pendingBookingKey = "navaja_pending_booking";
 
@@ -41,7 +41,12 @@ function availableDays() {
   });
 }
 
-export function BookingFlow() {
+type BookingFlowProps = {
+  services: PublicService[];
+  barbers: PublicBarber[];
+};
+
+export function BookingFlow({ services, barbers }: BookingFlowProps) {
   const params = useSearchParams();
   const initialService = params.get("servicio") ?? "";
   const initialBarber = params.get("peluquero") ?? "any";
@@ -55,6 +60,7 @@ export function BookingFlow() {
   const [authError, setAuthError] = useState(params.get("auth_error") ?? "");
   const [authLoading, setAuthLoading] = useState(false);
   const [phone, setPhone] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
@@ -84,6 +90,13 @@ export function BookingFlow() {
 
         setSignedUser({ name, email: user.email ?? "", initials });
         setSignedIn(true);
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("phone")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (profile?.phone) setPhone(profile.phone);
       }
 
       if (params.get("auth") === "complete") {
@@ -171,7 +184,7 @@ export function BookingFlow() {
   }
 
   async function confirmAppointment() {
-    if (!service || !day || !time || phone.trim().length < 7) return;
+    if (!service || !day || !time || phone.trim().length < 7 || !acceptedTerms) return;
     setBookingLoading(true);
     setBookingError("");
 
@@ -362,9 +375,9 @@ export function BookingFlow() {
                 <div className="contact-form">
                   <div className="signed-user"><span>{signedUser?.initials ?? "OK"}</span><p><strong>{signedUser?.name ?? "Cliente"}</strong><small>{signedUser?.email}</small></p><Check size={18} /></div>
                   <label>Teléfono de contacto<input type="tel" placeholder="Ej. 720 12345" value={phone} onChange={(event) => setPhone(event.target.value)} /></label>
-                  <label className="check-label"><input type="checkbox" defaultChecked /> <span>Acepto las condiciones de reserva y cancelación.</span></label>
+                  <label className="check-label"><input type="checkbox" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} /> <span>Acepto las condiciones de reserva y cancelación.</span></label>
                   {bookingError && <p className="booking-error">{bookingError}</p>}
-                  <button disabled={phone.trim().length < 7 || bookingLoading} className="button button-dark confirm-button" onClick={confirmAppointment}>{bookingLoading ? "Confirmando…" : "Confirmar reserva"} <CalendarCheck size={17} /></button>
+                  <button disabled={phone.trim().length < 7 || !acceptedTerms || bookingLoading} className="button button-dark confirm-button" onClick={confirmAppointment}>{bookingLoading ? "Confirmando…" : "Confirmar reserva"} <CalendarCheck size={17} /></button>
                 </div>
               )}
             </div>

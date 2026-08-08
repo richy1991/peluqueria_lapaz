@@ -5,13 +5,16 @@ Primera base funcional de la web pública y el sistema de reservas definido en `
 ## Estado actual
 
 - Web pública responsive con servicios, equipo, galería, contacto y llamadas a la acción.
-- Flujo demostrativo de reserva en cuatro pasos.
-- Cliente y callback OAuth de Google implementados; el proveedor debe habilitarse en Supabase.
+- Flujo real de reserva en cuatro pasos con disponibilidad y protecciones transaccionales.
+- Cliente y callback OAuth de Google implementados y conectados con Supabase Auth.
 - PWA básica mediante `manifest.webmanifest` e icono local.
-- Esquema inicial de Supabase con RLS y prevención de solapamientos.
-- Contenido e identidad ficticios, preparados para reemplazarse desde el futuro panel administrador.
+- Esquema versionado de Supabase con RLS y prevención de solapamientos.
+- Servicios, profesionales, estado del negocio, galería y productos cargados desde Supabase.
+- Panel protegido en `/admin` para contenido público, servicios, galería y productos.
+- Storage público con carga administrativa y optimización de imágenes en el navegador.
+- Apartado de productos durante 24 horas para clientes autenticados.
 
-Las imágenes actuales son referencias externas de demostración. No se guardarán en el código cuando exista el panel de administración.
+Las imágenes iniciales son referencias externas de demostración. Las nuevas publicaciones del administrador se guardan optimizadas en Supabase Storage.
 
 ## Ejecutar localmente
 
@@ -22,15 +25,13 @@ npm run dev
 
 Abrir `http://localhost:3000`.
 
-## Configurar Supabase más adelante
+## Configuración de producción
 
-1. Crear un proyecto en Supabase.
-2. Copiar `.env.example` como `.env.local` y completar la URL y la clave publicable.
+1. Copiar `.env.example` como `.env.local` y completar la URL y la clave publicable.
+2. Configurar las mismas variables `NEXT_PUBLIC_*` en Vercel para Production.
 3. Configurar Google como proveedor de autenticación.
-4. Aplicar `supabase/migrations/202608080001_initial_core.sql` mediante Supabase CLI.
-5. Crear buckets separados para contenido público y referencias privadas.
-6. Sustituir `lib/demo-data.ts` por consultas al backend.
-7. Reemplazar el guardado demo de citas por una acción protegida y transaccional.
+4. Aplicar las migraciones con `supabase db push`.
+5. Iniciar sesión una vez y asignar `admin` al usuario autorizado en `user_roles`.
 
 No se debe colocar una clave `sb_secret_...` ni `SUPABASE_SERVICE_ROLE_KEY` en variables públicas o en el navegador.
 
