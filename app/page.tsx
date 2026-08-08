@@ -2,17 +2,15 @@ import Link from "next/link";
 import {
   ArrowRight,
   CalendarDays,
-  Check,
   Clock3,
   MapPin,
   MessageCircle,
-  Scissors,
   Sparkles,
-  Star,
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductCatalog } from "@/components/product-catalog";
+import { BearPawIcon, LegendCrownIcon, LegendDivider, StraightRazorIcon } from "@/components/legend-icons";
 import { getPublicData } from "@/lib/public-data";
 
 export const dynamic = "force-dynamic";
@@ -39,10 +37,10 @@ export default async function HomePage() {
             <div className={`open-pill ${isOpen ? "" : "closed-pill"}`}>
               <span /> {statusText}{business.statusMessage ? ` · ${business.statusMessage}` : ""}
             </div>
-            <p className="eyebrow light">OFICIO · DETALLE · ACTITUD</p>
-            <h1>Tu estilo.<br /><em>Bien hecho.</em></h1>
+            <p className="eyebrow light">TRADICIÓN · CALLE · PRECISIÓN</p>
+            <h1>Respeto al estilo.<br /><em>Leyenda en cada corte.</em></h1>
             <p className="hero-copy">
-              Cortes precisos, atención sin apuros y un espacio pensado para que vuelvas.
+              Barbería LEGEND CLUB: oficio clásico, identidad de barrio y detalle sin concesiones.
             </p>
             <div className="hero-actions">
               <Link className="button" href="/reservar">
@@ -52,27 +50,29 @@ export default async function HomePage() {
             </div>
           </div>
           <div className="container hero-facts">
-            <div><Star size={17} fill="currentColor" /><strong>4.9</strong><span>clientes felices</span></div>
+            <div><LegendCrownIcon size={19} /><strong>LEGEND CLUB</strong><span>La Paz, Bolivia</span></div>
             <div><Clock3 size={18} /><strong>Horario</strong><span>{business.hours}</span></div>
             <div><MapPin size={18} /><strong>La Paz</strong><span>{business.address}</span></div>
           </div>
         </section>
 
+        <LegendDivider />
+
         <section className="section intro-section">
           <div className="container split-heading">
             <div>
-              <p className="eyebrow">NUESTRA MANERA</p>
-              <h2>Más que un corte,<br /><em>un buen momento.</em></h2>
+              <p className="eyebrow">CÓDIGO LEGEND</p>
+              <h2>El barrio reconoce<br /><em>un corte bien hecho.</em></h2>
             </div>
             <div className="intro-copy">
               <p>
-                Creemos en escuchar primero y cortar después. Cada servicio comienza con una
-                conversación para entender qué buscas y termina solo cuando el resultado se siente tuyo.
+                Aquí cada detalle cuenta. Escuchamos primero, trabajamos sin prisa y entregamos un estilo
+                limpio, personal y con carácter. Tradición de barbería con actitud contemporánea.
               </p>
               <div className="mini-benefits">
-                <span><Check size={16} /> Asesoría personal</span>
-                <span><Check size={16} /> Horarios puntuales</span>
-                <span><Check size={16} /> Productos profesionales</span>
+                <span><BearPawIcon size={18} /> Carácter propio</span>
+                <span><StraightRazorIcon size={18} /> Técnica precisa</span>
+                <span><LegendCrownIcon size={18} /> Servicio de primera</span>
               </div>
             </div>
           </div>
@@ -83,7 +83,7 @@ export default async function HomePage() {
             <div className="section-heading">
               <div>
                 <p className="eyebrow">SERVICIOS</p>
-                <h2>Lo esencial,<br /><em>hecho con precisión.</em></h2>
+                <h2>Clásicos del oficio,<br /><em>con sello Legend.</em></h2>
               </div>
               <p>Precios claros y el tiempo necesario para hacer las cosas bien.</p>
             </div>
@@ -117,7 +117,7 @@ export default async function HomePage() {
             <div className="section-heading light-heading">
               <div>
                 <p className="eyebrow light">EL EQUIPO</p>
-                <h2>Buenas manos.<br /><em>Grandes personas.</em></h2>
+                <h2>Manos expertas.<br /><em>Respeto ganado.</em></h2>
               </div>
               <p>Elige a tu profesional de confianza o déjanos asignarte el primer horario disponible.</p>
             </div>
@@ -143,7 +143,7 @@ export default async function HomePage() {
             <div className="section-heading">
               <div>
                 <p className="eyebrow">TRABAJOS RECIENTES</p>
-                <h2>Resultados que<br /><em>hablan solos.</em></h2>
+                <h2>Trabajos con<br /><em>firma propia.</em></h2>
               </div>
               <a className="text-link" href="#">Síguenos en Instagram <ArrowRight size={16} /></a>
             </div>
@@ -192,9 +192,9 @@ export default async function HomePage() {
         </section>
 
         <section className="closing-cta">
-          <Scissors size={34} />
-          <h2>¿Listo para un cambio?</h2>
-          <p>Encuentra tu horario en menos de un minuto.</p>
+          <BearPawIcon size={42} />
+          <h2>Entra al club.</h2>
+          <p>Tu próxima leyenda comienza en la silla.</p>
           <Link className="button" href="/reservar">Ver horarios disponibles <Sparkles size={17} /></Link>
         </section>
       </main>

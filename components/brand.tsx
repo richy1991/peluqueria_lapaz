@@ -1,12 +1,15 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export function Brand() {
   return (
-    <Link className="brand" href="/" aria-label="Navaja, ir al inicio">
-      <span className="brand-mark" aria-hidden="true">N</span>
+    <Link className="brand" href="/" aria-label="Barbería Legend Club, ir al inicio">
+      <span className="brand-mark" aria-hidden="true">
+        <Image src="/brand/legend-club-emblem.webp" alt="" width={52} height={52} priority />
+      </span>
       <span>
-        <strong>NAVAJA</strong>
-        <small>PELUQUERÍA & BARBERÍA</small>
+        <strong>LEGEND CLUB</strong>
+        <small>BARBERÍA · LA PAZ</small>
       </span>
     </Link>
   );

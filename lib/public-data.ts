@@ -54,8 +54,8 @@ export type BusinessInfo = {
 };
 
 const fallbackBusiness: BusinessInfo = {
-  name: "Navaja",
-  description: "Peluquería y barbería de demostración",
+  name: "Barbería LEGEND CLUB",
+  description: "Tradición, calle y precisión en cada corte.",
   address: "Av. 6 de Agosto 2145, Sopocachi, La Paz",
   phone: "+591 720 12345",
   whatsapp: "59172012345",
@@ -125,7 +125,7 @@ export async function getPublicData() {
       : (barbersResult.data ?? []).map((item) => ({
           id: item.slug,
           name: item.display_name,
-          role: item.bio ?? "Profesional Navaja",
+          role: item.bio ?? "Barbero LEGEND CLUB",
           specialties: (item.specialties ?? []).join(", "),
           image:
             publicImageUrl(supabase, item.photo_path) ??

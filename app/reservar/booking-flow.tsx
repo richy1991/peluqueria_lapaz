@@ -17,7 +17,7 @@ import { Brand } from "@/components/brand";
 import { createClient } from "@/lib/supabase/client";
 import type { PublicBarber, PublicService } from "@/lib/public-data";
 
-const pendingBookingKey = "navaja_pending_booking";
+const pendingBookingKey = "legend_club_pending_booking";
 
 type SignedUser = {
   name: string;

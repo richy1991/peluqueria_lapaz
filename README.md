@@ -1,6 +1,6 @@
-# Navaja — Peluquería & Barbería
+# Barbería LEGEND CLUB
 
-Primera base funcional de la web pública y el sistema de reservas definido en `guia_de_desarrollo.md`.
+Sitio público y sistema de reservas de Barbería LEGEND CLUB, definidos a partir de `guia_de_desarrollo.md`.
 
 ## Estado actual
 

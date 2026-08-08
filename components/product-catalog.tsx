@@ -5,7 +5,7 @@ import { PackageCheck } from "lucide-react";
 import type { PublicProduct } from "@/lib/public-data";
 import { createClient } from "@/lib/supabase/client";
 
-const pendingProductKey = "navaja_pending_product";
+const pendingProductKey = "legend_club_pending_product";
 
 export function ProductCatalog({ products }: { products: PublicProduct[] }) {
   const [busyId, setBusyId] = useState("");

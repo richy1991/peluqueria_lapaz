@@ -231,7 +231,7 @@ export function AdminDashboard({
           {section === "negocio" && <div className="admin-panel">
             <div className="admin-title"><Store /><div><p>CONFIGURACIÓN PÚBLICA</p><h1>Información del negocio</h1></div></div>
             <form className="admin-form" onSubmit={saveBusiness}>
-              <label>Nombre<input name="business_name" required defaultValue={String(settings.business_name ?? "Navaja")} /></label>
+              <label>Nombre<input name="business_name" required defaultValue={String(settings.business_name ?? "Barbería LEGEND CLUB")} /></label>
               <label>Estado<select name="business_status" defaultValue={String(settings.business_status ?? "open")}><option value="open">Abierto</option><option value="appointment_only">Solo con reserva</option><option value="closed">Cerrado</option><option value="emergency_closed">Cierre de emergencia</option></select></label>
               <label className="wide">Descripción<textarea name="description" defaultValue={String(settings.description ?? "")} /></label>
               <label className="wide">Mensaje de estado<input name="status_message" defaultValue={String(settings.status_message ?? "")} /></label>

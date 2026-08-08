@@ -9,7 +9,7 @@ export function SiteFooter({ business }: { business?: BusinessInfo }) {
       <div className="container footer-grid">
         <div className="footer-brand">
           <Brand />
-          <p>Buen oficio, atención honesta y un estilo que se siente tuyo.</p>
+          <p>Respeto por el oficio, identidad de barrio y un corte digno de leyenda.</p>
         </div>
         <div>
           <h3>Explora</h3>
@@ -35,7 +35,7 @@ export function SiteFooter({ business }: { business?: BusinessInfo }) {
         </div>
       </div>
       <div className="container footer-bottom">
-        <span>© {new Date().getFullYear()} Navaja. Marca demostrativa.</span>
+        <span>© {new Date().getFullYear()} Barbería LEGEND CLUB.</span>
         <span>Privacidad · Condiciones de reserva</span>
       </div>
     </footer>

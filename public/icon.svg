@@ -1,5 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#171814"/>
-  <path d="M135 164h242M135 348h242" stroke="#d08b56" stroke-width="28" stroke-linecap="round"/>
-  <path d="M188 118v276l136-276v276" fill="none" stroke="#f4f0e8" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="LEGEND CLUB">
+  <rect width="512" height="512" rx="92" fill="#f7f3e8"/>
+  <path d="M256 45 407 111v121c0 104-61 181-151 231-90-50-151-127-151-231V111Z" fill="none" stroke="#0c0b09" stroke-width="18"/>
+  <path d="M181 181c-20-28-1-61 32-49 12-19 28-28 43-28s31 9 43 28c33-12 52 21 32 49 16 18 24 41 24 66 0 62-44 106-99 106s-99-44-99-106c0-25 8-48 24-66Z" fill="#f7f3e8" stroke="#0c0b09" stroke-width="17"/>
+  <path d="m222 247 34-18 34 18-9 31-25 16-25-16Z" fill="#0c0b09"/>
+  <path d="M198 330c31-15 85-15 116 0M203 354l53 55 53-55" fill="none" stroke="#0c0b09" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

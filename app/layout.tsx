@@ -3,12 +3,12 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Navaja — Peluquería & Barbería",
-    template: "%s | Navaja",
+    default: "Barbería LEGEND CLUB — La Paz",
+    template: "%s | LEGEND CLUB",
   },
   description:
-    "Cortes, barba y estilo en el centro de La Paz. Conoce nuestros servicios y reserva tu cita en línea.",
-  applicationName: "Navaja",
+    "Barbería LEGEND CLUB en La Paz. Tradición, calle y precisión. Conoce nuestros servicios y reserva tu cita.",
+  applicationName: "Barbería LEGEND CLUB",
   manifest: "/manifest.webmanifest",
 };
 
