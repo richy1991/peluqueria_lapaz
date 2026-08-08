@@ -98,6 +98,8 @@ export function AdminDashboard({
     const payload = {
       business_name: String(form.get("business_name") ?? ""),
       description: String(form.get("description") ?? ""),
+      slogan: String(form.get("slogan") ?? ""),
+      amenities: String(form.get("amenities") ?? "").split(",").map((item) => item.trim()).filter(Boolean),
       address: String(form.get("address") ?? ""),
       phone: String(form.get("phone") ?? ""),
       whatsapp: String(form.get("whatsapp") ?? ""),
@@ -290,6 +292,8 @@ export function AdminDashboard({
               <label>Nombre<input name="business_name" required defaultValue={String(settings.business_name ?? "Barbería LEGEND CLUB")} /></label>
               <label>Estado<select name="business_status" defaultValue={String(settings.business_status ?? "open")}><option value="open">Abierto</option><option value="appointment_only">Solo con reserva</option><option value="closed">Cerrado</option><option value="emergency_closed">Cierre de emergencia</option></select></label>
               <label className="wide">Descripción<textarea name="description" defaultValue={String(settings.description ?? "")} /></label>
+              <label className="wide">Lema<input name="slogan" defaultValue={String(settings.slogan ?? "")} /></label>
+              <label className="wide">Beneficios separados por comas<input name="amenities" defaultValue={Array.isArray(settings.amenities) ? settings.amenities.join(", ") : ""} /></label>
               <label className="wide">Mensaje de estado<input name="status_message" defaultValue={String(settings.status_message ?? "")} /></label>
               <label className="wide">Dirección<input name="address" defaultValue={String(settings.address ?? "")} /></label>
               <label>Teléfono<input name="phone" defaultValue={String(settings.phone ?? "")} /></label>

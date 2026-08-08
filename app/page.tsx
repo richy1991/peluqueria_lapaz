@@ -39,9 +39,7 @@ export default async function HomePage() {
             </div>
             <p className="eyebrow light">TRADICIÓN · CALLE · PRECISIÓN</p>
             <h1>Respeto al estilo.<br /><em>Leyenda en cada corte.</em></h1>
-            <p className="hero-copy">
-              Barbería LEGEND CLUB: oficio clásico, identidad de barrio y detalle sin concesiones.
-            </p>
+            <p className="hero-copy">{business.slogan}</p>
             <div className="hero-actions">
               <Link className="button" href="/reservar">
                 Reservar una cita <ArrowRight size={18} />
@@ -65,14 +63,9 @@ export default async function HomePage() {
               <h2>El barrio reconoce<br /><em>un corte bien hecho.</em></h2>
             </div>
             <div className="intro-copy">
-              <p>
-                Aquí cada detalle cuenta. Escuchamos primero, trabajamos sin prisa y entregamos un estilo
-                limpio, personal y con carácter. Tradición de barbería con actitud contemporánea.
-              </p>
+              <p>{business.description}</p>
               <div className="mini-benefits">
-                <span><BearPawIcon size={18} /> Carácter propio</span>
-                <span><StraightRazorIcon size={18} /> Técnica precisa</span>
-                <span><LegendCrownIcon size={18} /> Servicio de primera</span>
+                {business.amenities.map((amenity, index) => <span key={amenity}>{index % 3 === 0 ? <BearPawIcon size={18} /> : index % 3 === 1 ? <StraightRazorIcon size={18} /> : <LegendCrownIcon size={18} />} {amenity}</span>)}
               </div>
             </div>
           </div>
@@ -194,7 +187,7 @@ export default async function HomePage() {
         <section className="closing-cta">
           <BearPawIcon size={42} />
           <h2>Entra al club.</h2>
-          <p>Tu próxima leyenda comienza en la silla.</p>
+          <p>{business.slogan}</p>
           <Link className="button" href="/reservar">Ver horarios disponibles <Sparkles size={17} /></Link>
         </section>
       </main>

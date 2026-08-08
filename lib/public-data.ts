@@ -41,6 +41,8 @@ export type PublicProduct = {
 export type BusinessInfo = {
   name: string;
   description: string;
+  slogan: string;
+  amenities: string[];
   address: string;
   phone: string;
   whatsapp: string;
@@ -56,10 +58,12 @@ export type BusinessInfo = {
 const fallbackBusiness: BusinessInfo = {
   name: "Barbería LEGEND CLUB",
   description: "Tradición, calle y precisión en cada corte.",
-  address: "Av. 6 de Agosto 2145, Sopocachi, La Paz",
-  phone: "+591 720 12345",
-  whatsapp: "59172012345",
-  mapUrl: "https://maps.google.com",
+  slogan: "Empezamos como un servicio al cliente y terminamos como amigos.",
+  amenities: ["Trato personalizado", "Buen servicio", "Ambiente cómodo", "Mucha higiene", "Wi‑Fi libre"],
+  address: "Av. Jaime Freyre, entre Av. Jaime Zudáñez y Caupolicán, casa N.º 2057, al lado de la Iglesia de los Mormones, La Paz",
+  phone: "+591 62600874",
+  whatsapp: "59162600874",
+  mapUrl: "https://maps.app.goo.gl/E2riV3QtnhfvmqKK9?g_st=ac",
   instagramUrl: "#",
   facebookUrl: "#",
   status: "open",
@@ -162,6 +166,8 @@ export async function getPublicData() {
       ? {
           name: row.business_name,
           description: row.description ?? fallbackBusiness.description,
+          slogan: row.slogan ?? fallbackBusiness.slogan,
+          amenities: row.amenities ?? fallbackBusiness.amenities,
           address: row.address ?? fallbackBusiness.address,
           phone: row.phone ?? fallbackBusiness.phone,
           whatsapp: row.whatsapp ?? fallbackBusiness.whatsapp,
