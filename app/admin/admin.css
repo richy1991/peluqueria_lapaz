@@ -30,6 +30,10 @@
 .admin-message { color: #315f3b; background: #e8f3e8; }
 .admin-error { color: #8c2f27; background: #f8e7e4; }
 .admin-help { color: #65665f; line-height: 1.7; }
+.admin-metrics { margin-bottom: 25px; display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.admin-metrics > div { padding: 18px; display: grid; gap: 5px; background: #f7f3ec; border: 1px solid rgba(23,24,20,.1); }
+.admin-metrics strong { font: 600 31px var(--serif); }.admin-metrics span { color: #6c6d66; font-size: 9px; text-transform: uppercase; }
+.admin-operation { min-width: 250px; display: grid; justify-items: end; gap: 7px; }.admin-operation > div { display: flex; gap: 5px; }.admin-operation button { padding: 7px 9px; color: #6e281e; border: 1px solid #8b492b55; background: transparent; cursor: pointer; font-size: 9px; }.admin-operation details { width: 100%; font-size: 9px; }.admin-operation summary { text-align: right; cursor: pointer; }.admin-operation form { margin-top: 6px; display: grid; grid-template-columns: 1fr 1.25fr auto; gap: 5px; }.admin-operation select,.admin-operation input { min-width: 0; padding: 7px; border: 1px solid rgba(23,24,20,.18); font-size: 9px; }.admin-operation small,.admin-alert { color: #9a3027; font-size: 9px; }.admin-alert { margin-top: 3px; }
 .admin-login-shell, .admin-denied { min-height: 100vh; display: grid; place-items: center; padding: 25px; background: #171814; }
 .admin-login-card, .admin-denied { text-align: center; }
 .admin-login-card { width: min(440px, 100%); padding: 42px; color: #171814; background: #fffdf8; }
@@ -54,4 +58,5 @@
   .admin-form { grid-template-columns: 1fr; padding: 15px; }
   .admin-form .wide { grid-column: auto; }
   .admin-list article { align-items: flex-start; }
+  .admin-metrics { grid-template-columns: 1fr; }.admin-operation { width: 100%; min-width: 0; justify-items: stretch; }.admin-operation > div { flex-wrap: wrap; }.admin-operation summary { text-align: left; }.admin-operation form { grid-template-columns: 1fr; }
 }
