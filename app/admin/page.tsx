@@ -21,12 +21,14 @@ export default async function AdminPage() {
     );
   }
 
-  const [services, gallery, products, barbers, settings] = await Promise.all([
+  const { data: isSuperadmin } = await supabase.rpc("is_superadmin");
+  const [services, gallery, products, barbers, settings, adminUsers] = await Promise.all([
     supabase.from("services").select("*").order("created_at"),
     supabase.from("gallery_posts").select("*").order("created_at", { ascending: false }),
     supabase.from("products").select("*").order("created_at", { ascending: false }),
     supabase.from("barber_profiles").select("*").order("display_name"),
     supabase.from("business_settings").select("*").eq("id", true).single(),
+    isSuperadmin ? supabase.rpc("list_admin_users") : Promise.resolve({ data: [] }),
   ]);
 
   return (
@@ -37,6 +39,8 @@ export default async function AdminPage() {
       initialProducts={products.data ?? []}
       barbers={barbers.data ?? []}
       initialSettings={settings.data}
+      isSuperadmin={Boolean(isSuperadmin)}
+      adminUsers={adminUsers.data ?? []}
     />
   );
 }
