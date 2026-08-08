@@ -9,7 +9,7 @@ export function SiteFooter({ business }: { business?: BusinessInfo }) {
       <div className="container footer-grid">
         <div className="footer-brand">
           <Brand />
-          <p>Respeto por el oficio, identidad de barrio y un corte digno de leyenda.</p>
+          <p>{business?.slogan ?? "Empezamos como un servicio al cliente y terminamos como amigos."}</p>
         </div>
         <div>
           <h3>Explora</h3>
@@ -21,9 +21,9 @@ export function SiteFooter({ business }: { business?: BusinessInfo }) {
         </div>
         <div>
           <h3>Contacto</h3>
-          <p>{business?.address ?? "Av. 6 de Agosto 2145, Sopocachi"}</p>
+          <p>{business?.address ?? "Av. Jaime Freyre, casa N.º 2057, La Paz"}</p>
           <p>{business?.hours ?? "La Paz, Bolivia"}</p>
-          <p>{business?.phone ?? "+591 720 12345"}</p>
+          <p>{business?.phone ?? "+591 62600874"}</p>
         </div>
         <div>
           <h3>Síguenos</h3>
