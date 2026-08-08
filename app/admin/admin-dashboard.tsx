@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ImagePlus, LogOut, PackagePlus, Save, Scissors, ShieldCheck, Store, UserPlus } from "lucide-react";
 import { Brand } from "@/components/brand";
+import { ModeSwitcher } from "@/components/mode-switcher";
 import { createClient } from "@/lib/supabase/client";
 
 type Row = Record<string, unknown> & { id: string };
@@ -19,6 +20,7 @@ type AdminDashboardProps = {
   initialSettings: Record<string, unknown> | null;
   isSuperadmin: boolean;
   adminUsers: AdminUser[];
+  hasBarber: boolean;
 };
 
 async function optimizeImage(file: File) {
@@ -63,9 +65,10 @@ export function AdminDashboard({
   initialSettings,
   isSuperadmin,
   adminUsers,
+  hasBarber,
 }: AdminDashboardProps) {
   const router = useRouter();
-  const [section, setSection] = useState("negocio");
+  const [section, setSection] = useState(isSuperadmin ? "administradores" : "negocio");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -229,6 +232,26 @@ export function AdminDashboard({
     finishAction(`Acceso administrativo retirado de ${email}.`);
   }
 
+  async function registerBarber(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); startAction();
+    const form = new FormData(event.currentTarget);
+    const { error: registerError } = await createClient().rpc("pre_register_barber", {
+      target_email: String(form.get("email") ?? "").trim(),
+      public_name: String(form.get("public_name") ?? "").trim(),
+      specialties: String(form.get("specialties") ?? "").split(",").map((item) => item.trim()).filter(Boolean),
+      biography: String(form.get("biography") ?? "").trim() || null,
+    });
+    if (registerError) return failAction(registerError);
+    finishAction("Peluquero registrado. Si la cuenta aún no existe, se activará al ingresar con Google.");
+  }
+
+  async function toggleBarber(id: string, enabled: boolean) {
+    startAction();
+    const { error: barberError } = await createClient().rpc("set_barber_active", { target_barber_id: id, enabled });
+    if (barberError) return failAction(barberError);
+    finishAction(enabled ? "Peluquero activado." : "Peluquero desactivado; sus citas futuras requieren reprogramación.");
+  }
+
   async function logout() {
     await createClient().auth.signOut();
     router.push("/");
@@ -241,6 +264,7 @@ export function AdminDashboard({
     <main className="admin-shell">
       <header className="admin-header">
         <Brand />
+        <ModeSwitcher current="admin" isAdmin hasBarber={hasBarber} />
         <div><span>{userEmail}</span><button onClick={logout}><LogOut size={16} /> Salir</button></div>
       </header>
       <div className="admin-layout">
@@ -301,7 +325,7 @@ export function AdminDashboard({
             <div className="admin-list">{initialProducts.map((item) => <article key={item.id}><div><strong>{String(item.name)}</strong><span>Bs {String(item.price)} · stock {String(item.stock)} · {String(item.status)}</span></div><button onClick={() => toggleStatus("products", item.id, item.status === "active" ? "inactive" : "active")}>{item.status === "active" ? "Desactivar" : "Activar"}</button></article>)}</div>
           </div>}
 
-          {section === "equipo" && <div className="admin-panel"><div className="admin-title"><Scissors /><div><p>PERSONAL</p><h1>Equipo actual</h1></div></div><p className="admin-help">La edición avanzada de horarios y perfiles se incorporará en la siguiente etapa. Estos profesionales ya se cargan desde Supabase.</p><div className="admin-list">{barbers.map((item) => <article key={item.id}><div><strong>{String(item.display_name)}</strong><span>{item.active ? "Activo" : "Inactivo"} · {Array.isArray(item.specialties) ? item.specialties.join(", ") : ""}</span></div></article>)}</div></div>}
+          {section === "equipo" && <div className="admin-panel"><div className="admin-title"><Scissors /><div><p>PERSONAL</p><h1>Peluqueros</h1></div></div><p className="admin-help">Si el correo ya pertenece a un cliente, se convierte de inmediato. Si todavía no existe, el perfil se activará cuando ingrese con Google.</p><form className="admin-form" onSubmit={registerBarber} acceptCharset="UTF-8"><label>Correo Google<input name="email" type="email" required /></label><label>Nombre público<input name="public_name" required /></label><label className="wide">Especialidades separadas por comas<input name="specialties" placeholder="Fades, Barba, Cortes clásicos" /></label><label className="wide">Biografía<textarea name="biography" /></label><button className="button button-dark wide" disabled={busy}>Registrar peluquero</button></form><div className="admin-list">{barbers.map((item) => <article key={item.id}><div><strong>{String(item.display_name)}</strong><span>{item.active ? "Activo" : "Inactivo"} · {Array.isArray(item.specialties) ? item.specialties.join(", ") : ""}</span></div><button disabled={busy} onClick={() => toggleBarber(item.id, !Boolean(item.active))}>{item.active ? "Desactivar" : "Activar"}</button></article>)}</div></div>}
 
           {section === "administradores" && isSuperadmin && <div className="admin-panel">
             <div className="admin-title"><ShieldCheck /><div><p>SEGURIDAD</p><h1>Administradores</h1></div></div>

@@ -13,6 +13,7 @@ export function SiteHeader() {
           <Link href="/#galeria">Galería</Link>
           <Link href="/#productos">Productos</Link>
           <Link href="/#visitanos">Visítanos</Link>
+          <Link href="/panel">Mi cuenta</Link>
         </nav>
         <Link className="button button-small header-book" href="/reservar">
           Reservar cita
@@ -25,6 +26,7 @@ export function SiteHeader() {
             <Link href="/#galeria">Galería</Link>
             <Link href="/#productos">Productos</Link>
             <Link href="/#visitanos">Visítanos</Link>
+            <Link href="/panel">Mi cuenta</Link>
             <Link href="/reservar">Reservar cita</Link>
           </nav>
         </details>

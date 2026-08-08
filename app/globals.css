@@ -163,6 +163,31 @@ h2 { font-size: clamp(46px, 5.2vw, 72px); line-height: .98; }
 .footer-bottom { border-top: 1px solid #ffffff17; margin-top: 55px; padding-top: 24px; display: flex; justify-content: space-between; color: #73756f; font-size: 10px; }
 .mobile-book-bar { display: none; }
 
+.portal-shell { min-height: 100vh; color: var(--ink); background: #e9dfca; }
+.portal-header { min-height: 78px; padding: 12px max(20px, 4vw); display: flex; align-items: center; gap: 24px; color: white; background: var(--ink); }
+.portal-header > a:last-child { margin-left: auto; font-size: 12px; text-decoration: underline; }
+.mode-switcher { display: flex; gap: 4px; padding: 4px; border: 1px solid #ffffff22; background: #ffffff0b; }
+.mode-switcher a { padding: 9px 12px; color: #c8c1b4; font-size: 10px; }
+.mode-switcher a.active { color: var(--ink); background: var(--paper); }
+.portal-hero { padding: 65px max(20px, calc((100vw - 1180px) / 2)); color: white; background: #251f19; }
+.portal-hero h1 { max-width: none; font-size: clamp(42px, 6vw, 74px); }
+.portal-hero > p:last-child { color: #c7bdaa; }
+.portal-grid { width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 42px 0 80px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.portal-card { padding: 27px; background: #fffaf0; border: 1px solid var(--line); }
+.portal-wide { grid-column: 1 / 3; }
+.portal-title { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+.portal-title svg { color: var(--copper); }
+.portal-title h2 { margin: 0; font-size: 27px; }
+.portal-title a { margin-left: auto; color: var(--copper); font-size: 11px; font-weight: 800; }
+.portal-card dl { display: grid; gap: 12px; margin: 0; }
+.portal-card dl > div { display: flex; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.portal-card dt { color: var(--muted-ink); font-size: 11px; }.portal-card dd { margin: 0; font-size: 12px; font-weight: 700; }
+.portal-list { display: grid; }.portal-list article { min-height: 68px; padding: 12px 0; display: flex; align-items: center; gap: 18px; border-top: 1px solid var(--line); }
+.portal-list article > div { display: grid; gap: 5px; margin-right: auto; }.portal-list span { color: var(--muted-ink); font-size: 11px; }
+.portal-empty { color: var(--muted-ink); font-size: 12px; }.portal-warning,.portal-error { padding: 9px; font-size: 11px; }.portal-warning { color: #7a5819; background: #f5e5b5; }.portal-error { color: #8a2929; background: #f4dcdc; }
+.inline-action,.status-actions { display: flex; align-items: flex-end; gap: 6px; flex-direction: column; }.inline-action button,.status-actions button { padding: 7px 10px; border: 1px solid var(--line); background: transparent; cursor: pointer; font-size: 10px; }.inline-action small,.status-actions small { max-width: 260px; color: #9b2929; font-size: 9px; }.status-actions { flex-direction: row; flex-wrap: wrap; }.status-actions .danger { color: #922f2f; }
+.agenda-time { min-width: 58px; color: var(--copper) !important; font: 700 17px var(--serif); }.next-appointment { display: flex; justify-content: space-between; font-size: 24px; }.next-appointment span { color: var(--copper); }
+
 @keyframes legendReveal { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes heroSettle { from { opacity: .35; transform: scale(1.08); } to { opacity: 1; transform: scale(1.015); } }
 
@@ -209,6 +234,7 @@ h2 { font-size: clamp(46px, 5.2vw, 72px); line-height: .98; }
   .footer-bottom { gap: 15px; flex-direction: column; }
   .mobile-book-bar { position: fixed; z-index: 30; display: flex; align-items: center; justify-content: center; gap: 8px; left: 12px; right: 12px; bottom: 12px; height: 54px; color: white; background: var(--copper); box-shadow: 0 10px 35px #0005; font-size: 13px; font-weight: 800; }
   .site-footer { padding-bottom: 90px; }
+  .portal-header { align-items: flex-start; flex-wrap: wrap; }.portal-header .mode-switcher { order: 3; width: 100%; overflow-x: auto; }.portal-header > a:last-child { padding-top: 17px; }.portal-grid { grid-template-columns: 1fr; width: min(100% - 24px, 620px); }.portal-wide { grid-column: auto; }.portal-list article { align-items: flex-start; flex-wrap: wrap; }.status-actions { width: 100%; }.portal-hero { padding: 48px 20px; }
 }
 
 @media (max-width: 480px) {

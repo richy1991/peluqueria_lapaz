@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AdminDashboard } from "./admin-dashboard";
+import { getUserCapabilities } from "@/lib/user-capabilities";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,8 @@ export default async function AdminPage() {
     );
   }
 
-  const { data: isSuperadmin } = await supabase.rpc("is_superadmin");
+  const capabilities = await getUserCapabilities(user.id);
+  const isSuperadmin = capabilities.isSuperadmin;
   const [services, gallery, products, barbers, settings, adminUsers] = await Promise.all([
     supabase.from("services").select("*").order("created_at"),
     supabase.from("gallery_posts").select("*").order("created_at", { ascending: false }),
@@ -41,6 +43,7 @@ export default async function AdminPage() {
       initialSettings={settings.data}
       isSuperadmin={Boolean(isSuperadmin)}
       adminUsers={adminUsers.data ?? []}
+      hasBarber={Boolean(capabilities.barber)}
     />
   );
 }
