@@ -236,14 +236,14 @@ export function BookingFlow({ services, barbers }: BookingFlowProps) {
           <span className="success-icon"><CalendarCheck size={35} /></span>
           <p className="eyebrow">RESERVA REGISTRADA</p>
           <h1>¡Nos vemos pronto!</h1>
-          <p className="success-copy">Tu cita quedó registrada. Podrás consultarla desde tu cuenta cuando habilitemos el panel del cliente.</p>
+          <p className="success-copy">Tu cita quedó registrada. Puedes consultarla, recibir avisos o cancelarla desde tu cuenta.</p>
           <div className="ticket">
             <div><span>Servicio</span><strong>{service?.name}</strong></div>
             <div><span>Profesional</span><strong>{barber?.name ?? "Primero disponible"}</strong></div>
             <div><span>Fecha</span><strong>{selectedDay?.day} {selectedDay?.number} · {time}</strong></div>
             <div><span>Total</span><strong>Bs {service?.price}</strong></div>
           </div>
-          <Link className="button button-dark" href="/">Volver al inicio</Link>
+          <Link className="button button-dark" href="/mi-cuenta">Ver mis citas</Link>
         </section>
       </main>
     );
