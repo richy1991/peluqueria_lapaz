@@ -112,17 +112,28 @@ export function AdminDashboard({
     const name = String(form.get("name") ?? "").trim();
     const slug = String(form.get("slug") ?? "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-");
     const supabase = createClient();
-    const { error: insertError } = await supabase.from("services").insert({
-      name,
-      slug,
-      description: String(form.get("description") ?? ""),
-      category: String(form.get("category") ?? "Servicio"),
-      price: Number(form.get("price")),
-      duration_minutes: Number(form.get("duration_minutes")),
-      grace_minutes: Number(form.get("grace_minutes") ?? 10),
-      status: "active",
-    });
+    const { data: insertedService, error: insertError } = await supabase
+      .from("services")
+      .insert({
+        name,
+        slug,
+        description: String(form.get("description") ?? ""),
+        category: String(form.get("category") ?? "Servicio"),
+        price: Number(form.get("price")),
+        duration_minutes: Number(form.get("duration_minutes")),
+        grace_minutes: Number(form.get("grace_minutes") ?? 10),
+        status: "active",
+      })
+      .select("id")
+      .single();
     if (insertError) return failAction(insertError);
+    const activeBarbers = barbers.filter((barber) => barber.active);
+    if (activeBarbers.length && insertedService) {
+      const { error: assignmentError } = await supabase.from("barber_services").insert(
+        activeBarbers.map((barber) => ({ barber_id: barber.id, service_id: insertedService.id })),
+      );
+      if (assignmentError) return failAction(assignmentError);
+    }
     finishAction("Servicio publicado.");
   }
 
