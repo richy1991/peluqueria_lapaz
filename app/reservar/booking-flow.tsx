@@ -17,7 +17,6 @@ import { Brand } from "@/components/brand";
 import { barbers, services } from "@/lib/demo-data";
 import { createClient } from "@/lib/supabase/client";
 
-const times = ["09:00", "09:45", "10:30", "11:15", "14:00", "14:45", "16:30", "18:00"];
 const pendingBookingKey = "navaja_pending_booking";
 
 type SignedUser = {
@@ -31,8 +30,11 @@ function availableDays() {
   return Array.from({ length: 6 }, (_, index) => {
     const date = new Date();
     date.setDate(date.getDate() + index + 1);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const dayOfMonth = String(date.getDate()).padStart(2, "0");
     return {
-      id: date.toISOString().slice(0, 10),
+      id: `${year}-${month}-${dayOfMonth}`,
       day: formatter.format(date).replace(".", ""),
       number: date.getDate(),
     };
@@ -54,6 +56,10 @@ export function BookingFlow() {
   const [authLoading, setAuthLoading] = useState(false);
   const [phone, setPhone] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [bookingError, setBookingError] = useState("");
+  const [bookingLoading, setBookingLoading] = useState(false);
   const days = useMemo(() => availableDays(), []);
 
   const service = services.find((item) => item.id === serviceId);
@@ -102,6 +108,47 @@ export function BookingFlow() {
     void restoreSession();
   }, [params]);
 
+  useEffect(() => {
+    if (!day || !serviceId) return;
+    let active = true;
+
+    async function loadAvailability() {
+      setSlotsLoading(true);
+      setBookingError("");
+      const supabase = createClient();
+      const { data, error } = await supabase.rpc("get_available_slots", {
+        p_service_slug: serviceId,
+        p_barber_slug: barberId || "any",
+        p_date: day,
+      });
+
+      if (!active) return;
+      if (error) {
+        setAvailableTimes([]);
+        setBookingError("La agenda todavía no está disponible. Intenta nuevamente en unos minutos.");
+      } else {
+        const formatter = new Intl.DateTimeFormat("es-BO", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+          timeZone: "America/La_Paz",
+        });
+        const slots = (data ?? []) as Array<{ starts_at: string }>;
+        const uniqueTimes = [...new Set<string>(
+          slots.map((slot) => formatter.format(new Date(slot.starts_at))),
+        )];
+        setAvailableTimes(uniqueTimes);
+        setTime((current) => current && !uniqueTimes.includes(current) ? "" : current);
+      }
+      setSlotsLoading(false);
+    }
+
+    void loadAvailability();
+    return () => {
+      active = false;
+    };
+  }, [barberId, day, serviceId]);
+
   async function signInWithGoogle() {
     setAuthLoading(true);
     setAuthError("");
@@ -123,9 +170,41 @@ export function BookingFlow() {
     }
   }
 
+  async function confirmAppointment() {
+    if (!service || !day || !time || phone.trim().length < 7) return;
+    setBookingLoading(true);
+    setBookingError("");
+
+    const supabase = createClient();
+    const startsAt = new Date(`${day}T${time}:00-04:00`).toISOString();
+    const { error } = await supabase.rpc("create_appointment", {
+      p_service_slug: service.id,
+      p_barber_slug: barberId || "any",
+      p_starts_at: startsAt,
+      p_phone: phone,
+    });
+
+    if (error) {
+      setBookingError(error.message || "No pudimos guardar la cita. Revisa el horario e inténtalo nuevamente.");
+      setBookingLoading(false);
+      return;
+    }
+
+    setConfirmed(true);
+    setBookingLoading(false);
+  }
+
   function chooseService(id: string) {
     setServiceId(id);
+    setDay("");
+    setTime("");
     setStep(2);
+  }
+
+  function chooseBarber(id: string) {
+    setBarberId(id);
+    setDay("");
+    setTime("");
   }
 
   function nextFromBarber() {
@@ -139,12 +218,12 @@ export function BookingFlow() {
   if (confirmed) {
     return (
       <main className="booking-shell success-shell">
-        <div className="booking-topbar"><Brand /><span className="demo-badge">MODO DEMOSTRACIÓN</span></div>
+        <div className="booking-topbar"><Brand /><span className="demo-badge">RESERVA CONFIRMADA</span></div>
         <section className="success-card">
           <span className="success-icon"><CalendarCheck size={35} /></span>
           <p className="eyebrow">RESERVA REGISTRADA</p>
           <h1>¡Nos vemos pronto!</h1>
-          <p className="success-copy">Esta confirmación es una simulación visual. Se conectará a Supabase para guardar citas reales.</p>
+          <p className="success-copy">Tu cita quedó registrada. Podrás consultarla desde tu cuenta cuando habilitemos el panel del cliente.</p>
           <div className="ticket">
             <div><span>Servicio</span><strong>{service?.name}</strong></div>
             <div><span>Profesional</span><strong>{barber?.name ?? "Primero disponible"}</strong></div>
@@ -214,14 +293,14 @@ export function BookingFlow() {
               <div className="panel-heading"><span><UserRound /></span><div><p>PASO 2 DE 4</p><h2>Elige profesional</h2></div></div>
               <p className="panel-copy">Puedes elegir a alguien en particular o encontrar el primer horario disponible.</p>
               <div className="barber-choice-grid">
-                <button className={`barber-choice any-choice ${barberId === "any" ? "selected" : ""}`} onClick={() => setBarberId("any")}>
+                <button className={`barber-choice any-choice ${barberId === "any" ? "selected" : ""}`} onClick={() => chooseBarber("any")}>
                   <span className="any-icon"><Scissors /></span>
                   <strong>Primero disponible</strong>
                   <small>Más opciones de horario</small>
                   <i>{barberId === "any" && <Check size={14} />}</i>
                 </button>
                 {barbers.map((item) => (
-                  <button className={`barber-choice ${barberId === item.id ? "selected" : ""}`} onClick={() => setBarberId(item.id)} key={item.id}>
+                  <button className={`barber-choice ${barberId === item.id ? "selected" : ""}`} onClick={() => chooseBarber(item.id)} key={item.id}>
                     <span className="barber-choice-photo" style={{ backgroundImage: `url(${item.image})` }} />
                     <strong>{item.name}</strong>
                     <small>{item.specialties}</small>
@@ -236,7 +315,7 @@ export function BookingFlow() {
           {step === 3 && (
             <div className="booking-panel">
               <div className="panel-heading"><span><Clock3 /></span><div><p>PASO 3 DE 4</p><h2>Fecha y hora</h2></div></div>
-              <p className="panel-copy">Los horarios mostrados son demostrativos hasta conectar la agenda real.</p>
+              <p className="panel-copy">La agenda considera la duración del servicio, los horarios del equipo y las citas existentes.</p>
               <div className="date-strip">
                 {days.map((item) => (
                   <button className={day === item.id ? "selected" : ""} key={item.id} onClick={() => { setDay(item.id); setTime(""); }}>
@@ -244,16 +323,19 @@ export function BookingFlow() {
                   </button>
                 ))}
               </div>
-              {day ? (
+              {day && slotsLoading ? (
+                <div className="empty-times">Consultando agenda disponible…</div>
+              ) : day ? (
                 <div className="time-area">
                   <p>Horarios disponibles</p>
-                  <div className="time-grid">
-                    {times.map((item, index) => (
-                      <button disabled={index === 2 || index === 5} className={time === item ? "selected" : ""} key={item} onClick={() => setTime(item)}>{item}</button>
+                  {availableTimes.length ? <div className="time-grid">
+                    {availableTimes.map((item) => (
+                      <button className={time === item ? "selected" : ""} key={item} onClick={() => setTime(item)}>{item}</button>
                     ))}
-                  </div>
+                  </div> : <div className="empty-times small-empty">No quedan horarios disponibles para este día.</div>}
                 </div>
               ) : <div className="empty-times">Selecciona un día para ver sus horarios.</div>}
+              {bookingError && <p className="booking-error">{bookingError}</p>}
               <div className="panel-actions"><button disabled={!day || !time} className="button button-dark" onClick={nextFromSchedule}>Continuar <ArrowRight size={17} /></button></div>
             </div>
           )}
@@ -281,7 +363,8 @@ export function BookingFlow() {
                   <div className="signed-user"><span>{signedUser?.initials ?? "OK"}</span><p><strong>{signedUser?.name ?? "Cliente"}</strong><small>{signedUser?.email}</small></p><Check size={18} /></div>
                   <label>Teléfono de contacto<input type="tel" placeholder="Ej. 720 12345" value={phone} onChange={(event) => setPhone(event.target.value)} /></label>
                   <label className="check-label"><input type="checkbox" defaultChecked /> <span>Acepto las condiciones de reserva y cancelación.</span></label>
-                  <button disabled={phone.trim().length < 7} className="button button-dark confirm-button" onClick={() => setConfirmed(true)}>Confirmar reserva <CalendarCheck size={17} /></button>
+                  {bookingError && <p className="booking-error">{bookingError}</p>}
+                  <button disabled={phone.trim().length < 7 || bookingLoading} className="button button-dark confirm-button" onClick={confirmAppointment}>{bookingLoading ? "Confirmando…" : "Confirmar reserva"} <CalendarCheck size={17} /></button>
                 </div>
               )}
             </div>
