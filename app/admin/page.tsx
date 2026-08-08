@@ -24,13 +24,15 @@ export default async function AdminPage() {
 
   const capabilities = await getUserCapabilities(user.id);
   const isSuperadmin = capabilities.isSuperadmin;
-  const [services, gallery, products, barbers, settings, adminUsers] = await Promise.all([
+  const [services, gallery, products, barbers, settings, adminUsers, appointments, profiles] = await Promise.all([
     supabase.from("services").select("*").order("created_at"),
     supabase.from("gallery_posts").select("*").order("created_at", { ascending: false }),
     supabase.from("products").select("*").order("created_at", { ascending: false }),
     supabase.from("barber_profiles").select("*").order("display_name"),
     supabase.from("business_settings").select("*").eq("id", true).single(),
     isSuperadmin ? supabase.rpc("list_admin_users") : Promise.resolve({ data: [] }),
+    supabase.from("appointments").select("id,starts_at,status,service_name_snapshot,price_snapshot,profiles!appointments_client_id_fkey(full_name,email,phone,is_blacklisted),barber_profiles(display_name)").order("starts_at", { ascending: false }).limit(100),
+    supabase.from("profiles").select("id,full_name,email,phone,status,no_show_count,is_blacklisted,is_blocked,user_roles(role)").order("created_at", { ascending: false }).limit(100),
   ]);
 
   return (
@@ -44,6 +46,8 @@ export default async function AdminPage() {
       isSuperadmin={Boolean(isSuperadmin)}
       adminUsers={adminUsers.data ?? []}
       hasBarber={Boolean(capabilities.barber)}
+      initialAppointments={appointments.data ?? []}
+      clients={(profiles.data ?? []).filter((profile) => !profile.user_roles?.some((role) => role.role === "admin" || role.role === "superadmin"))}
     />
   );
 }

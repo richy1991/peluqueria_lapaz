@@ -3,10 +3,11 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ImagePlus, LogOut, PackagePlus, Save, Scissors, ShieldCheck, Store, UserPlus } from "lucide-react";
+import { CalendarClock, ImagePlus, LogOut, PackagePlus, Save, Scissors, ShieldCheck, Store, UserPlus, Users } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { createClient } from "@/lib/supabase/client";
+import { AppointmentAdminActions, ClientAdminActions } from "./admin-operations";
 
 type Row = Record<string, unknown> & { id: string };
 type AdminUser = { user_id: string; email: string; role: "admin" | "superadmin"; created_at: string };
@@ -21,6 +22,8 @@ type AdminDashboardProps = {
   isSuperadmin: boolean;
   adminUsers: AdminUser[];
   hasBarber: boolean;
+  initialAppointments: Row[];
+  clients: Row[];
 };
 
 async function optimizeImage(file: File) {
@@ -66,9 +69,11 @@ export function AdminDashboard({
   isSuperadmin,
   adminUsers,
   hasBarber,
+  initialAppointments,
+  clients,
 }: AdminDashboardProps) {
   const router = useRouter();
-  const [section, setSection] = useState(isSuperadmin ? "administradores" : "negocio");
+  const [section, setSection] = useState(isSuperadmin ? "administradores" : "agenda");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -273,6 +278,8 @@ export function AdminDashboard({
         <aside className="admin-nav">
           <p>GESTIÓN</p>
           {[
+            ["agenda", "Agenda"],
+            ["clientes", "Clientes"],
             ["negocio", "Negocio"],
             ["servicios", "Servicios"],
             ["galeria", "Galería"],
@@ -285,6 +292,10 @@ export function AdminDashboard({
         <section className="admin-content">
           {message && <p className="admin-message">{message}</p>}
           {error && <p className="admin-error">{error}</p>}
+
+          {section === "agenda" && <div className="admin-panel"><div className="admin-title"><CalendarClock /><div><p>OPERACIÓN</p><h1>Reservas y agenda</h1></div></div><div className="admin-metrics"><div><strong>{initialAppointments.filter((item)=>["requested","confirmed","pending_client_confirmation"].includes(String(item.status))).length}</strong><span>Próximas o pendientes</span></div><div><strong>{initialAppointments.filter((item)=>item.status==="needs_reschedule").length}</strong><span>Por reprogramar</span></div><div><strong>{initialAppointments.length}</strong><span>Últimas reservas</span></div></div><div className="admin-list appointment-admin-list">{initialAppointments.length?initialAppointments.map((item)=>{const client=item.profiles as {full_name?:string;phone?:string;email?:string;is_blacklisted?:boolean}|null;const barber=item.barber_profiles as {display_name?:string}|null;return <article key={item.id}><div><strong>{String(item.service_name_snapshot)} · {new Intl.DateTimeFormat("es-BO",{dateStyle:"medium",timeStyle:"short",timeZone:"America/La_Paz"}).format(new Date(String(item.starts_at)))}</strong><span>{client?.full_name??client?.email??"Cliente"} · {client?.phone??"Sin teléfono"} · {barber?.display_name??"Sin asignar"} · {String(item.status)}</span>{client?.is_blacklisted&&<small className="admin-alert">Alerta por inasistencias</small>}</div><AppointmentAdminActions id={item.id} barbers={barbers as Array<{id:string;display_name:string;active?:boolean}>}/></article>}):<p className="admin-help">Todavía no existen reservas.</p>}</div></div>}
+
+          {section === "clientes" && <div className="admin-panel"><div className="admin-title"><Users /><div><p>USUARIOS</p><h1>Clientes</h1></div></div><p className="admin-help">Puedes dar de baja cuentas antiguas o bloquear manualmente a clientes reincidentes. Ninguna cuenta se elimina físicamente.</p><div className="admin-list client-admin-list">{clients.length?clients.map((item)=><article key={item.id}><div><strong>{String(item.full_name??item.email)}</strong><span>{String(item.email)} · {String(item.phone??"Sin teléfono")} · {String(item.status)} · {String(item.no_show_count)} inasistencia(s)</span>{Boolean(item.is_blacklisted)&&<small className="admin-alert">Lista negra informativa</small>}</div><ClientAdminActions id={item.id} status={String(item.status)} blocked={Boolean(item.is_blocked)}/></article>):<p className="admin-help">Todavía no existen clientes registrados.</p>}</div></div>}
 
           {section === "negocio" && <div className="admin-panel">
             <div className="admin-title"><Store /><div><p>CONFIGURACIÓN PÚBLICA</p><h1>Información del negocio</h1></div></div>

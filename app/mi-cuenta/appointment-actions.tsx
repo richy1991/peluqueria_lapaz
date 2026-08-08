@@ -17,3 +17,9 @@ export function CancelAppointmentButton({ id }: { id: string }) {
   }
   return <div className="inline-action"><button disabled={busy} onClick={cancel}>{busy ? "Cancelando…" : "Cancelar cita"}</button>{error && <small>{error}</small>}</div>;
 }
+
+export function ConfirmReassignmentButton({ id }: { id: string }) {
+  const router=useRouter(); const [busy,setBusy]=useState(false); const [error,setError]=useState("");
+  async function confirm(){setBusy(true);setError("");const {error:e}=await createClient().rpc("confirm_reassigned_appointment",{target_appointment_id:id});if(e){setError(e.message);setBusy(false);return;}router.refresh();}
+  return <div className="inline-action"><button disabled={busy} onClick={confirm}>{busy?"Confirmando…":"Confirmar nuevo horario"}</button>{error&&<small>{error}</small>}</div>;
+}
