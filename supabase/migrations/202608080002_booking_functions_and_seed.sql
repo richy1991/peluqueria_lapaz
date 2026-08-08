@@ -114,13 +114,13 @@ as $$
   ),
   candidate_slots as (
     select
-      window.barber_id,
+      work_window.barber_id,
       slot as slot_start,
-      slot + make_interval(mins => window.duration_minutes) as slot_end
-    from working_windows window
+      slot + make_interval(mins => work_window.duration_minutes) as slot_end
+    from working_windows work_window
     cross join lateral generate_series(
-      window.window_start,
-      window.window_end - make_interval(mins => window.duration_minutes),
+      work_window.window_start,
+      work_window.window_end - make_interval(mins => work_window.duration_minutes),
       interval '15 minutes'
     ) slot
   )
@@ -286,6 +286,7 @@ begin
     service_id,
     starts_at,
     ends_at,
+    blocked_until,
     duration_snapshot,
     price_snapshot,
     service_name_snapshot,
@@ -296,6 +297,7 @@ begin
     v_service.id,
     p_starts_at,
     v_ends_at,
+    v_ends_at + interval '5 minutes',
     v_service.duration_minutes,
     v_service.price,
     v_service.name,

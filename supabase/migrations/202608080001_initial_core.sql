@@ -90,6 +90,7 @@ create table public.appointments (
   service_id uuid not null references public.services(id),
   starts_at timestamptz not null,
   ends_at timestamptz not null,
+  blocked_until timestamptz not null,
   duration_snapshot integer not null,
   price_snapshot numeric(10,2) not null,
   service_name_snapshot text not null,
@@ -99,15 +100,17 @@ create table public.appointments (
   is_delayed boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  check (starts_at < ends_at)
+  check (starts_at < ends_at),
+  check (ends_at <= blocked_until)
 );
 
--- El rango incluye cinco minutos de preparación después de cada cita.
+-- blocked_until incluye el tiempo de preparación posterior y mantiene
+-- inmutable la expresión usada por el índice GiST de PostgreSQL.
 alter table public.appointments
   add constraint appointments_no_barber_overlap
   exclude using gist (
     barber_id with =,
-    tstzrange(starts_at, ends_at + interval '5 minutes', '[)') with &&
+    tstzrange(starts_at, blocked_until, '[)') with &&
   ) where (status in ('requested', 'confirmed', 'in_progress', 'pending_client_confirmation'));
 
 create table public.business_settings (
