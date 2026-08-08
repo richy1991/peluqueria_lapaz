@@ -4,4 +4,4 @@ set
   business_name = 'Barbería LEGEND CLUB',
   description = 'Tradición, calle y precisión en cada corte.',
   updated_at = timezone('utc', now())
-where id = 1;
+where id = true;
