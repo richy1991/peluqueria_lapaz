@@ -10,6 +10,9 @@ export const metadata: Metadata = {
     "Barbería LEGEND CLUB en La Paz. Tradición, calle y precisión. Conoce nuestros servicios y reserva tu cita.",
   applicationName: "Barbería LEGEND CLUB",
   manifest: "/manifest.webmanifest",
+  other: {
+    google: "notranslate",
+  },
 };
 
 export const viewport: Viewport = {
@@ -19,8 +22,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es">
-      <body>{children}</body>
+    <html lang="es-BO" translate="no">
+      <body lang="es-BO" translate="no">{children}</body>
     </html>
   );
 }

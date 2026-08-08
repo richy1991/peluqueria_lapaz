@@ -3,11 +3,12 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ImagePlus, LogOut, PackagePlus, Save, Scissors, Store } from "lucide-react";
+import { ImagePlus, LogOut, PackagePlus, Save, Scissors, ShieldCheck, Store, UserPlus } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { createClient } from "@/lib/supabase/client";
 
 type Row = Record<string, unknown> & { id: string };
+type AdminUser = { user_id: string; email: string; role: "admin" | "superadmin"; created_at: string };
 
 type AdminDashboardProps = {
   userEmail: string;
@@ -16,6 +17,8 @@ type AdminDashboardProps = {
   initialProducts: Row[];
   barbers: Row[];
   initialSettings: Record<string, unknown> | null;
+  isSuperadmin: boolean;
+  adminUsers: AdminUser[];
 };
 
 async function optimizeImage(file: File) {
@@ -58,6 +61,8 @@ export function AdminDashboard({
   initialProducts,
   barbers,
   initialSettings,
+  isSuperadmin,
+  adminUsers,
 }: AdminDashboardProps) {
   const router = useRouter();
   const [section, setSection] = useState("negocio");
@@ -198,6 +203,32 @@ export function AdminDashboard({
     finishAction("Estado actualizado.");
   }
 
+  async function manageAdmin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    startAction();
+    const form = new FormData(event.currentTarget);
+    const email = String(form.get("email") ?? "").trim().toLowerCase();
+    const supabase = createClient();
+    const { error: roleUpdateError } = await supabase.rpc("set_admin_role", {
+      target_email: email,
+      enabled: true,
+    });
+    if (roleUpdateError) return failAction(roleUpdateError);
+    finishAction(`Acceso administrativo habilitado para ${email}.`);
+  }
+
+  async function removeAdmin(email: string) {
+    if (!window.confirm(`¿Retirar el acceso administrativo de ${email}?`)) return;
+    startAction();
+    const supabase = createClient();
+    const { error: roleUpdateError } = await supabase.rpc("set_admin_role", {
+      target_email: email,
+      enabled: false,
+    });
+    if (roleUpdateError) return failAction(roleUpdateError);
+    finishAction(`Acceso administrativo retirado de ${email}.`);
+  }
+
   async function logout() {
     await createClient().auth.signOut();
     router.push("/");
@@ -221,6 +252,7 @@ export function AdminDashboard({
             ["galeria", "Galería"],
             ["productos", "Productos"],
             ["equipo", "Equipo"],
+            ...(isSuperadmin ? [["administradores", "Administradores"]] : []),
           ].map(([id, label]) => <button className={section === id ? "active" : ""} key={id} onClick={() => setSection(id)}>{label}</button>)}
           <Link href="/" target="_blank">Ver sitio público ↗</Link>
         </aside>
@@ -230,7 +262,7 @@ export function AdminDashboard({
 
           {section === "negocio" && <div className="admin-panel">
             <div className="admin-title"><Store /><div><p>CONFIGURACIÓN PÚBLICA</p><h1>Información del negocio</h1></div></div>
-            <form className="admin-form" onSubmit={saveBusiness}>
+            <form className="admin-form" onSubmit={saveBusiness} acceptCharset="UTF-8">
               <label>Nombre<input name="business_name" required defaultValue={String(settings.business_name ?? "Barbería LEGEND CLUB")} /></label>
               <label>Estado<select name="business_status" defaultValue={String(settings.business_status ?? "open")}><option value="open">Abierto</option><option value="appointment_only">Solo con reserva</option><option value="closed">Cerrado</option><option value="emergency_closed">Cierre de emergencia</option></select></label>
               <label className="wide">Descripción<textarea name="description" defaultValue={String(settings.description ?? "")} /></label>
@@ -248,7 +280,7 @@ export function AdminDashboard({
 
           {section === "servicios" && <div className="admin-panel">
             <div className="admin-title"><Scissors /><div><p>CATÁLOGO</p><h1>Servicios</h1></div></div>
-            <form className="admin-form compact-form" onSubmit={addService}>
+            <form className="admin-form compact-form" onSubmit={addService} acceptCharset="UTF-8">
               <label>Nombre<input name="name" required /></label><label>Identificador<input name="slug" required placeholder="corte-clasico" /></label>
               <label className="wide">Descripción<input name="description" /></label><label>Categoría<input name="category" /></label>
               <label>Precio Bs<input name="price" type="number" min="0" step="0.5" required /></label><label>Duración (min)<input name="duration_minutes" type="number" min="5" required /></label><label>Gracia (min)<input name="grace_minutes" type="number" min="0" defaultValue="10" /></label>
@@ -259,17 +291,27 @@ export function AdminDashboard({
 
           {section === "galeria" && <div className="admin-panel">
             <div className="admin-title"><ImagePlus /><div><p>CONTENIDO</p><h1>Galería de trabajos</h1></div></div>
-            <form className="admin-form" onSubmit={addGalleryPost}><label>Título<input name="title" required /></label><label>Imagen<input name="image" type="file" accept="image/jpeg,image/png,image/webp" required /></label><label className="wide">Descripción<input name="description" /></label><label className="check-label wide"><input type="checkbox" name="client_consent" /> Confirmo que existe autorización del cliente.</label><label className="check-label wide"><input type="checkbox" name="featured" /> Marcar como destacada.</label><button className="button button-dark wide" disabled={busy}>Optimizar y publicar</button></form>
+            <form className="admin-form" onSubmit={addGalleryPost} acceptCharset="UTF-8"><label>Título<input name="title" required /></label><label>Imagen<input name="image" type="file" accept="image/jpeg,image/png,image/webp" required /></label><label className="wide">Descripción<input name="description" /></label><label className="check-label wide"><input type="checkbox" name="client_consent" /> Confirmo que existe autorización del cliente.</label><label className="check-label wide"><input type="checkbox" name="featured" /> Marcar como destacada.</label><button className="button button-dark wide" disabled={busy}>Optimizar y publicar</button></form>
             <div className="admin-list">{initialGallery.map((item) => <article key={item.id}><div><strong>{String(item.title)}</strong><span>{String(item.status)} · consentimiento: {item.client_consent ? "sí" : "no"}</span></div><button onClick={() => toggleStatus("gallery_posts", item.id, item.status === "published" ? "hidden" : "published")}>{item.status === "published" ? "Ocultar" : "Publicar"}</button></article>)}</div>
           </div>}
 
           {section === "productos" && <div className="admin-panel">
             <div className="admin-title"><PackagePlus /><div><p>CATÁLOGO</p><h1>Productos</h1></div></div>
-            <form className="admin-form" onSubmit={addProduct}><label>Nombre<input name="name" required /></label><label>Identificador<input name="slug" placeholder="se genera del nombre" /></label><label className="wide">Descripción<input name="description" /></label><label>Categoría<input name="category" /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" required /></label><label>Stock<input name="stock" type="number" min="0" required /></label><label className="wide">Imagen<input name="image" type="file" accept="image/jpeg,image/png,image/webp" /></label><button className="button button-dark wide" disabled={busy}>Publicar producto</button></form>
+            <form className="admin-form" onSubmit={addProduct} acceptCharset="UTF-8"><label>Nombre<input name="name" required /></label><label>Identificador<input name="slug" placeholder="se genera del nombre" /></label><label className="wide">Descripción<input name="description" /></label><label>Categoría<input name="category" /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" required /></label><label>Stock<input name="stock" type="number" min="0" required /></label><label className="wide">Imagen<input name="image" type="file" accept="image/jpeg,image/png,image/webp" /></label><button className="button button-dark wide" disabled={busy}>Publicar producto</button></form>
             <div className="admin-list">{initialProducts.map((item) => <article key={item.id}><div><strong>{String(item.name)}</strong><span>Bs {String(item.price)} · stock {String(item.stock)} · {String(item.status)}</span></div><button onClick={() => toggleStatus("products", item.id, item.status === "active" ? "inactive" : "active")}>{item.status === "active" ? "Desactivar" : "Activar"}</button></article>)}</div>
           </div>}
 
           {section === "equipo" && <div className="admin-panel"><div className="admin-title"><Scissors /><div><p>PERSONAL</p><h1>Equipo actual</h1></div></div><p className="admin-help">La edición avanzada de horarios y perfiles se incorporará en la siguiente etapa. Estos profesionales ya se cargan desde Supabase.</p><div className="admin-list">{barbers.map((item) => <article key={item.id}><div><strong>{String(item.display_name)}</strong><span>{item.active ? "Activo" : "Inactivo"} · {Array.isArray(item.specialties) ? item.specialties.join(", ") : ""}</span></div></article>)}</div></div>}
+
+          {section === "administradores" && isSuperadmin && <div className="admin-panel">
+            <div className="admin-title"><ShieldCheck /><div><p>SEGURIDAD</p><h1>Administradores</h1></div></div>
+            <p className="admin-help">La persona debe iniciar sesión una vez con Google antes de recibir acceso. Solo el superadministrador puede gestionar estos permisos.</p>
+            <form className="admin-form admin-role-form" onSubmit={manageAdmin} acceptCharset="UTF-8">
+              <label className="wide">Correo de la cuenta Google<input name="email" type="email" inputMode="email" autoComplete="email" placeholder="administrador@correo.com" required /></label>
+              <button className="button button-dark wide" disabled={busy}><UserPlus size={17} /> Habilitar administrador</button>
+            </form>
+            <div className="admin-list">{adminUsers.map((item) => <article key={`${String(item.user_id)}-${String(item.role)}`}><div><strong>{String(item.email)}</strong><span>{item.role === "superadmin" ? "Superadministrador · desarrollador" : "Administrador"}</span></div>{item.role === "admin" && <button disabled={busy} onClick={() => removeAdmin(String(item.email))}>Retirar acceso</button>}</article>)}</div>
+          </div>}
         </section>
       </div>
     </main>
