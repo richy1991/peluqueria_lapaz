@@ -42,6 +42,8 @@ button, input, select, textarea { font: inherit; }
 .mobile-menu summary::-webkit-details-marker { display: none; }
 .mobile-menu nav { position: absolute; right: 0; top: 38px; width: 210px; display: grid; background: var(--ink); box-shadow: 0 20px 50px #0004; }
 .mobile-menu nav a { padding: 14px 18px; border-bottom: 1px solid #ffffff18; }
+.header-login { min-width: max-content; padding: 10px 2px 7px; border-bottom: 1px solid #ffffff99; font-size: 11px; font-weight: 800; }
+.account-menu { position: relative; flex: 0 0 auto; }.account-menu summary { width: 43px; height: 43px; display: grid; place-items: center; list-style: none; cursor: pointer; }.account-menu summary::-webkit-details-marker { display: none; }.account-avatar { width: 39px; height: 39px; display: grid; place-items: center; border-radius: 50%; border: 2px solid #f7f3e8; background: center/cover no-repeat #2c2924; box-shadow: 0 0 0 2px #0005; }.account-initials { color: var(--ink); background: var(--paper); font-size: 10px; font-weight: 900; }.account-popover { position: absolute; z-index: 50; top: 53px; right: 0; width: 245px; padding: 17px; display: grid; gap: 8px; color: var(--ink); background: #fffaf0; border: 1px solid var(--line); box-shadow: 0 20px 45px #0005; }.account-popover>strong { font-size: 12px; }.account-popover>small { color: var(--muted-ink); padding-bottom: 8px; border-bottom: 1px solid var(--line); }.account-popover a,.account-popover button { padding: 9px 0; display: flex; align-items: center; gap: 8px; color: var(--ink); border: 0; background: transparent; font-size: 10px; cursor: pointer; }
 
 .hero { min-height: 760px; position: relative; display: flex; align-items: center; overflow: hidden; color: white; background: var(--ink); }
 .hero-photo { position: absolute; inset: 0; background: url("/brand/legend-club-hero.webp") center/cover no-repeat; transform: scale(1.015); animation: heroSettle 1.5s ease-out both; }
@@ -202,6 +204,7 @@ h2 { font-size: clamp(46px, 5.2vw, 72px); line-height: .98; }
 @media (max-width: 800px) {
   .container { width: min(100% - 30px, 620px); }
   .desktop-nav, .header-book { display: none; }
+  .header-login { margin-left: auto; }.account-menu { margin-left: auto; }
   .mobile-menu { display: block; margin-left: auto; }
   .header-inner { height: 72px; }
   .hero { min-height: 730px; }

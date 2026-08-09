@@ -1,0 +1,4 @@
+.login-shell { min-height: 100vh; padding: 30px; display: grid; place-items: center; color: #f7f3e8; background: radial-gradient(circle at 50% 20%,#352b20,#0c0b09 58%); }
+.login-card { width: min(500px,100%); padding: 48px; text-align: center; color: #17130f; background: #f7f3e8; border: 1px solid #c7a568; box-shadow: 12px 12px 0 #0007; }
+.login-card .brand { justify-content: center; margin-bottom: 40px; }.login-card h1 { color: #17130f; font-size: 52px; text-shadow: none; }.login-card>p:not(.eyebrow) { color: #655d50; line-height: 1.7; }.login-card .google-button { margin: 18px 0; }.login-card>small,.login-card>a { display: block; margin-top: 14px; font-size: 10px; }.login-card>a { text-decoration: underline; }.login-error { padding: 10px; color: #8b2828!important; background: #f4dcdc; }
+@media(max-width:520px){.login-shell{padding:16px}.login-card{padding:35px 20px}.login-card h1{font-size:42px}}
