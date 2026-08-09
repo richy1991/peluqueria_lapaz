@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { AppointmentAdminActions, ClientAdminActions } from "./admin-operations";
 
 type Row = Record<string, unknown> & { id: string };
-type AdminUser = { user_id: string; email: string; role: "admin" | "superadmin"; created_at: string };
+type AdminUser = { user_id: string | null; email: string; role: "admin" | "superadmin" | "pending"; created_at: string };
 
 type AdminDashboardProps = {
   userEmail: string;
@@ -92,7 +92,11 @@ export function AdminDashboard({
 
   function failAction(reason: unknown) {
     setBusy(false);
-    setError(reason instanceof Error ? reason.message : "No se pudo completar la operación.");
+    if (reason instanceof Error) return setError(reason.message);
+    if (reason && typeof reason === "object" && "message" in reason) {
+      return setError(String(reason.message));
+    }
+    setError("No se pudo completar la operación.");
   }
 
   async function saveBusiness(event: FormEvent<HTMLFormElement>) {
@@ -224,7 +228,7 @@ export function AdminDashboard({
       enabled: true,
     });
     if (roleUpdateError) return failAction(roleUpdateError);
-    finishAction(`Acceso administrativo habilitado para ${email}.`);
+    finishAction(`Acceso administrativo habilitado o invitación registrada para ${email}.`);
   }
 
   async function removeAdmin(email: string) {
@@ -291,7 +295,7 @@ export function AdminDashboard({
     <main className="admin-shell">
       <header className="admin-header">
         <Brand />
-        <ModeSwitcher current="admin" isAdmin hasBarber={hasBarber} />
+        <ModeSwitcher current="admin" isAdmin hasBarber={hasBarber} showClient={!isSuperadmin} />
         <div><span>{userEmail}</span><button onClick={logout}><LogOut size={16} /> Salir</button></div>
       </header>
       <div className="admin-layout">
@@ -364,12 +368,12 @@ export function AdminDashboard({
 
           {section === "administradores" && isSuperadmin && <div className="admin-panel">
             <div className="admin-title"><ShieldCheck /><div><p>SEGURIDAD</p><h1>Administradores</h1></div></div>
-            <p className="admin-help">La persona debe iniciar sesión una vez con Google antes de recibir acceso. Solo el superadministrador puede gestionar estos permisos.</p>
+            <p className="admin-help">Puedes registrar el correo antes de su primer ingreso. Si la persona todavía no tiene cuenta, la invitación quedará pendiente y el rol se activará automáticamente cuando inicie sesión con Google.</p>
             <form className="admin-form admin-role-form" onSubmit={manageAdmin} acceptCharset="UTF-8">
               <label className="wide">Correo de la cuenta Google<input name="email" type="email" inputMode="email" autoComplete="email" placeholder="administrador@correo.com" required /></label>
               <button className="button button-dark wide" disabled={busy}><UserPlus size={17} /> Habilitar administrador</button>
             </form>
-            <div className="admin-list">{adminUsers.map((item) => <article key={`${String(item.user_id)}-${String(item.role)}`}><div><strong>{String(item.email)}</strong><span>{item.role === "superadmin" ? "Superadministrador · desarrollador" : "Administrador"}</span></div>{item.role === "admin" && <button disabled={busy} onClick={() => removeAdmin(String(item.email))}>Retirar acceso</button>}</article>)}</div>
+            <div className="admin-list">{adminUsers.map((item) => <article key={`${String(item.user_id ?? item.email)}-${String(item.role)}`}><div><strong>{String(item.email)}</strong><span>{item.role === "superadmin" ? "Superadministrador · desarrollador" : item.role === "pending" ? "Invitación pendiente de ingreso con Google" : "Administrador"}</span></div>{item.role !== "superadmin" && <button disabled={busy} onClick={() => removeAdmin(String(item.email))}>{item.role === "pending" ? "Cancelar invitación" : "Retirar acceso"}</button>}</article>)}</div>
           </div>}
         </section>
       </div>
