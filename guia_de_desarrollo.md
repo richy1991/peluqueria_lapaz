@@ -1678,6 +1678,23 @@ Flujo de productos probado.
 Chat probado.
 Notificaciones probadas.
 Roles probados.
+AMPLIACION APROBADA: ESTADISTICAS DEL NEGOCIO
+El panel administrador incluira una seccion de inteligencia de negocio.
+La primera etapa utilizara datos internos confirmables:
+Servicios completados por mes.
+Comparacion con el mes anterior.
+Valor registrado de servicios completados.
+Ticket promedio registrado.
+Nuevos usuarios y total de cuentas registradas.
+Clientes recurrentes con dos o mas servicios completados.
+Cancelaciones e inasistencias.
+Servicios mas demandados.
+Productos marcados como recogidos.
+Peluqueros con mayor cantidad de trabajos completados.
+Meses, fechas, dias de semana y horas con mayor demanda.
+Las cifras de servicios no se presentaran como dinero cobrado mientras no exista confirmacion de caja.
+Las metricas de visitas web, origen de campañas, clics en redes y conversion web requeriran una etapa posterior de analitica con consentimiento y privacidad.
+Solo administradores y superadmin podran consultar estas estadisticas.
 FUERA DE ALCANCE EN V1
 Pagos online.
 Caja.
