@@ -25,7 +25,7 @@ export default async function AdminPage() {
 
   const capabilities = await getUserCapabilities(user.id);
   const isSuperadmin = capabilities.isSuperadmin;
-  const [services, gallery, products, barbers, settings, adminUsers, appointments, profiles, analytics] = await Promise.all([
+  const [services, gallery, products, barbers, settings, adminUsers, appointments, profiles, analytics,marketing,loyaltySettings,rewards,promotions,expenses,payouts] = await Promise.all([
     supabase.from("services").select("*").order("created_at"),
     supabase.from("gallery_posts").select("*").order("created_at", { ascending: false }),
     supabase.from("products").select("*").order("created_at", { ascending: false }),
@@ -35,6 +35,12 @@ export default async function AdminPage() {
     supabase.from("appointments").select("id,starts_at,status,service_name_snapshot,price_snapshot,profiles!appointments_client_id_fkey(full_name,email,phone,is_blacklisted),barber_profiles(display_name)").order("starts_at", { ascending: false }).limit(100),
     supabase.from("profiles").select("id,full_name,email,phone,status,no_show_count,is_blacklisted,is_blocked,user_roles(role)").order("created_at", { ascending: false }).limit(100),
     supabase.rpc("admin_business_analytics"),
+    supabase.rpc("admin_marketing_analytics"),
+    supabase.from("loyalty_settings").select("*").eq("id",true).maybeSingle(),
+    supabase.from("rewards").select("*").order("points_cost"),
+    supabase.from("promotions").select("*").order("created_at",{ascending:false}),
+    supabase.from("barber_expenses").select("*,barber_profiles(display_name)").order("created_at",{ascending:false}).limit(100),
+    supabase.from("payouts").select("*,barber_profiles(display_name)").order("created_at",{ascending:false}).limit(100),
   ]);
 
   return (
@@ -50,7 +56,8 @@ export default async function AdminPage() {
       hasBarber={Boolean(capabilities.barber)}
       initialAppointments={appointments.data ?? []}
       clients={(profiles.data ?? []).filter((profile) => !profile.user_roles?.some((role) => role.role === "admin" || role.role === "superadmin"))}
-      analyticsData={(analytics.data as AnalyticsData | null) ?? null}
+      analyticsData={analytics.data?{...(analytics.data as AnalyticsData),marketing:(marketing.data as AnalyticsData["marketing"])??undefined}:null}
+      program={{settings:loyaltySettings.data,rewards:rewards.data??[],promotions:promotions.data??[],expenses:expenses.data??[],payouts:payouts.data??[],cashiers:(profiles.data??[]).filter((profile)=>profile.user_roles?.some((role)=>role.role==="cashier"))}}
     />
   );
 }

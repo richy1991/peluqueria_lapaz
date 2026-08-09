@@ -9,6 +9,7 @@ import { ModeSwitcher } from "@/components/mode-switcher";
 import { createClient } from "@/lib/supabase/client";
 import { AppointmentAdminActions, ClientAdminActions } from "./admin-operations";
 import { AdminAnalytics, type AnalyticsData } from "./admin-analytics";
+import { AdminProgram } from "./admin-program";
 
 type Row = Record<string, unknown> & { id: string };
 type AdminUser = { user_id: string | null; email: string; role: "admin" | "superadmin" | "pending"; created_at: string };
@@ -26,6 +27,7 @@ type AdminDashboardProps = {
   initialAppointments: Row[];
   clients: Row[];
   analyticsData: AnalyticsData | null;
+  program: {settings:Row|null;rewards:Row[];promotions:Row[];expenses:Row[];payouts:Row[];cashiers:Row[]};
 };
 
 async function optimizeImage(file: File) {
@@ -74,6 +76,7 @@ export function AdminDashboard({
   initialAppointments,
   clients,
   analyticsData,
+  program,
 }: AdminDashboardProps) {
   const router = useRouter();
   const [section, setSection] = useState(isSuperadmin ? "administradores" : "agenda");
@@ -298,7 +301,7 @@ export function AdminDashboard({
     <main className="admin-shell">
       <header className="admin-header">
         <Brand />
-        <ModeSwitcher current="admin" isAdmin hasBarber={hasBarber} showClient={!isSuperadmin} />
+        <ModeSwitcher current="admin" isAdmin hasBarber={hasBarber} isCashier={!isSuperadmin} showClient={!isSuperadmin} />
         <div><span>{userEmail}</span><button onClick={logout}><LogOut size={16} /> Salir</button></div>
       </header>
       <div className="admin-layout">
@@ -307,6 +310,7 @@ export function AdminDashboard({
           {[
             ["agenda", "Agenda"],
             ["estadisticas", "Estadísticas"],
+            ["programa", "Caja y fidelización"],
             ["clientes", "Clientes"],
             ["negocio", "Negocio"],
             ["servicios", "Servicios"],
@@ -315,6 +319,7 @@ export function AdminDashboard({
             ["equipo", "Equipo"],
             ...(isSuperadmin ? [["administradores", "Administradores"]] : []),
           ].map(([id, label]) => <button className={section === id ? "active" : ""} key={id} onClick={() => setSection(id)}>{label}</button>)}
+          <Link href="/mensajes">Mensajes</Link>
           <Link href="/" target="_blank">Ver sitio público ↗</Link>
         </aside>
         <section className="admin-content">
@@ -324,6 +329,8 @@ export function AdminDashboard({
           {section === "agenda" && <div className="admin-panel"><div className="admin-title"><CalendarClock /><div><p>OPERACIÓN</p><h1>Reservas y agenda</h1></div></div><div className="admin-metrics"><div><strong>{initialAppointments.filter((item)=>["requested","confirmed","pending_client_confirmation"].includes(String(item.status))).length}</strong><span>Próximas o pendientes</span></div><div><strong>{initialAppointments.filter((item)=>item.status==="needs_reschedule").length}</strong><span>Por reprogramar</span></div><div><strong>{initialAppointments.length}</strong><span>Últimas reservas</span></div></div><div className="admin-list appointment-admin-list">{initialAppointments.length?initialAppointments.map((item)=>{const client=item.profiles as {full_name?:string;phone?:string;email?:string;is_blacklisted?:boolean}|null;const barber=item.barber_profiles as {display_name?:string}|null;return <article key={item.id}><div><strong>{String(item.service_name_snapshot)} · {new Intl.DateTimeFormat("es-BO",{dateStyle:"medium",timeStyle:"short",timeZone:"America/La_Paz"}).format(new Date(String(item.starts_at)))}</strong><span>{client?.full_name??client?.email??"Cliente"} · {client?.phone??"Sin teléfono"} · {barber?.display_name??"Sin asignar"} · {String(item.status)}</span>{client?.is_blacklisted&&<small className="admin-alert">Alerta por inasistencias</small>}</div><AppointmentAdminActions id={item.id} barbers={barbers as Array<{id:string;display_name:string;active?:boolean}>}/></article>}):<p className="admin-help">Todavía no existen reservas.</p>}</div></div>}
 
           {section === "estadisticas" && <AdminAnalytics data={analyticsData} />}
+
+          {section === "programa" && <AdminProgram settings={program.settings} rewards={program.rewards} promotions={program.promotions} expenses={program.expenses} payouts={program.payouts} cashiers={program.cashiers} barbers={barbers} products={initialProducts} />}
 
           {section === "clientes" && <div className="admin-panel"><div className="admin-title"><Users /><div><p>USUARIOS</p><h1>Clientes</h1></div></div><p className="admin-help">Puedes dar de baja cuentas antiguas o bloquear manualmente a clientes reincidentes. Ninguna cuenta se elimina físicamente.</p><div className="admin-list client-admin-list">{clients.length?clients.map((item)=><article key={item.id}><div><strong>{String(item.full_name??item.email)}</strong><span>{String(item.email)} · {String(item.phone??"Sin teléfono")} · {String(item.status)} · {String(item.no_show_count)} inasistencia(s)</span>{Boolean(item.is_blacklisted)&&<small className="admin-alert">Lista negra informativa</small>}</div><ClientAdminActions id={item.id} status={String(item.status)} blocked={Boolean(item.is_blocked)}/></article>):<p className="admin-help">Todavía no existen clientes registrados.</p>}</div></div>}
 

@@ -1,0 +1,10 @@
+"use client";
+import {useEffect,useState} from "react";
+import {usePathname,useSearchParams} from "next/navigation";
+import {createClient} from "@/lib/supabase/client";
+
+export function MarketingTracker(){const path=usePathname();const params=useSearchParams();const[consent,setConsent]=useState<"accepted"|"rejected"|null>(null);
+ useEffect(()=>{const timer=window.setTimeout(()=>setConsent(localStorage.getItem("legend-analytics-consent") as "accepted"|"rejected"|null),0);return()=>window.clearTimeout(timer)},[]);
+ useEffect(()=>{if(consent!=="accepted")return;let session=localStorage.getItem("legend-session");if(!session){session=crypto.randomUUID();localStorage.setItem("legend-session",session)}const campaign={utm_source:params.get("utm_source"),utm_medium:params.get("utm_medium"),utm_campaign:params.get("utm_campaign")};createClient().from("web_events").insert({session_id:session,event_name:"page_view",path,referrer:document.referrer||null,campaign});const click=(event:MouseEvent)=>{const target=(event.target as HTMLElement).closest("a,button") as HTMLElement|null;if(!target)return;createClient().from("web_events").insert({session_id:session,event_name:"click",path,data:{label:(target.textContent??"").trim().slice(0,100),href:target instanceof HTMLAnchorElement?target.href:null}})};document.addEventListener("click",click);return()=>document.removeEventListener("click",click)},[consent,path,params]);
+ function choose(value:"accepted"|"rejected"){localStorage.setItem("legend-analytics-consent",value);setConsent(value)}
+ if(consent!==null)return null;return <aside className="analytics-consent"><p><strong>Analítica con privacidad</strong> Nos ayuda a conocer qué secciones funcionan mejor. No vendemos tus datos.</p><div><button onClick={()=>choose("rejected")}>Solo necesarias</button><button onClick={()=>choose("accepted")}>Aceptar analítica</button></div></aside>}

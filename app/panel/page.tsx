@@ -11,5 +11,6 @@ export default async function PanelPage() {
   const capabilities = await getUserCapabilities(user.id);
   if (capabilities.barber) redirect("/barbero");
   if (capabilities.isAdmin) redirect("/admin");
+  if (capabilities.isCashier) redirect("/caja");
   redirect("/mi-cuenta");
 }

@@ -91,6 +91,8 @@
 .analytics-date-grid span { font-size: 9px; text-transform: capitalize; }.analytics-date-grid strong { font-size: 9px; }
 .analytics-empty { color: #777168; font-size: 10px; line-height: 1.6; }
 .analytics-note { margin-top: 14px; padding: 15px 18px; color: #605d55; background: #f2eee5; border-left: 3px solid #c87845; font-size: 10px; line-height: 1.65; }
+.cashier-content { width: min(1280px,calc(100% - 40px)); margin: auto; padding: 45px 0 80px; }.cashier-grid { display: grid; grid-template-columns: minmax(0,2fr) minmax(280px,1fr); gap: 16px; margin: 16px 0; }.cashier-side { display: grid; align-content: start; gap: 16px; }.cashier-status { padding: 13px 18px; display: flex; gap: 15px; align-items: center; color: white; background: #2a2b26; font-size: 10px; }.cashier-status b { margin-left: auto; color: #e3a171; }.cashier-open { max-width: 650px; margin: auto; text-align: center; }.cashier-open > svg { width: 44px; height: 44px; color: #c87845; }.cashier-sale .admin-form { grid-template-columns: repeat(2,1fr); }.cashier-sale button svg { width: 16px; }
+.program-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }.program-grid > section { min-width: 0; padding: 20px; border: 1px solid rgba(23,24,20,.12); background: #fff; }.program-grid .admin-form { padding: 14px; }.marketing-card { margin-top: 14px; }.marketing-card .analytics-grid > div { padding: 15px; background: #f7f3ec; }.marketing-card h3 { font: 600 18px var(--serif); }
 
 @media (max-width: 760px) {
   .admin-header { padding-inline: 16px; }
@@ -110,6 +112,7 @@
   .analytics-snapshot { grid-template-columns: 1fr 1fr; }
   .analytics-snapshot article { border-bottom: 1px solid rgba(23,24,20,.1); }
   .analytics-insights,.analytics-grid { grid-template-columns: 1fr; }
+  .cashier-content { width: min(100% - 24px,680px); padding-top: 25px; }.cashier-grid,.program-grid { grid-template-columns: 1fr; }.cashier-status { align-items: flex-start; flex-direction: column; }.cashier-status b { margin-left: 0; }.cashier-sale .admin-form { grid-template-columns: 1fr; }
   .analytics-card.wide { grid-column: auto; }
   .analytics-date-grid { grid-template-columns: 1fr; }
 }

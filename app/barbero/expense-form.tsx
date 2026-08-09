@@ -1,0 +1,5 @@
+"use client";
+import {FormEvent,useState} from "react";
+import {useRouter} from "next/navigation";
+import {createClient} from "@/lib/supabase/client";
+export function ExpenseForm(){const router=useRouter();const[busy,setBusy]=useState(false);const[error,setError]=useState("");async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);setError("");const f=new FormData(e.currentTarget);const{error}=await createClient().rpc("submit_barber_expense",{expense_concept:String(f.get("concept")),expense_amount:Number(f.get("amount")),expense_notes:String(f.get("notes")??"")||null});setBusy(false);if(error)return setError(error.message);e.currentTarget.reset();router.refresh();}return <form className="portal-inline-form expense-form" onSubmit={submit}><input name="concept" placeholder="Insumo o concepto" required/><input name="amount" type="number" min="0.5" step="0.5" placeholder="Bs" required/><input name="notes" placeholder="Detalle opcional"/><button disabled={busy}>Solicitar revisión</button>{error&&<small>{error}</small>}</form>}

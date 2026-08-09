@@ -1,10 +1,11 @@
 import Link from "next/link";
 
-type ModeSwitcherProps = { current: "client" | "barber" | "admin"; isAdmin: boolean; hasBarber: boolean; showClient?: boolean };
+type ModeSwitcherProps = { current: "client" | "barber" | "cashier" | "admin"; isAdmin: boolean; hasBarber: boolean; isCashier?: boolean; showClient?: boolean };
 
-export function ModeSwitcher({ current, isAdmin, hasBarber, showClient = true }: ModeSwitcherProps) {
+export function ModeSwitcher({ current, isAdmin, hasBarber, isCashier = false, showClient = true }: ModeSwitcherProps) {
   const modes = [
     ...(hasBarber ? [{ id: "barber", href: "/barbero", label: "Modo peluquero" }] : []),
+    ...(isCashier ? [{ id: "cashier", href: "/caja", label: "Modo caja" }] : []),
     ...(isAdmin ? [{ id: "admin", href: "/admin", label: "Modo administrador" }] : []),
     ...(showClient ? [{ id: "client", href: "/mi-cuenta", label: "Modo cliente" }] : []),
   ];
