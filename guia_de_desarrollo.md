@@ -8,7 +8,7 @@ Mostrar catalogo de trabajos, estilos y productos.
 Permitir comunicacion interna mediante chat de texto.
 Enviar notificaciones internas dentro del sistema.
 Administrar servicios, peluqueros, productos, galeria y estado del negocio.
-El sistema no manejara pagos online, caja ni contabilidad en esta version.
+La V1 original no manejaba pagos online, caja ni contabilidad. El cambio de alcance aprobado el 9 de agosto de 2026 incorpora caja operativa, fidelizacion y comisiones por etapas, pero mantiene fuera los pagos online y la contabilidad fiscal completa.
 ALCANCE GENERAL DE LA PRIMERA VERSION
 El sistema incluira:
 Autenticacion con Google.
@@ -32,7 +32,7 @@ Anuncios de actualizaciones del sistema.
 Registro rapido para clientes sin cita, incentivando instalacion/registro.
 Optimizacion de imagenes.
 Auditoria de acciones administrativas.
-No incluira en esta version:
+La V1 original no incluia:
 Pagos online.
 Pasarelas de pago.
 Caja.
@@ -1679,8 +1679,9 @@ Chat probado.
 Notificaciones probadas.
 Roles probados.
 AMPLIACION APROBADA: ESTADISTICAS DEL NEGOCIO
-El panel administrador incluira una seccion de inteligencia de negocio.
-La primera etapa utilizara datos internos confirmables:
+Estado: IMPLEMENTADO Y DESPLEGADO el 9 de agosto de 2026.
+El panel administrador incluye una seccion protegida de inteligencia de negocio.
+La primera etapa utiliza datos internos confirmables:
 Servicios completados por mes.
 Comparacion con el mes anterior.
 Valor registrado de servicios completados.
@@ -1692,23 +1693,366 @@ Servicios mas demandados.
 Productos marcados como recogidos.
 Peluqueros con mayor cantidad de trabajos completados.
 Meses, fechas, dias de semana y horas con mayor demanda.
-Las cifras de servicios no se presentaran como dinero cobrado mientras no exista confirmacion de caja.
-Las metricas de visitas web, origen de campañas, clics en redes y conversion web requeriran una etapa posterior de analitica con consentimiento y privacidad.
-Solo administradores y superadmin podran consultar estas estadisticas.
-FUERA DE ALCANCE EN V1
-Pagos online.
-Caja.
-Contabilidad.
-Facturacion.
-Comisiones avanzadas.
-Membresias complejas.
-Programa de puntos avanzado.
-WhatsApp API automatizado.
+Las cifras de servicios se presentan como valor registrado y no como dinero cobrado mientras no exista confirmacion de caja.
+Solo administradores y superadmin pueden consultar estas estadisticas.
+
+CAMBIO DE ALCANCE APROBADO: OPERACION, FIDELIZACION E INCENTIVOS
+Fecha de aprobacion funcional: 9 de agosto de 2026.
+Esta ampliacion deja de considerar caja operativa, fidelizacion y comisiones como ideas fuera de alcance.
+Se desarrollaran por etapas sobre la aplicacion actual.
+No implica pagos online ni contabilidad fiscal completa.
+
+43. CAJA OPERATIVA / PUNTO DE VENTA
+43.1 Objetivo
+Registrar todas las atenciones y ventas del negocio, incluyendo clientes que llegan sin reserva web.
+Una reserva no equivale a una venta ni a un pago.
+Los puntos y comisiones solo se generan cuando el servicio o producto fue completado y el pago fue confirmado.
+
+43.2 Venta unificada
+Cada venta podra contener:
+Servicios.
+Productos.
+Cliente registrado o invitado.
+Peluquero que realizo el servicio.
+Peluquero que recomendo un producto, si aplica.
+Precios historicos.
+Descuentos y promociones.
+Importe pagado.
+Forma de pago.
+Puntos generados o canjeados.
+Comisiones e incentivos.
+Comprobante interno.
+
+43.3 Estados minimos
+draft: atencion iniciada.
+pending_payment: servicio terminado y pendiente de caja.
+paid: pago confirmado.
+canceled: operacion anulada antes de cobrar.
+refunded: devolucion o reversion autorizada.
+Las ventas pagadas no se borran. Se corrigen mediante anulaciones o movimientos de reversion auditados.
+
+43.4 Atenciones sin reserva
+El peluquero o cajero podra crear una atencion walk-in.
+Se seleccionara peluquero, servicio y cliente registrado o invitado.
+La atencion sin reserva usara el mismo catalogo y precio vigente que una reserva web.
+El precio, duracion, porcentaje de comision y nombre del servicio se guardaran como snapshot.
+
+43.5 Pagos y cierre
+La primera etapa registrara pagos presenciales informativos: efectivo, QR, transferencia u otro metodo autorizado.
+No procesara pagos online.
+La caja permitira apertura, monto inicial, ingresos, egresos justificados, cierre, monto esperado, monto contado y diferencia.
+Cada turno tendra un responsable.
+
+44. CAPACIDAD DE CAJERO
+Se agregara una capacidad o rol operativo de cajero, separada del administrador.
+Un administrador podra tambien trabajar como cajero.
+El cajero podra registrar walk-ins, buscar clientes, confirmar pagos, aplicar promociones autorizadas, registrar productos y emitir comprobantes.
+El cajero no podra crear administradores, cambiar reglas de comision, modificar campañas, eliminar ventas ni acceder a configuracion tecnica.
+El peluquero podra registrar o confirmar el trabajo realizado, pero no confirmar el pago ni modificar precios o descuentos salvo permiso especial.
+
+45. REGLA ECONOMICA DE SERVICIOS Y PELUQUEROS
+45.1 Precio y reparto aprobado
+El corte de cabello de varon tiene como precio de referencia actual Bs 25, pero el precio continuara siendo configurable por servicio.
+El peluquero recibe 50% del precio normal completo del servicio.
+La promocion o descuento se descuenta exclusivamente de la participacion del negocio.
+La comision del peluquero no disminuye por una promocion creada por administracion.
+
+45.2 Formula
+commission_base = precio normal registrado del servicio.
+barber_commission = commission_base * 0.50.
+customer_total = precio normal - descuento.
+business_share = customer_total - barber_commission.
+
+Ejemplo sin descuento:
+Precio normal Bs 25.
+Cliente paga Bs 25.
+Peluquero recibe Bs 12,50.
+Negocio recibe Bs 12,50 antes de otros gastos.
+
+Ejemplo con 20% de descuento:
+Precio normal Bs 25.
+Cliente paga Bs 20.
+Peluquero mantiene Bs 12,50.
+Negocio recibe Bs 7,50 antes de otros gastos.
+
+Ejemplo con 50% de descuento:
+Precio normal Bs 25.
+Cliente paga Bs 12,50.
+Peluquero mantiene Bs 12,50.
+Negocio recibe Bs 0.
+
+Los descuentos superiores a la participacion normal del negocio deberan bloquearse o requerir autorizacion extraordinaria porque generan una perdida directa.
+En interfaz y reportes se usara el termino participacion del negocio, no ganancia del administrador.
+
+45.3 Historial y liquidaciones
+Cada servicio pagado creara un movimiento de comision inmutable.
+Estados sugeridos: pending, approved, paid y reversed.
+El peluquero vera servicios completados, comision pendiente y liquidaciones anteriores.
+El administrador podra cerrar periodos, aprobar liquidaciones y registrar el pago al peluquero.
+
+46. INCENTIVOS POR PRODUCTOS
+El peluquero podra quedar asociado como recomendador o vendedor de un producto.
+El incentivo de producto sera independiente de la comision de servicios.
+El porcentaje o monto podra configurarse por producto, categoria o campaña.
+El incentivo solo se generara cuando el producto sea entregado y el pago sea confirmado.
+Una reserva o apartado no genera incentivo.
+El porcentaje inicial de incentivo por productos queda PENDIENTE DE DEFINICION por el negocio.
+
+47. INSUMOS Y REEMBOLSOS DE PELUQUEROS
+Los insumos comprados por peluqueros no se mezclaran silenciosamente con sus comisiones.
+Se registraran como movimientos independientes con peluquero, concepto, importe, fecha, comprobante opcional y motivo.
+Estados sugeridos: pending, approved, rejected y reimbursed.
+El administrador aprobara o rechazara cada solicitud.
+El resumen del peluquero mostrara por separado comisiones, incentivos, reembolsos y total pendiente.
+
+48. PROGRAMA DE PUNTOS PARA CLIENTES
+48.1 Principios
+Los puntos no son dinero y no se guardaran solamente como un saldo editable.
+Cada aumento, canje, expiracion, ajuste o reversion tendra un movimiento historico.
+La suma de movimientos determinara el saldo.
+Cada origen tendra una clave unica para impedir entregar dos veces los mismos puntos.
+
+48.2 Formas de ganar puntos
+Servicio completado y pagado.
+Producto entregado y pagado, si la campaña lo permite.
+Primera atencion vinculada despues del registro.
+Referido valido.
+Racha de asistencia.
+Campaña temporal.
+Ajuste manual auditado por administrador.
+
+48.3 Canjes
+Los puntos podran canjearse por descuentos, productos seleccionados o servicios promocionales.
+Cada recompensa definira costo en puntos, vigencia, limite de usos, stock o cupo, servicios/productos permitidos y descuento maximo.
+Los canjes que afecten servicios respetaran siempre la comision completa del peluquero.
+El costo del beneficio saldra de la participacion del negocio o de un presupuesto promocional definido.
+
+48.4 Valores pendientes de aprobacion
+Puntos por servicio completado.
+Puntos por monto de compra.
+Puntos de bienvenida.
+Vencimiento de puntos.
+Catalogo inicial de recompensas.
+Valor y limite de cada descuento.
+No se codificaran cantidades definitivas hasta que administracion apruebe estas reglas.
+
+49. REFERIDOS
+Cada cliente registrado tendra codigo y QR personal de referido.
+El referido podra indicarse en una reserva, en caja o durante el registro de una atencion invitada.
+No se otorgaran puntos por crear una cuenta sin consumo.
+La recompensa se liberara cuando el nuevo cliente complete y pague su primera atencion y vincule su cuenta Google.
+Se impediran autorreferidos, reutilizacion del mismo cliente y asignaciones duplicadas.
+El codigo solo podra asociarse una vez y las correcciones requeriran auditoria.
+Los puntos para quien refiere y para el nuevo cliente quedan PENDIENTES DE DEFINICION.
+
+50. RACHAS DE ASISTENCIA
+La racha se basara en visitas completadas, no en reservas creadas.
+Una cancelacion realizada dentro de las reglas no rompera automaticamente la racha.
+Una inasistencia si podra romperla.
+El administrador configurara numero de visitas, periodo maximo entre visitas, recompensa y vigencia de campaña.
+El numero de visitas, dias permitidos y puntos de bonificacion quedan PENDIENTES DE DEFINICION.
+
+51. CLIENTE INVITADO Y VINCULACION POSTERIOR
+Un cliente sin cuenta podra ser atendido como invitado.
+No se crearan cuentas Google en nombre del cliente.
+La venta emitira un codigo o QR de vinculacion de un solo uso y con vencimiento.
+Al iniciar sesion con Google, el cliente podra reclamar su atencion y recibir historial y puntos correspondientes.
+No se vinculara una venta solamente por telefono mientras no exista verificacion OTP.
+La vinculacion debe prevenir que otra persona reclame una atencion ajena.
+
+52. COMPROBANTE INTERNO
+Cada pago confirmado generara un comprobante interno correlativo.
+Incluira negocio, fecha, cliente o invitado, peluquero, servicios, productos, precios, descuentos, total, forma de pago, puntos y QR.
+Podra imprimirse en formato termico y descargarse como PDF.
+Mientras no exista integracion fiscal autorizada mostrara claramente:
+COMPROBANTE INTERNO - NO VALIDO COMO CREDITO FISCAL.
+No se denominara factura fiscal.
+La integracion con SIAT sera un proyecto separado que requerira definicion tributaria, credenciales y validacion del SIN.
+
+53. ANALITICA DE MARKETING - SIGUIENTE ETAPA
+El tablero interno ya mide comportamiento registrado dentro del sistema.
+Para medir visitantes y campañas se agregara posteriormente:
+Visitas unicas y sesiones.
+Origen de trafico y parametros UTM.
+Clics en reservar, WhatsApp, Instagram, Facebook y mapa.
+Conversion de visita a inicio de reserva.
+Conversion de inicio a reserva completada.
+Conversion de invitado a cuenta Google.
+Uso y retorno de campañas y referidos.
+La analitica web debera respetar consentimiento, privacidad y minimizacion de datos.
+
+54. ESTRUCTURA DE DATOS PROPUESTA PARA LA AMPLIACION
+sales y sale_items: ventas, servicios y productos.
+payments: confirmaciones y formas de pago.
+cash_shifts y cash_movements: apertura, movimientos y cierre de caja.
+receipts: numeracion y representacion del comprobante.
+guest_customers y claim_tokens: atencion invitada y vinculacion segura.
+barber_earnings: comisiones e incentivos historicos.
+payout_periods y payout_items: liquidaciones al equipo.
+barber_expenses: insumos y reembolsos.
+loyalty_accounts: resumen de puntos.
+loyalty_transactions: libro inmutable de movimientos.
+loyalty_rules: reglas configurables.
+rewards y reward_redemptions: premios y canjes.
+referrals: relacion entre quien refiere y nuevo cliente.
+customer_streaks: progreso de rachas.
+Las operaciones criticas se ejecutaran mediante funciones SQL transaccionales, con RLS, validacion de rol, idempotencia y auditoria.
+
+55. ORDEN DE DESARROLLO APROBADO
+Fase 1: venta unificada, atenciones sin reserva, pagos presenciales informativos y rol/capacidad de cajero.
+Fase 2: comprobante interno, QR de vinculacion, apertura y cierre de caja.
+Fase 3: comision fija del peluquero, incentivos de productos y liquidaciones.
+Fase 4: puntos por servicios completados y catalogo de recompensas.
+Fase 5: referidos, rachas y campañas configurables.
+Fase 6: insumos, reembolsos y reportes economicos ampliados.
+Fase 7: analitica web y atribucion de marketing.
+Fase opcional independiente: integracion fiscal SIAT.
+
+CHECKLIST CONSOLIDADO DE ESTADO - 9 DE AGOSTO DE 2026
+Leyenda:
+[x] Implementado y presente en el proyecto.
+[~] Implementacion parcial o pendiente de validacion operativa completa.
+[ ] Pendiente de desarrollo o configuracion.
+
+Infraestructura y seguridad:
+[x] Proyecto Supabase conectado.
+[x] Repositorio GitHub y despliegue Vercel.
+[x] Variables publicas de Supabase fuera del codigo fuente.
+[x] Autenticacion Google mediante Supabase Auth.
+[x] RLS y funciones protegidas para operaciones sensibles existentes.
+[x] Separacion de roles cliente, peluquero, administrador y superadmin.
+[x] Cuenta dick.nina29@gmail.com exclusivamente como superadmin/desarrollador.
+[x] Invitaciones pendientes para administradores antes del primer ingreso Google.
+[~] Auditoria implementada para varias acciones administrativas; debe ampliarse a caja, puntos y liquidaciones.
+[ ] Rotar las claves secretas de Supabase y Google OAuth expuestas durante la configuracion inicial.
+[ ] Confirmar estrategia automatica de backups y restauracion probada.
+[ ] Configurar dominio propio, si el negocio lo requiere.
+
+Sitio publico y contenido:
+[x] Identidad visual Barberia LEGEND CLUB.
+[x] Informacion real, direccion, WhatsApp, mapa y lema.
+[x] Catalogo de servicios desde base de datos.
+[x] Equipo/peluqueros desde base de datos.
+[x] Galeria administrable desde base de datos.
+[x] Productos administrables desde base de datos.
+[x] Apartado de productos por 24 horas.
+[~] Flujo de entrega/recogida de productos: existe el estado en base de datos, falta operacion completa de caja.
+[~] PWA: existe manifest e identidad instalable; falta validar experiencia offline, actualizacion y pruebas en dispositivos reales.
+
+Usuarios y paneles:
+[x] Registro automatico de clientes con Google.
+[x] Boton de login y fotografia de perfil al iniciar sesion.
+[x] Resolucion de panel segun capacidades.
+[x] Panel de cliente con citas, apartados y notificaciones.
+[x] Panel de peluquero con agenda y cambio de estados permitido.
+[x] Panel administrador para agenda, clientes, negocio, servicios, galeria, productos, equipo y administradores.
+[x] Alta, vinculacion, edicion y desactivacion de peluqueros.
+[x] Administracion y bloqueo manual de clientes.
+[~] Existe una invitacion administrativa pendiente; falta que el negocio complete y pruebe el ingreso del administrador invitado.
+[ ] Confirmar al menos dos administradores operativos si se mantiene la regla de continuidad definida en la guia original.
+
+Reservas y operacion actual:
+[x] Seleccion de servicio, peluquero y horario disponible.
+[x] Precio y duracion guardados como snapshot en la cita.
+[x] Prevencion de superposicion de horarios.
+[x] Cancelacion del cliente bajo reglas existentes.
+[x] Reasignacion con confirmacion del cliente.
+[x] Estados de cita para administrador y peluquero.
+[x] Inasistencia y lista negra informativa/manual.
+[x] Cierre de emergencia y reprogramacion/notificacion interna a nivel de base de datos.
+[~] Notificaciones internas visibles; faltan preferencias completas y pruebas de todos los eventos.
+[ ] Chat interno solo texto.
+[ ] Registro de atenciones sin reserva.
+
+Estadisticas:
+[x] Pagina Estadisticas dentro del panel administrador.
+[x] Comparacion del mes actual con el anterior.
+[x] Evolucion mensual de 12 meses.
+[x] Usuarios registrados y clientes recurrentes.
+[x] Cancelaciones e inasistencias.
+[x] Servicios, peluqueros, productos, fechas, dias y horas de mayor demanda.
+[x] Proteccion backend exclusiva para administradores.
+[~] Valores economicos basados en servicios completados, aun no en cobros confirmados.
+[ ] Visitas web, fuentes de trafico, UTM y conversiones de marketing.
+
+Caja, ventas y comprobantes:
+[ ] Tablas de ventas y detalle de venta.
+[ ] Atencion walk-in o cliente sin reserva.
+[ ] Rol/capacidad de cajero.
+[ ] Registro de formas de pago presenciales.
+[ ] Apertura y cierre de caja.
+[ ] Ingresos y egresos justificados.
+[ ] Anulaciones y reversiones auditadas.
+[ ] Comprobante interno correlativo.
+[ ] PDF e impresion termica.
+[ ] Codigo QR de vinculacion para cliente invitado.
+[ ] Flujo seguro para reclamar una atencion al registrarse con Google.
+
+Peluqueros, comisiones e incentivos:
+[~] Campo configurable commission_percent existente en barber_profiles.
+[ ] Configurar y mostrar 50% como regla operativa aprobada.
+[ ] Snapshot de porcentaje y comision por servicio vendido.
+[ ] Mantener la comision sobre precio normal aunque exista descuento.
+[ ] Bloqueo o autorizacion extraordinaria para promociones con perdida.
+[ ] Libro historico de comisiones.
+[ ] Dashboard economico del peluquero.
+[ ] Cierre de periodos y liquidaciones.
+[ ] Asociar peluquero recomendador a venta de producto.
+[ ] Incentivos por productos entregados y pagados.
+[ ] Registro, aprobacion y reembolso de insumos.
+
+Fidelizacion:
+[ ] Libro de movimientos de puntos.
+[ ] Saldo y historial visible para el cliente.
+[ ] Reglas configurables para ganar puntos.
+[ ] Puntos por servicios completados y pagados.
+[ ] Catalogo de recompensas.
+[ ] Canje seguro y reversion de puntos.
+[ ] Vencimiento configurable.
+[ ] Codigo y QR personal de referido.
+[ ] Validacion de primera compra del referido.
+[ ] Proteccion contra autorreferidos y duplicados.
+[ ] Rachas de asistencia.
+[ ] Campañas y promociones configurables.
+
+Decisiones del negocio pendientes antes de programar fidelizacion:
+[ ] Cantidad de puntos por servicio.
+[ ] Cantidad de puntos por compra de productos.
+[ ] Puntos de bienvenida.
+[ ] Puntos para quien refiere y para el nuevo cliente.
+[ ] Vencimiento de puntos.
+[ ] Recompensas iniciales y limites de descuento.
+[ ] Regla de visitas y dias para mantener una racha.
+[ ] Porcentaje o monto de incentivo por venta de producto.
+[ ] Periodicidad de pago de comisiones a peluqueros.
+[ ] Tratamiento exacto de insumos: reembolso completo, parcial o sujeto a categorias.
+[ ] Persona que asumira inicialmente la funcion de cajero.
+[ ] Formas de pago que se registraran.
+[ ] Necesidad futura de factura fiscal e integracion SIAT.
+
+Pruebas pendientes para la ampliacion:
+[ ] Pruebas de doble confirmacion o doble clic en caja.
+[ ] Pruebas de comision con promociones de 0%, 20%, 50% y descuento extraordinario.
+[ ] Pruebas de cancelacion, anulacion y devolucion.
+[ ] Pruebas de cierre de caja con diferencias.
+[ ] Pruebas de puntos duplicados, canjes concurrentes y reversiones.
+[ ] Pruebas antifraude de referidos.
+[ ] Pruebas de vinculacion segura de clientes invitados.
+[ ] Pruebas RLS para cajero, peluquero, administrador, cliente y superadmin.
+[ ] Pruebas de reportes y conciliacion de liquidaciones.
+
+FUERA DE ALCANCE DE LA AMPLIACION ACTUAL
+Procesamiento de pagos online.
+Pasarela de pagos.
+Contabilidad fiscal completa.
+Facturacion fiscal sin integracion y autorizacion del SIN.
+WhatsApp API automatizado de pago.
 SMS.
-Email automatico obligatorio.
+Email transaccional obligatorio.
 Chat con imagenes.
 App nativa en tiendas.
 Multi-sucursal.
+Los puntos, comisiones y caja de esta lista historica fueron trasladados posteriormente a la ampliacion aprobada. Consultar las secciones 43 a 55 y el checklist consolidado.
 Multi-tenant para otras peluquerias, salvo decision futura.
 IA para recomendaciones.
 Pruebas virtuales de estilos.
@@ -1728,8 +2072,11 @@ Mantener chat simple y seguro.
 Evitar sobreingenieria.
 Preparar el sistema para crecer, pero sin complicar el MVP.
 RESUMEN EJECUTIVO
-El sistema sera una web app movil tipo PWA, desarrollada con React en Vercel y Supabase como backend.
-Los usuarios se autentican con Google. Los clientes se registran solos. Los peluqueros son registrados o habilitados por el administrador. Habra dos administradores con mismos permisos, y un superadmin tecnico.
-El sistema prioriza la vista peluquero para usuarios administradores que tambien atienden. Permite reservas con telefono confirmado, buffer de 5 minutos, tiempo de gracia, cancelaciones con 2 horas, lista negra no automatica, reasignaciones con confirmacion del cliente, cierre por emergencia, galeria autorizada, productos con apartado de 24 horas, chat solo texto y notificaciones internas.
-No manejara pagos online, caja ni contabilidad. Se apoyara en WhatsApp manual solo como canal de contacto, sin API pagada.
+El sistema es una web app movil desarrollada con Next.js, desplegada en Vercel y conectada a Supabase.
+Los usuarios se autentican con Google. Los clientes se registran solos, los peluqueros y administradores se habilitan mediante invitaciones protegidas y el desarrollador conserva exclusivamente el rol superadmin tecnico.
+La version actualmente desplegada incluye sitio publico, reservas, catalogos, apartados de productos, paneles por rol, gestion administrativa, notificaciones internas y estadisticas operativas protegidas.
+La ampliacion aprobada agregara caja presencial, atenciones sin reserva, comprobante interno, comisiones del peluquero sobre el precio normal, incentivos de productos, puntos, referidos, rachas, insumos y liquidaciones.
+El peluquero mantendra 50% del precio normal completo del servicio aunque administracion aplique una promocion. El descuento reducira exclusivamente la participacion del negocio.
+La ampliacion no procesara pagos online ni sustituira un sistema contable o fiscal. Una futura factura fiscal requerira un proyecto de integracion autorizado con el SIN.
+El checklist consolidado de este documento debe actualizarse despues de cada migracion, despliegue y validacion funcional.
 Fin del documento.
