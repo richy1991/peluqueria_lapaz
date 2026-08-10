@@ -1955,6 +1955,7 @@ Usuarios y paneles:
 [x] Contraste de textos, fondos, inputs, selects, modales y estados revisado para ambos temas.
 [x] Paleta visual privada LEGEND OS v2 aplicada con azul institucional, azul real, índigo, celeste, azul hielo y azul noche; header y sidebar forman una estructura coherente y la página pública permanece sin cambios.
 [x] Selector de modos del header corregido para sus enlaces reales, con estados normal, hover y activo claramente diferenciados.
+[x] Sistema reutilizable de tarjetas privadas con contorno azul, acento lateral, relieve suave y variantes semánticas azul, verde y naranja para indicadores; no afecta al sitio público.
 [x] Alta, vinculacion, edicion y desactivacion de peluqueros.
 [x] Administracion y bloqueo manual de clientes.
 [~] Existe una invitacion administrativa pendiente; falta que el negocio complete y pruebe el ingreso del administrador invitado.

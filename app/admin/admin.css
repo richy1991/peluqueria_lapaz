@@ -757,3 +757,125 @@
   .panel-theme .nav-collapsed .dash-sidebar nav svg,
   .panel-theme .nav-collapsed .dash-sidebar-foot svg{margin:0}
 }
+
+/* Sistema de contornos acentuados para todas las superficies privadas. */
+.panel-theme{
+  --card-accent:#3478f6;
+  --card-accent-soft:rgba(52,120,246,.16);
+  --card-success:#13a47a;
+  --card-warning:#f06a22;
+}
+.panel-theme[data-panel-theme="light"] :is(
+  .admin-panel,
+  .program-grid>.program-card,
+  .barber-portal .portal-card,
+  .panel-client-shell .portal-card,
+  .analytics-card,
+  .command-card,
+  .cashier-kpis>article
+){
+  border:1px solid rgba(48,103,214,.32);
+  border-left:4px solid var(--card-accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.7),
+    0 12px 30px rgba(39,83,166,.1),
+    -1px 0 0 var(--card-accent-soft);
+}
+.panel-theme[data-panel-theme="dark"] :is(
+  .admin-panel,
+  .program-grid>.program-card,
+  .barber-portal .portal-card,
+  .panel-client-shell .portal-card,
+  .analytics-card,
+  .command-card,
+  .cashier-kpis>article
+){
+  border:1px solid rgba(105,171,255,.28);
+  border-left:4px solid var(--card-accent);
+  box-shadow:
+    inset 0 1px 0 rgba(173,214,255,.06),
+    0 15px 34px rgba(1,8,27,.25),
+    -1px 0 0 rgba(77,145,255,.12);
+}
+.panel-theme :is(
+  .admin-panel,
+  .program-grid>.program-card,
+  .barber-portal .portal-card,
+  .panel-client-shell .portal-card,
+  .analytics-card,
+  .command-card,
+  .cashier-kpis>article
+){
+  position:relative;
+  overflow:hidden;
+  transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease;
+}
+.panel-theme :is(
+  .program-grid>.program-card,
+  .barber-portal .portal-card,
+  .panel-client-shell .portal-card,
+  .analytics-card,
+  .command-card,
+  .cashier-kpis>article
+):hover{
+  border-color:rgba(62,126,244,.52);
+  transform:translateY(-2px);
+}
+
+/* Variación controlada del acento entre tarjetas hermanas. */
+.panel-theme :is(.program-grid,.dash-portal-grid,.portal-grid,.cashier-command-grid,.analytics-grid) > :nth-child(3n+1){--card-accent:#3478f6;--card-accent-soft:rgba(52,120,246,.16)}
+.panel-theme :is(.program-grid,.dash-portal-grid,.portal-grid,.cashier-command-grid,.analytics-grid) > :nth-child(3n+2){--card-accent:#16a47a;--card-accent-soft:rgba(22,164,122,.14)}
+.panel-theme :is(.program-grid,.dash-portal-grid,.portal-grid,.cashier-command-grid,.analytics-grid) > :nth-child(3n){--card-accent:#f06a22;--card-accent-soft:rgba(240,106,34,.14)}
+
+/* Indicadores compactos inspirados en la referencia. */
+.panel-theme :is(.admin-metrics,.analytics-kpis,.cashier-kpis,.analytics-snapshot) > :is(div,article){
+  --metric-accent:#3478f6;
+  position:relative;
+  overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--metric-accent) 34%,transparent);
+  border-left:5px solid var(--metric-accent);
+  border-radius:11px;
+  box-shadow:0 8px 22px color-mix(in srgb,var(--metric-accent) 9%,transparent);
+}
+.panel-theme :is(.admin-metrics,.analytics-kpis,.cashier-kpis,.analytics-snapshot) > :is(div,article):nth-child(3n+1){--metric-accent:#3478f6}
+.panel-theme :is(.admin-metrics,.analytics-kpis,.cashier-kpis,.analytics-snapshot) > :is(div,article):nth-child(3n+2){--metric-accent:#13a47a}
+.panel-theme :is(.admin-metrics,.analytics-kpis,.cashier-kpis,.analytics-snapshot) > :is(div,article):nth-child(3n){--metric-accent:#f06a22}
+.panel-theme[data-panel-theme="light"] :is(.admin-metrics,.analytics-kpis,.cashier-kpis,.analytics-snapshot) > :is(div,article){
+  background:linear-gradient(145deg,#f9fcff,#eaf4ff);
+}
+.panel-theme[data-panel-theme="dark"] :is(.admin-metrics,.analytics-kpis,.cashier-kpis,.analytics-snapshot) > :is(div,article){
+  background:linear-gradient(145deg,#1b2d4b,#14233d);
+}
+
+/* Formularios y bloques internos mantienen el mismo lenguaje con menor intensidad. */
+.panel-theme :is(.admin-form,.inline-edit-form,.dash-modal-body .link-account-form){
+  border:1px solid rgba(55,113,223,.25);
+  border-left:4px solid #4b86f7;
+  border-radius:12px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+.panel-theme .dash-modal{
+  border:1px solid rgba(73,137,247,.38);
+  border-top:4px solid #3478f6;
+}
+.panel-theme .admin-list>article,.panel-theme .portal-list>article{
+  border-bottom-color:var(--dash-line);
+  transition:background .18s ease,padding-left .18s ease;
+}
+.panel-theme .admin-list>article:hover,.panel-theme .portal-list>article:hover{
+  padding-left:10px;
+  background:rgba(65,129,245,.055);
+}
+
+@media(max-width:760px){
+  .panel-theme[data-panel-theme] :is(
+    .admin-panel,
+    .program-grid>.program-card,
+    .barber-portal .portal-card,
+    .panel-client-shell .portal-card,
+    .analytics-card,
+    .command-card,
+    .cashier-kpis>article
+  ){border-left-width:4px}
+  .panel-theme :is(.admin-metrics,.analytics-kpis,.cashier-kpis,.analytics-snapshot) > :is(div,article){border-left-width:5px}
+}
