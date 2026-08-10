@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BarChart3, CalendarClock, CircleDollarSign, ImagePlus, LogOut, Menu, PackagePlus, Save, Scissors, ShieldCheck, Sparkles, Store, UserPlus, UserRoundCog, Users, X } from "lucide-react";
@@ -89,6 +89,16 @@ export function AdminDashboard({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [navCollapsed,setNavCollapsed]=useState(false);
+  const [mobileNavOpen,setMobileNavOpen]=useState(false);
+
+  useEffect(()=>{
+    if(!mobileNavOpen)return;
+    const previous=document.body.style.overflow;
+    document.body.style.overflow="hidden";
+    const close=(event:KeyboardEvent)=>{if(event.key==="Escape")setMobileNavOpen(false);};
+    window.addEventListener("keydown",close);
+    return()=>{document.body.style.overflow=previous;window.removeEventListener("keydown",close);};
+  },[mobileNavOpen]);
 
   function startAction() {
     setBusy(true);
@@ -348,18 +358,20 @@ export function AdminDashboard({
   ];
 
   return (
-    <main className="admin-shell">
+    <main className="admin-shell admin-control-shell">
       <header className="admin-header dash-header">
+        <button className="mobile-nav-toggle" type="button" onClick={()=>setMobileNavOpen(true)} aria-label="Abrir menú lateral" aria-expanded={mobileNavOpen}><Menu/></button>
         <div className="dash-brand"><Brand /><span className="dash-live"><i/> SISTEMA EN LÍNEA</span></div>
         <ModeSwitcher current="admin" isAdmin hasBarber={hasBarber} isCashier={!isSuperadmin} showClient={!isSuperadmin} />
-        <div className="dash-user"><span className="dash-avatar">{userEmail.slice(0,2).toUpperCase()}</span><span>{userEmail}<small>Administrador</small></span><button onClick={logout}><LogOut size={16} /> Salir</button></div>
+        <div className="dash-user"><span className="dash-avatar">{userEmail.slice(0,2).toUpperCase()}</span><span>{userEmail}<small>Administrador</small></span><button className="desktop-logout" onClick={logout}><LogOut size={16} /> Salir</button></div>
       </header>
-      <div className={`admin-layout ${navCollapsed?"nav-collapsed":""}`}>
+      <div className={`admin-layout ${navCollapsed?"nav-collapsed":""} ${mobileNavOpen?"mobile-nav-open":""}`}>
         <aside className="admin-nav dash-sidebar">
-          <div className="dash-sidebar-head"><p>CONTROL CENTRAL</p><button className="dash-collapse" type="button" onClick={()=>setNavCollapsed(value=>!value)} aria-label={navCollapsed?"Abrir menú lateral":"Cerrar menú lateral"} aria-expanded={!navCollapsed} title={navCollapsed?"Abrir menú":"Cerrar menú"}>{navCollapsed?<Menu/>:<X/>}</button></div>
-          <nav>{navigation.map(([id,label,Icon])=><button title={label} className={`${section===id?"active":""} ${id==="negocio"?"nav-secondary-start":""}`} key={id} onClick={()=>setSection(id)}><Icon/><span>{label}</span>{section===id&&<i/>}</button>)}</nav>
-          <div className="dash-sidebar-foot"><PanelThemeSelector/><Link href="/" target="_blank"><Sparkles/><span>Ver sitio público</span></Link></div>
+          <div className="dash-sidebar-head"><p>CONTROL CENTRAL</p><button className="dash-collapse" type="button" onClick={()=>setNavCollapsed(value=>!value)} aria-label={navCollapsed?"Abrir menú lateral":"Cerrar menú lateral"} aria-expanded={!navCollapsed} title={navCollapsed?"Abrir menú":"Cerrar menú"}>{navCollapsed?<Menu/>:<X/>}</button><button className="mobile-sidebar-close" type="button" onClick={()=>setMobileNavOpen(false)} aria-label="Cerrar menú lateral"><X/></button></div>
+          <nav>{navigation.map(([id,label,Icon])=><button title={label} className={`${section===id?"active":""} ${id==="negocio"?"nav-secondary-start":""}`} key={id} onClick={()=>{setSection(id);setMobileNavOpen(false)}}><Icon/><span>{label}</span>{section===id&&<i/>}</button>)}</nav>
+          <div className="dash-sidebar-foot"><PanelThemeSelector/><Link href="/" target="_blank"><Sparkles/><span>Ver sitio público</span></Link><button className="mobile-sidebar-logout" type="button" onClick={logout}><LogOut/><span>Cerrar sesión</span></button></div>
         </aside>
+        <button className="sidebar-scrim" type="button" onClick={()=>setMobileNavOpen(false)} aria-label="Cerrar menú"/>
         <section className="admin-content">
           {message && <p className="admin-message">{message}</p>}
           {error && <p className="admin-error">{error}</p>}

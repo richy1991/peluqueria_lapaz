@@ -1,8 +1,8 @@
 "use client";
 
-import {ReactNode,useSyncExternalStore} from "react";
+import {ReactNode,useRef,useSyncExternalStore} from "react";
 import {FloatingSupportChat} from "@/components/floating-support-chat";
-import {Monitor, Moon, Sun} from "lucide-react";
+import {ChevronDown,Monitor,Moon,Palette,Sun} from "lucide-react";
 
 type Preference="system"|"light"|"dark";
 const EVENT="legend-panel-theme";
@@ -24,14 +24,16 @@ function selectTheme(next:Preference){
 export function PanelThemeSelector({compact=false}:{compact?:boolean}){
   const value=useSyncExternalStore(subscribe,snapshot,serverSnapshot);
   const[preference]=value.split(":") as [Preference,"light"|"dark"];
-  return <section className={`panel-theme-selector ${compact?"compact":""}`} aria-label="Apariencia del panel">
-    <small>APARIENCIA</small>
-    <div>
-      <button type="button" title="Usar tema del dispositivo" aria-pressed={preference==="system"} className={preference==="system"?"active":""} onClick={()=>selectTheme("system")}><Monitor/><span>Sistema</span></button>
-      <button type="button" title="Usar tema claro" aria-pressed={preference==="light"} className={preference==="light"?"active":""} onClick={()=>selectTheme("light")}><Sun/><span>Claro</span></button>
-      <button type="button" title="Usar tema oscuro" aria-pressed={preference==="dark"} className={preference==="dark"?"active":""} onClick={()=>selectTheme("dark")}><Moon/><span>Oscuro</span></button>
+  const detailsRef=useRef<HTMLDetailsElement>(null);
+  function choose(next:Preference){selectTheme(next);detailsRef.current?.removeAttribute("open");}
+  return <details ref={detailsRef} className={`panel-theme-selector ${compact?"compact":""}`}>
+    <summary aria-label="Seleccionar apariencia"><Palette/><span>Apariencia</span><ChevronDown className="theme-chevron"/></summary>
+    <div className="panel-theme-options" role="group" aria-label="Seleccionar tema">
+      <button type="button" aria-pressed={preference==="system"} className={preference==="system"?"active":""} onClick={()=>choose("system")}><Monitor/><span>Sistema</span></button>
+      <button type="button" aria-pressed={preference==="light"} className={preference==="light"?"active":""} onClick={()=>choose("light")}><Sun/><span>Claro</span></button>
+      <button type="button" aria-pressed={preference==="dark"} className={preference==="dark"?"active":""} onClick={()=>choose("dark")}><Moon/><span>Oscuro</span></button>
     </div>
-  </section>;
+  </details>;
 }
 
 export function PanelExperience({children}:{children:ReactNode}){

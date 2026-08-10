@@ -1956,7 +1956,8 @@ Usuarios y paneles:
 [x] Contraste de textos, fondos, inputs, selects, modales y estados revisado para ambos temas.
 [x] Paleta visual privada LEGEND OS v2 aplicada con azul institucional, azul real, índigo, celeste, azul hielo y azul noche; header y sidebar forman una estructura coherente y la página pública permanece sin cambios.
 [x] Selector de modos del header corregido para sus enlaces reales, con estados normal, hover y activo claramente diferenciados.
-[x] Selector Sistema/Claro/Oscuro integrado en el sidebar de administrador, caja y peluquero, y en el header del cliente; el chat es el único control flotante del área de trabajo.
+[x] Apariencia integrada como una única opción desplegable del sidebar; muestra Sistema/Claro/Oscuro y se retrae automáticamente al seleccionar. En el cliente se integra al header y el chat es el único control flotante.
+[x] Sidebar administrativo móvil convertido en drawer con hamburguesa, cierre mediante X/Escape/fondo y acción Cerrar sesión ubicada en el pie del menú.
 [x] Sistema reutilizable de tarjetas privadas con contorno azul, acento lateral, relieve suave y variantes semánticas azul, verde y naranja para indicadores; no afecta al sitio público.
 [x] Alta, vinculacion, edicion y desactivacion de peluqueros.
 [x] Página Equipo agrupada por roles con peluqueros y cajeros activos, altas de ambos perfiles y personal inactivo concentrado en un bloque desplegable al final.
