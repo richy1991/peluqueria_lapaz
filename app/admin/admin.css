@@ -952,3 +952,42 @@
   .admin-control-shell .admin-layout>.sidebar-scrim{position:fixed;z-index:180;inset:0;display:block!important;border:0;background:rgba(3,10,27,.58);backdrop-filter:blur(3px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s,visibility .25s}
   .admin-control-shell .mobile-nav-open .sidebar-scrim{opacity:1;visibility:visible;pointer-events:auto}
 }
+
+/* Headers privados compactos e inteligentes en teléfono. */
+.portal-public-link{display:inline-flex;align-items:center;gap:7px}.portal-public-link svg{width:16px;height:16px}
+@media(max-width:760px){
+  .panel-theme :is(.dash-header,.portal-header){transition:transform .26s cubic-bezier(.2,.8,.2,1),box-shadow .2s;will-change:transform}
+  .panel-theme.panel-header-hidden :is(.dash-header,.portal-header){transform:translateY(calc(-100% - 3px));pointer-events:none;box-shadow:none}
+
+  .panel-theme .panel-client-shell .portal-header{
+    position:sticky;z-index:120;top:0;
+    min-height:0;padding:7px 10px;
+    display:grid;grid-template-columns:minmax(0,1fr) 38px 38px;grid-template-rows:44px 35px;
+    align-items:center;gap:5px 7px;flex-wrap:nowrap;
+    box-shadow:0 8px 24px rgba(9,35,86,.2);
+  }
+  .panel-theme .panel-client-shell .portal-header>.brand{min-width:0;grid-column:1;grid-row:1;gap:8px;overflow:hidden}
+  .panel-theme .panel-client-shell .portal-header .brand-mark{width:38px;height:38px;min-width:38px;border-width:1px;box-shadow:0 0 0 2px #f7f3e8}
+  .panel-theme .panel-client-shell .portal-header .brand>span:last-child{min-width:0}
+  .panel-theme .panel-client-shell .portal-header .brand strong{overflow:hidden;font-size:13px;letter-spacing:.1em;text-overflow:ellipsis;white-space:nowrap}
+  .panel-theme .panel-client-shell .portal-header .brand small{margin-top:4px;font-size:5px;letter-spacing:.12em}
+  .panel-theme .panel-client-shell .portal-header>.panel-theme-selector{grid-column:2;grid-row:1}
+  .panel-theme .panel-client-shell .portal-header>.portal-public-link{width:38px;height:38px;margin:0;padding:0!important;display:grid;place-items:center;grid-column:3;grid-row:1;color:#fff;border:1px solid rgba(190,222,255,.25);border-radius:9px;background:rgba(9,36,94,.25);text-decoration:none}
+  .panel-theme .panel-client-shell .portal-header>.portal-public-link span{display:none}
+  .panel-theme .panel-client-shell .portal-header>.portal-public-link svg{width:17px;height:17px}
+  .panel-theme .panel-client-shell .portal-header>.mode-switcher{
+    width:100%;height:35px;margin:0;padding:3px;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(max-content,1fr);
+    grid-column:1/-1;grid-row:2;order:initial;gap:2px;overflow-x:auto;border-radius:9px;
+  }
+  .panel-theme .panel-client-shell .portal-header>.mode-switcher a{min-height:27px;padding:6px 9px;display:flex;align-items:center;justify-content:center;font-size:8px;white-space:nowrap}
+  .panel-theme .panel-client-shell .portal-header .panel-theme-selector.compact>summary{width:38px;height:38px;min-height:38px}
+
+  .admin-control-shell .dash-header{min-height:0;padding:6px 9px;gap:6px}
+  .admin-control-shell .dash-header>.mobile-nav-toggle{width:38px;height:38px}
+  .admin-control-shell .dash-header .dash-brand .brand{gap:8px}
+  .admin-control-shell .dash-header .dash-brand .brand-mark{width:38px;height:38px;min-width:38px;border-width:1px;box-shadow:0 0 0 2px #f7f3e8}
+  .admin-control-shell .dash-header .dash-brand .brand strong{font-size:12px;letter-spacing:.1em}.admin-control-shell .dash-header .dash-brand .brand small{margin-top:4px;font-size:5px}
+  .admin-control-shell .dash-header .dash-avatar{width:34px;height:34px}
+  .admin-control-shell .dash-header .mode-switcher{height:34px;padding:3px;gap:2px}
+  .admin-control-shell .dash-header .mode-switcher a{min-height:27px;padding:6px 9px;font-size:8px;white-space:nowrap}
+}

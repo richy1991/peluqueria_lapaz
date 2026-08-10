@@ -1,6 +1,6 @@
 "use client";
 
-import {ReactNode,useRef,useSyncExternalStore} from "react";
+import {ReactNode,useEffect,useRef,useState,useSyncExternalStore} from "react";
 import {FloatingSupportChat} from "@/components/floating-support-chat";
 import {ChevronDown,Monitor,Moon,Palette,Sun} from "lucide-react";
 
@@ -38,5 +38,21 @@ export function PanelThemeSelector({compact=false}:{compact?:boolean}){
 
 export function PanelExperience({children}:{children:ReactNode}){
   const value=useSyncExternalStore(subscribe,snapshot,serverSnapshot);const[,resolved]=value.split(":") as [Preference,"light"|"dark"];
-  return <div className="panel-theme" data-panel-theme={resolved} suppressHydrationWarning>{children}<aside className="panel-floating-tools" aria-label="Atención al cliente"><FloatingSupportChat/></aside></div>;
+  const[headerHidden,setHeaderHidden]=useState(false);
+  useEffect(()=>{
+    let previous=window.scrollY;
+    let ticking=false;
+    function update(){
+      const current=window.scrollY;
+      const delta=current-previous;
+      if(current<24){setHeaderHidden(false);previous=current;}
+      else if(delta>7&&current>90){setHeaderHidden(true);previous=current;}
+      else if(delta< -7){setHeaderHidden(false);previous=current;}
+      ticking=false;
+    }
+    function onScroll(){if(!ticking){ticking=true;window.requestAnimationFrame(update);}}
+    window.addEventListener("scroll",onScroll,{passive:true});
+    return()=>window.removeEventListener("scroll",onScroll);
+  },[]);
+  return <div className={`panel-theme ${headerHidden?"panel-header-hidden":""}`} data-panel-theme={resolved} suppressHydrationWarning>{children}<aside className="panel-floating-tools" aria-label="Atención al cliente"><FloatingSupportChat/></aside></div>;
 }
