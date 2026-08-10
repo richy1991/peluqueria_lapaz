@@ -1946,6 +1946,9 @@ Usuarios y paneles:
 [x] Panel de cliente con citas, apartados y notificaciones.
 [x] Panel de peluquero con agenda y cambio de estados permitido.
 [x] Panel administrador para agenda, clientes, negocio, servicios, galeria, productos, equipo y administradores.
+[x] Sistema visual LEGEND OS compartido para administrador, cajero y peluquero, con sidebar contextual y header operativo.
+[x] Formularios de creacion y edicion presentados como componentes modales reutilizables.
+[x] Animaciones de entrada, estados, tarjetas y ventanas con alternativa accesible para movimiento reducido.
 [x] Alta, vinculacion, edicion y desactivacion de peluqueros.
 [x] Administracion y bloqueo manual de clientes.
 [~] Existe una invitacion administrativa pendiente; falta que el negocio complete y pruebe el ingreso del administrador invitado.

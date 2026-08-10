@@ -3,13 +3,15 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarClock, ImagePlus, LogOut, PackagePlus, Save, Scissors, ShieldCheck, Store, UserPlus, Users } from "lucide-react";
+import { BarChart3, CalendarClock, ChevronLeft, ChevronRight, CircleDollarSign, ImagePlus, LogOut, MessageSquareText, PackagePlus, Save, Scissors, ShieldCheck, Sparkles, Store, UserPlus, Users } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { createClient } from "@/lib/supabase/client";
 import { AppointmentAdminActions, ClientAdminActions } from "./admin-operations";
 import { AdminAnalytics, type AnalyticsData } from "./admin-analytics";
 import { AdminProgram } from "./admin-program";
+import { DashboardModal } from "@/components/dashboard-modal";
+import type {LucideIcon} from "lucide-react";
 
 type Row = Record<string, unknown> & { id: string };
 type AdminUser = { user_id: string | null; email: string; role: "admin" | "superadmin" | "pending"; created_at: string };
@@ -83,6 +85,7 @@ export function AdminDashboard({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [navCollapsed,setNavCollapsed]=useState(false);
 
   function startAction() {
     setBusy(true);
@@ -187,6 +190,10 @@ export function AdminDashboard({
       failAction(uploadError);
     }
   }
+
+  async function updateService(event:FormEvent<HTMLFormElement>,item:Row){event.preventDefault();startAction();const form=new FormData(event.currentTarget);const{error:updateError}=await createClient().from("services").update({name:String(form.get("name")??""),description:String(form.get("description")??""),category:String(form.get("category")??"Servicio"),price:Number(form.get("price")),duration_minutes:Number(form.get("duration_minutes")),grace_minutes:Number(form.get("grace_minutes")??10)}).eq("id",item.id);if(updateError)return failAction(updateError);finishAction("Servicio actualizado.");}
+
+  async function updateGalleryPost(event:FormEvent<HTMLFormElement>,item:Row){event.preventDefault();startAction();try{const form=new FormData(event.currentTarget);const file=form.get("image");const imagePath=file instanceof File&&file.size?await uploadImage(file,"gallery"):String(item.image_path??"");const{error:updateError}=await createClient().from("gallery_posts").update({title:String(form.get("title")??""),description:String(form.get("description")??""),featured:form.get("featured")==="on",image_path:imagePath}).eq("id",item.id);if(updateError)throw updateError;finishAction("Publicación actualizada.");}catch(reason){failAction(reason);}}
 
   async function addProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -296,31 +303,22 @@ export function AdminDashboard({
   }
 
   const settings = initialSettings ?? {};
+  const navigation:Array<[string,string,LucideIcon]>=[
+    ["agenda","Agenda",CalendarClock],["estadisticas","Estadísticas",BarChart3],["programa","Caja y fidelización",CircleDollarSign],["clientes","Clientes",Users],["negocio","Negocio",Store],["servicios","Servicios",Scissors],["galeria","Galería",ImagePlus],["productos","Productos",PackagePlus],["equipo","Equipo",UserPlus],...(isSuperadmin?[["administradores","Administradores",ShieldCheck] as [string,string,LucideIcon]]:[]),
+  ];
 
   return (
     <main className="admin-shell">
-      <header className="admin-header">
-        <Brand />
+      <header className="admin-header dash-header">
+        <div className="dash-brand"><Brand /><span className="dash-live"><i/> SISTEMA EN LÍNEA</span></div>
         <ModeSwitcher current="admin" isAdmin hasBarber={hasBarber} isCashier={!isSuperadmin} showClient={!isSuperadmin} />
-        <div><span>{userEmail}</span><button onClick={logout}><LogOut size={16} /> Salir</button></div>
+        <div className="dash-user"><span className="dash-avatar">{userEmail.slice(0,2).toUpperCase()}</span><span>{userEmail}<small>Administrador</small></span><button onClick={logout}><LogOut size={16} /> Salir</button></div>
       </header>
-      <div className="admin-layout">
-        <aside className="admin-nav">
-          <p>GESTIÓN</p>
-          {[
-            ["agenda", "Agenda"],
-            ["estadisticas", "Estadísticas"],
-            ["programa", "Caja y fidelización"],
-            ["clientes", "Clientes"],
-            ["negocio", "Negocio"],
-            ["servicios", "Servicios"],
-            ["galeria", "Galería"],
-            ["productos", "Productos"],
-            ["equipo", "Equipo"],
-            ...(isSuperadmin ? [["administradores", "Administradores"]] : []),
-          ].map(([id, label]) => <button className={section === id ? "active" : ""} key={id} onClick={() => setSection(id)}>{label}</button>)}
-          <Link href="/mensajes">Mensajes</Link>
-          <Link href="/" target="_blank">Ver sitio público ↗</Link>
+      <div className={`admin-layout ${navCollapsed?"nav-collapsed":""}`}>
+        <aside className="admin-nav dash-sidebar">
+          <div className="dash-sidebar-head"><p>CONTROL CENTRAL</p><button className="dash-collapse" onClick={()=>setNavCollapsed(value=>!value)} aria-label={navCollapsed?"Expandir menú":"Contraer menú"}>{navCollapsed?<ChevronRight/>:<ChevronLeft/>}</button></div>
+          <nav>{navigation.map(([id,label,Icon])=><button title={label} className={section===id?"active":""} key={id} onClick={()=>setSection(id)}><Icon/><span>{label}</span>{section===id&&<i/>}</button>)}</nav>
+          <div className="dash-sidebar-foot"><Link href="/mensajes"><MessageSquareText/><span>Mensajes</span></Link><Link href="/" target="_blank"><Sparkles/><span>Ver sitio público</span></Link></div>
         </aside>
         <section className="admin-content">
           {message && <p className="admin-message">{message}</p>}
@@ -336,6 +334,7 @@ export function AdminDashboard({
 
           {section === "negocio" && <div className="admin-panel">
             <div className="admin-title"><Store /><div><p>CONFIGURACIÓN PÚBLICA</p><h1>Información del negocio</h1></div></div>
+            <div className="dash-section-intro"><p>Edita la identidad, ubicación, horarios y estado público desde una ventana dedicada.</p><DashboardModal title="Editar información del negocio" description="Los cambios se reflejarán en la página pública." triggerLabel="Editar negocio" triggerIcon={<Store/>} size="large">
             <form className="admin-form" onSubmit={saveBusiness} acceptCharset="UTF-8">
               <label>Nombre<input name="business_name" required defaultValue={String(settings.business_name ?? "Barbería LEGEND CLUB")} /></label>
               <label>Estado<select name="business_status" defaultValue={String(settings.business_status ?? "open")}><option value="open">Abierto</option><option value="appointment_only">Solo con reserva</option><option value="closed">Cerrado</option><option value="emergency_closed">Cierre de emergencia</option></select></label>
@@ -352,40 +351,48 @@ export function AdminDashboard({
               <label>Facebook<input name="facebook_url" defaultValue={String(settings.facebook_url ?? "")} /></label>
               <button className="button button-dark wide" disabled={busy}><Save size={17} /> Guardar cambios</button>
             </form>
+            </DashboardModal></div>
           </div>}
 
           {section === "servicios" && <div className="admin-panel">
             <div className="admin-title"><Scissors /><div><p>CATÁLOGO</p><h1>Servicios</h1></div></div>
+            <div className="dash-section-intro"><p>Administra el catálogo sin saturar la vista principal.</p><DashboardModal title="Crear servicio" description="Define precio, duración y tiempo de gracia." triggerLabel="Nuevo servicio" triggerIcon={<Scissors/>}>
             <form className="admin-form compact-form" onSubmit={addService} acceptCharset="UTF-8">
               <label>Nombre<input name="name" required /></label><label>Identificador<input name="slug" required placeholder="corte-clasico" /></label>
               <label className="wide">Descripción<input name="description" /></label><label>Categoría<input name="category" /></label>
               <label>Precio Bs<input name="price" type="number" min="0" step="0.5" required /></label><label>Duración (min)<input name="duration_minutes" type="number" min="5" required /></label><label>Gracia (min)<input name="grace_minutes" type="number" min="0" defaultValue="10" /></label>
               <button className="button button-dark wide" disabled={busy}>Agregar servicio</button>
             </form>
-            <div className="admin-list">{initialServices.map((item) => <article key={item.id}><div><strong>{String(item.name)}</strong><span>Bs {String(item.price)} · {String(item.duration_minutes)} min · {String(item.status)}</span></div><button onClick={() => toggleStatus("services", item.id, item.status === "active" ? "inactive" : "active")}>{item.status === "active" ? "Desactivar" : "Activar"}</button></article>)}</div>
+            </DashboardModal></div>
+            <div className="admin-list">{initialServices.map((item)=><article key={item.id}><div><strong>{String(item.name)}</strong><span>Bs {String(item.price)} · {String(item.duration_minutes)} min · {String(item.status)}</span></div><div className="dash-row-actions"><button onClick={()=>toggleStatus("services",item.id,item.status==="active"?"inactive":"active")}>{item.status==="active"?"Desactivar":"Activar"}</button><DashboardModal title={`Editar ${String(item.name)}`} triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateService(event,item)}><label>Nombre<input name="name" defaultValue={String(item.name)} required/></label><label>Categoría<input name="category" defaultValue={String(item.category??"")}/></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description??"")}/></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" defaultValue={Number(item.price)} required/></label><label>Duración<input name="duration_minutes" type="number" min="5" defaultValue={Number(item.duration_minutes)} required/></label><label>Gracia<input name="grace_minutes" type="number" min="0" defaultValue={Number(item.grace_minutes??10)}/></label><button className="button button-dark wide" disabled={busy}>Guardar servicio</button></form></DashboardModal></div></article>)}</div>
           </div>}
 
           {section === "galeria" && <div className="admin-panel">
             <div className="admin-title"><ImagePlus /><div><p>CONTENIDO</p><h1>Galería de trabajos</h1></div></div>
+            <div className="dash-section-intro"><p>Publica imágenes optimizadas únicamente con autorización del cliente.</p><DashboardModal title="Publicar trabajo" description="La imagen será optimizada automáticamente." triggerLabel="Nueva publicación" triggerIcon={<ImagePlus/>}>
             <form className="admin-form" onSubmit={addGalleryPost} acceptCharset="UTF-8"><label>Título<input name="title" required /></label><label>Imagen<input name="image" type="file" accept="image/jpeg,image/png,image/webp" required /></label><label className="wide">Descripción<input name="description" /></label><label className="check-label wide"><input type="checkbox" name="client_consent" /> Confirmo que existe autorización del cliente.</label><label className="check-label wide"><input type="checkbox" name="featured" /> Marcar como destacada.</label><button className="button button-dark wide" disabled={busy}>Optimizar y publicar</button></form>
-            <div className="admin-list">{initialGallery.map((item) => <article key={item.id}><div><strong>{String(item.title)}</strong><span>{String(item.status)} · consentimiento: {item.client_consent ? "sí" : "no"}</span></div><button onClick={() => toggleStatus("gallery_posts", item.id, item.status === "published" ? "hidden" : "published")}>{item.status === "published" ? "Ocultar" : "Publicar"}</button></article>)}</div>
+            </DashboardModal></div>
+            <div className="admin-list">{initialGallery.map((item)=><article key={item.id}><div><strong>{String(item.title)}</strong><span>{String(item.status)} · consentimiento: {item.client_consent?"sí":"no"}</span></div><div className="dash-row-actions"><button onClick={()=>toggleStatus("gallery_posts",item.id,item.status==="published"?"hidden":"published")}>{item.status==="published"?"Ocultar":"Publicar"}</button><DashboardModal title={`Editar ${String(item.title)}`} triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateGalleryPost(event,item)}><label>Título<input name="title" defaultValue={String(item.title)} required/></label><label>Nueva imagen opcional<input name="image" type="file" accept="image/jpeg,image/png,image/webp"/></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description??"")}/></label><label className="check-label wide"><input type="checkbox" name="featured" defaultChecked={Boolean(item.featured)}/> Destacada</label><button className="button button-dark wide" disabled={busy}>Guardar publicación</button></form></DashboardModal></div></article>)}</div>
           </div>}
 
           {section === "productos" && <div className="admin-panel">
             <div className="admin-title"><PackagePlus /><div><p>CATÁLOGO</p><h1>Productos</h1></div></div>
+            <div className="dash-section-intro"><p>Publica inventario nuevo o abre una ficha existente para editarla.</p><DashboardModal title="Crear producto" description="Configura inventario, precio e imagen comercial." triggerLabel="Nuevo producto" triggerIcon={<PackagePlus/>}>
             <form className="admin-form" onSubmit={addProduct} acceptCharset="UTF-8"><label>Nombre<input name="name" required /></label><label>Identificador<input name="slug" placeholder="se genera del nombre" /></label><label className="wide">Descripción<input name="description" /></label><label>Categoría<input name="category" /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" required /></label><label>Stock<input name="stock" type="number" min="0" required /></label><label className="wide">Imagen<input name="image" type="file" accept="image/jpeg,image/png,image/webp" /></label><button className="button button-dark wide" disabled={busy}>Publicar producto</button></form>
-            <div className="admin-list editable-list">{initialProducts.map((item) => <article key={item.id}><div><strong>{String(item.name)}</strong><span>Bs {String(item.price)} · stock {String(item.stock)} · {String(item.status)}</span></div><button onClick={() => toggleStatus("products", item.id, item.status === "active" ? "inactive" : "active")}>{item.status === "active" ? "Desactivar" : "Activar"}</button><details><summary>Editar producto</summary><form className="inline-edit-form" onSubmit={(event)=>updateProduct(event,item)} acceptCharset="UTF-8"><label>Nombre<input name="name" defaultValue={String(item.name)} required/></label><label>Categoría<input name="category" defaultValue={String(item.category??"")}/></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description??"")}/></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" defaultValue={Number(item.price)} required/></label><label>Stock<input name="stock" type="number" min="0" defaultValue={Number(item.stock)} required/></label><label className="wide">Nueva imagen opcional<input name="image" type="file" accept="image/jpeg,image/png,image/webp"/></label><button className="button button-dark wide" disabled={busy}>Guardar producto</button></form></details></article>)}</div>
+            </DashboardModal></div>
+            <div className="admin-list editable-list">{initialProducts.map((item)=><article key={item.id}><div><strong>{String(item.name)}</strong><span>Bs {String(item.price)} · stock {String(item.stock)} · {String(item.status)}</span></div><div className="dash-row-actions"><button onClick={()=>toggleStatus("products",item.id,item.status==="active"?"inactive":"active")}>{item.status==="active"?"Desactivar":"Activar"}</button><DashboardModal title={`Editar ${String(item.name)}`} description="Actualiza la ficha comercial y el inventario." triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateProduct(event,item)} acceptCharset="UTF-8"><label>Nombre<input name="name" defaultValue={String(item.name)} required/></label><label>Categoría<input name="category" defaultValue={String(item.category??"")}/></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description??"")}/></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" defaultValue={Number(item.price)} required/></label><label>Stock<input name="stock" type="number" min="0" defaultValue={Number(item.stock)} required/></label><label className="wide">Nueva imagen opcional<input name="image" type="file" accept="image/jpeg,image/png,image/webp"/></label><button className="button button-dark wide" disabled={busy}>Guardar producto</button></form></DashboardModal></div></article>)}</div>
           </div>}
 
-          {section === "equipo" && <div className="admin-panel"><div className="admin-title"><Scissors /><div><p>PERSONAL</p><h1>Peluqueros</h1></div></div><p className="admin-help">Crea nuevos perfiles o vincula los peluqueros visibles con el correo Google que usarán para entrar a su agenda.</p><form className="admin-form" onSubmit={registerBarber} acceptCharset="UTF-8"><label>Correo Google<input name="email" type="email" required /></label><label>Nombre público<input name="public_name" required /></label><label className="wide">Especialidades separadas por comas<input name="specialties" placeholder="Fades, Barba, Cortes clásicos" /></label><label className="wide">Biografía<textarea name="biography" /></label><button className="button button-dark wide" disabled={busy}>Crear nuevo peluquero</button></form><div className="admin-list editable-list">{barbers.map((item) => <article key={item.id}><div><strong>{String(item.display_name)}</strong><span>{item.active ? "Activo" : "Inactivo"} · {Array.isArray(item.specialties) ? item.specialties.join(", ") : ""} · {item.user_id ? "Cuenta vinculada" : "Sin cuenta Google"}</span></div><button disabled={busy} onClick={() => toggleBarber(item.id, !Boolean(item.active))}>{item.active ? "Desactivar" : "Activar"}</button><details><summary>Editar o vincular cuenta</summary><form className="inline-edit-form" onSubmit={(event)=>updateBarber(event,item.id)} acceptCharset="UTF-8"><label>Nombre público<input name="display_name" defaultValue={String(item.display_name)} required/></label><label>Especialidades<input name="specialties" defaultValue={Array.isArray(item.specialties)?item.specialties.join(", "):""}/></label><label className="wide">Biografía<textarea name="bio" defaultValue={String(item.bio??"")}/></label><button className="button button-dark wide" disabled={busy}>Guardar información</button></form>{!item.user_id&&<form className="link-account-form" onSubmit={(event)=>linkBarber(event,item.id)}><input name="account_email" type="email" placeholder="correo Google del peluquero" required/><button disabled={busy}>Vincular cuenta Google</button></form>}</details></article>)}</div></div>}
+          {section === "equipo" && <div className="admin-panel"><div className="admin-title"><Scissors/><div><p>PERSONAL</p><h1>Peluqueros</h1></div></div><div className="dash-section-intro"><p>Crea perfiles y vincula las cuentas Google del equipo.</p><DashboardModal title="Crear peluquero" description="Podrás vincular su cuenta incluso después de crear el perfil." triggerLabel="Nuevo peluquero" triggerIcon={<UserPlus/>}><form className="admin-form" onSubmit={registerBarber} acceptCharset="UTF-8"><label>Correo Google<input name="email" type="email" required/></label><label>Nombre público<input name="public_name" required/></label><label className="wide">Especialidades separadas por comas<input name="specialties" placeholder="Fades, Barba, Cortes clásicos"/></label><label className="wide">Biografía<textarea name="biography"/></label><button className="button button-dark wide" disabled={busy}>Crear nuevo peluquero</button></form></DashboardModal></div><div className="admin-list editable-list">{barbers.map((item)=><article key={item.id}><div><strong>{String(item.display_name)}</strong><span>{item.active?"Activo":"Inactivo"} · {Array.isArray(item.specialties)?item.specialties.join(", "):""} · {item.user_id?"Cuenta vinculada":"Sin cuenta Google"}</span></div><div className="dash-row-actions"><button disabled={busy} onClick={()=>toggleBarber(item.id,!Boolean(item.active))}>{item.active?"Desactivar":"Activar"}</button><DashboardModal title={`Editar ${String(item.display_name)}`} description="Actualiza su perfil público o vincula el acceso Google." triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateBarber(event,item.id)} acceptCharset="UTF-8"><label>Nombre público<input name="display_name" defaultValue={String(item.display_name)} required/></label><label>Especialidades<input name="specialties" defaultValue={Array.isArray(item.specialties)?item.specialties.join(", "):""}/></label><label className="wide">Biografía<textarea name="bio" defaultValue={String(item.bio??"")}/></label><button className="button button-dark wide" disabled={busy}>Guardar información</button></form>{!item.user_id&&<form className="link-account-form" onSubmit={(event)=>linkBarber(event,item.id)}><input name="account_email" type="email" placeholder="correo Google del peluquero" required/><button disabled={busy}>Vincular cuenta Google</button></form>}</DashboardModal></div></article>)}</div></div>}
 
           {section === "administradores" && isSuperadmin && <div className="admin-panel">
             <div className="admin-title"><ShieldCheck /><div><p>SEGURIDAD</p><h1>Administradores</h1></div></div>
-            <p className="admin-help">Puedes registrar el correo antes de su primer ingreso. Si la persona todavía no tiene cuenta, la invitación quedará pendiente y el rol se activará automáticamente cuando inicie sesión con Google.</p>
+            <div className="dash-section-intro"><p>Puedes registrar el correo antes de su primer ingreso. La invitación se activará automáticamente con Google.</p><DashboardModal title="Habilitar administrador" description="Solo el superadministrador puede conceder este permiso." triggerLabel="Nuevo administrador" triggerIcon={<UserPlus/>}>
             <form className="admin-form admin-role-form" onSubmit={manageAdmin} acceptCharset="UTF-8">
               <label className="wide">Correo de la cuenta Google<input name="email" type="email" inputMode="email" autoComplete="email" placeholder="administrador@correo.com" required /></label>
               <button className="button button-dark wide" disabled={busy}><UserPlus size={17} /> Habilitar administrador</button>
             </form>
+            </DashboardModal></div>
             <div className="admin-list">{adminUsers.map((item) => <article key={`${String(item.user_id ?? item.email)}-${String(item.role)}`}><div><strong>{String(item.email)}</strong><span>{item.role === "superadmin" ? "Superadministrador · desarrollador" : item.role === "pending" ? "Invitación pendiente de ingreso con Google" : "Administrador"}</span></div>{item.role !== "superadmin" && <button disabled={busy} onClick={() => removeAdmin(String(item.email))}>{item.role === "pending" ? "Cancelar invitación" : "Retirar acceso"}</button>}</article>)}</div>
           </div>}
         </section>
