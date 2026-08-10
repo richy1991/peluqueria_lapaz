@@ -1,18 +1,329 @@
 "use client";
 
-import {FormEvent,useEffect,useState} from "react";
-import {ArrowLeft,Headphones,MessageCircle,Search,Send,X} from "lucide-react";
-import {createClient} from "@/lib/supabase/client";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  Headphones,
+  MessageCircle,
+  Paperclip,
+  Search,
+  Send,
+  X,
+} from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
-type Row=Record<string,unknown>;
+type Row = Record<string, unknown>;
 
-export function FloatingSupportChat(){
- const[open,setOpen]=useState(false);const[loading,setLoading]=useState(false);const[busy,setBusy]=useState(false);const[error,setError]=useState("");const[userId,setUserId]=useState("");const[support,setSupport]=useState(false);const[conversations,setConversations]=useState<Row[]>([]);const[selected,setSelected]=useState<string|null>(null);const[messages,setMessages]=useState<Row[]>([]);const[query,setQuery]=useState("");
- async function loadMessages(id:string){const{data,error}=await createClient().from("messages").select("id,body,created_at,sender_id,profiles!messages_sender_id_fkey(full_name,email)").eq("conversation_id",id).order("created_at");if(error)setError(error.message);else setMessages((data??[]) as unknown as Row[]);}
- async function initialize(){setOpen(true);setLoading(true);setError("");const supabase=createClient();const{data:{user}}=await supabase.auth.getUser();if(!user){setError("Inicia sesión para conversar con LEGEND CLUB.");setLoading(false);return;}setUserId(user.id);const[{data:isAdmin},{data:isCashier}]=await Promise.all([supabase.rpc("is_admin"),supabase.rpc("is_cashier")]);const isSupport=Boolean(isAdmin||isCashier);setSupport(isSupport);let rows:Row[]=[];let target:string|null=null;if(isSupport){const{data,error}=await supabase.from("conversations").select("id,subject,status,updated_at,created_by,profiles!conversations_created_by_fkey(full_name,email)").order("updated_at",{ascending:false}).limit(100);if(error)setError(error.message);rows=(data??[]) as unknown as Row[];target=String(rows[0]?.id??"")||null;}else{const{data:id,error}=await supabase.rpc("get_or_create_support_conversation");if(error)setError(error.message);else{target=String(id);const{data}=await supabase.from("conversations").select("id,subject,status,updated_at").eq("id",id).single();if(data)rows=[data];}}setConversations(rows);setSelected(target);if(target)await loadMessages(target);setLoading(false);}
- async function choose(id:string){setSelected(id);setMessages([]);await loadMessages(id);}
- async function send(event:FormEvent<HTMLFormElement>){event.preventDefault();if(!selected)return;const form=new FormData(event.currentTarget);const body=String(form.get("body")??"").trim();if(!body)return;setBusy(true);setError("");const{error}=await createClient().rpc("send_chat_message",{target_conversation:selected,message_body:body});setBusy(false);if(error)return setError(error.message);event.currentTarget.reset();await loadMessages(selected);}
- useEffect(()=>{if(!open||!selected)return;const supabase=createClient();const channel=supabase.channel(`support-${selected}`).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:`conversation_id=eq.${selected}`},()=>{void loadMessages(selected);}).subscribe();return()=>{void supabase.removeChannel(channel);};},[open,selected]);
- const filtered=conversations.filter(item=>{const owner=item.profiles as Row|null;return String(owner?.full_name??owner?.email??item.subject??"").toLowerCase().includes(query.toLowerCase());});
- return <>{!open&&<button className="support-fab" onClick={initialize} aria-label="Abrir atención al cliente"><MessageCircle/><i/></button>}{open&&<section className={`support-window ${support?"support-agent":"support-client"}`} aria-label="Atención al cliente"><header><div className="support-logo"><Headphones/></div><div><strong>LEGEND CLUB</strong><span><i/> Atención privada</span></div><button onClick={()=>setOpen(false)} aria-label="Cerrar chat"><X/></button></header>{loading?<div className="support-loading"><MessageCircle/><p>Conectando con atención…</p></div>:error&&!userId?<div className="support-loading"><p>{error}</p></div>:<div className="support-layout">{support&&<aside className={selected?"has-selection":""}><div className="support-search"><Search/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Buscar contacto"/></div><small>CONVERSACIONES</small>{filtered.map(item=>{const owner=item.profiles as Row|null;return <button className={String(item.id)===selected?"active":""} key={String(item.id)} onClick={()=>choose(String(item.id))}><span>{String(owner?.full_name??owner?.email??"CL").slice(0,2).toUpperCase()}</span><div><strong>{String(owner?.full_name??owner?.email??item.subject)}</strong><small>{String(item.status)==="open"?"Conversación activa":"Cerrada"}</small></div></button>})}{!filtered.length&&<p>Sin conversaciones.</p>}</aside>}<div className={`support-thread ${!selected?"empty":""}`}>{selected?<><div className="support-contact">{support&&<button onClick={()=>setSelected(null)}><ArrowLeft/></button>}<div><strong>{support?String((conversations.find(item=>String(item.id)===selected)?.profiles as Row|null)?.full_name??"Cliente"):"Soporte LEGEND CLUB"}</strong><span>{support?"Atención individual":"Solo tú y nuestro equipo pueden ver este chat"}</span></div></div><div className="support-messages">{messages.map(message=>{const mine=String(message.sender_id)===userId;const sender=message.profiles as Row|null;return <article className={mine?"mine":""} key={String(message.id)}><small>{mine?"Tú":support?String(sender?.full_name??sender?.email??"Cliente"):"LEGEND CLUB"}</small><p>{String(message.body)}</p><time>{new Intl.DateTimeFormat("es-BO",{hour:"2-digit",minute:"2-digit",timeZone:"America/La_Paz"}).format(new Date(String(message.created_at)))}</time></article>})}{!messages.length&&<div className="support-empty"><Headphones/><p>Inicia una conversación privada con atención al cliente.</p></div>}</div><form className="support-compose" onSubmit={send}><textarea name="body" maxLength={2000} placeholder="Escribe un mensaje…" required/><button disabled={busy}><Send/></button></form>{error&&<small className="support-error">{error}</small>}</>:<div className="support-empty"><MessageCircle/><p>Selecciona un contacto para responder.</p></div>}</div></div>}</section>}</>;
+export function FloatingSupportChat() {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [userId, setUserId] = useState("");
+  const [support, setSupport] = useState(false);
+  const [conversations, setConversations] = useState<Row[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Row[]>([]);
+  const [query, setQuery] = useState("");
+  const messageEndRef = useRef<HTMLDivElement>(null);
+
+  async function loadMessages(id: string) {
+    const { data, error: loadError } = await createClient()
+      .from("messages")
+      .select("id,body,created_at,sender_id,profiles!messages_sender_id_fkey(full_name,email)")
+      .eq("conversation_id", id)
+      .order("created_at");
+
+    if (loadError) setError(loadError.message);
+    else setMessages((data ?? []) as unknown as Row[]);
+  }
+
+  async function initialize() {
+    setOpen(true);
+    setLoading(true);
+    setError("");
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setError("Inicia sesión para conversar con LEGEND CLUB.");
+      setLoading(false);
+      return;
+    }
+
+    setUserId(user.id);
+    const [{ data: isAdmin }, { data: isCashier }] = await Promise.all([
+      supabase.rpc("is_admin"),
+      supabase.rpc("is_cashier"),
+    ]);
+    const isSupport = Boolean(isAdmin || isCashier);
+    setSupport(isSupport);
+
+    let rows: Row[] = [];
+    let target: string | null = null;
+
+    if (isSupport) {
+      const { data, error: conversationError } = await supabase
+        .from("conversations")
+        .select("id,subject,status,updated_at,created_by,profiles!conversations_created_by_fkey(full_name,email)")
+        .order("updated_at", { ascending: false })
+        .limit(100);
+
+      if (conversationError) setError(conversationError.message);
+      rows = (data ?? []) as unknown as Row[];
+      target = String(rows[0]?.id ?? "") || null;
+    } else {
+      const { data: id, error: conversationError } = await supabase.rpc(
+        "get_or_create_support_conversation",
+      );
+      if (conversationError) setError(conversationError.message);
+      else {
+        target = String(id);
+        const { data } = await supabase
+          .from("conversations")
+          .select("id,subject,status,updated_at")
+          .eq("id", id)
+          .single();
+        if (data) rows = [data];
+      }
+    }
+
+    setConversations(rows);
+    setSelected(target);
+    if (target) await loadMessages(target);
+    setLoading(false);
+  }
+
+  async function choose(id: string) {
+    setSelected(id);
+    setMessages([]);
+    await loadMessages(id);
+  }
+
+  async function send(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selected) return;
+
+    const form = new FormData(event.currentTarget);
+    const body = String(form.get("body") ?? "").trim();
+    if (!body) return;
+
+    setBusy(true);
+    setError("");
+    const { error: sendError } = await createClient().rpc("send_chat_message", {
+      target_conversation: selected,
+      message_body: body,
+    });
+    setBusy(false);
+
+    if (sendError) {
+      setError(sendError.message);
+      return;
+    }
+
+    event.currentTarget.reset();
+    await loadMessages(selected);
+  }
+
+  useEffect(() => {
+    if (!open || !selected) return;
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`support-${selected}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${selected}`,
+        },
+        () => void loadMessages(selected),
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [open, selected]);
+
+  useEffect(() => {
+    messageEndRef.current?.scrollIntoView({ block: "end" });
+  }, [messages]);
+
+  const filtered = conversations.filter((item) => {
+    const owner = item.profiles as Row | null;
+    return String(owner?.full_name ?? owner?.email ?? item.subject ?? "")
+      .toLowerCase()
+      .includes(query.toLowerCase());
+  });
+
+  const selectedOwner = useMemo(() => {
+    const conversation = conversations.find((item) => String(item.id) === selected);
+    return conversation?.profiles as Row | null;
+  }, [conversations, selected]);
+
+  const contactName = support
+    ? String(selectedOwner?.full_name ?? selectedOwner?.email ?? "Cliente")
+    : "Soporte LEGEND CLUB";
+  const contactInitials = support
+    ? contactName.slice(0, 2).toUpperCase()
+    : "LC";
+
+  return (
+    <>
+      {!open && (
+        <button className="support-fab" onClick={initialize} aria-label="Abrir atención al cliente">
+          <MessageCircle />
+          <i />
+        </button>
+      )}
+
+      {open && (
+        <section
+          className={`support-window ${support ? "support-agent" : "support-client"}`}
+          aria-label="Atención al cliente"
+        >
+          <header>
+            <div className="support-logo"><Headphones /></div>
+            <div>
+              <strong>LEGEND CLUB</strong>
+              <span><i /> Atención privada</span>
+            </div>
+            <button onClick={() => setOpen(false)} aria-label="Cerrar chat"><X /></button>
+          </header>
+
+          {loading ? (
+            <div className="support-loading">
+              <MessageCircle />
+              <p>Conectando con atención…</p>
+            </div>
+          ) : error && !userId ? (
+            <div className="support-loading"><p>{error}</p></div>
+          ) : (
+            <div className="support-layout">
+              {support && (
+                <aside className={selected ? "has-selection" : ""}>
+                  <div className="support-search">
+                    <Search />
+                    <input
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      placeholder="Buscar contacto"
+                    />
+                  </div>
+                  <small>CONVERSACIONES</small>
+                  {filtered.map((item) => {
+                    const owner = item.profiles as Row | null;
+                    const name = String(owner?.full_name ?? owner?.email ?? item.subject ?? "Cliente");
+                    return (
+                      <button
+                        className={String(item.id) === selected ? "active" : ""}
+                        key={String(item.id)}
+                        onClick={() => choose(String(item.id))}
+                      >
+                        <span>{name.slice(0, 2).toUpperCase()}</span>
+                        <div>
+                          <strong>{name}</strong>
+                          <small>{String(item.status) === "open" ? "Conversación activa" : "Cerrada"}</small>
+                        </div>
+                      </button>
+                    );
+                  })}
+                  {!filtered.length && <p>Sin conversaciones.</p>}
+                </aside>
+              )}
+
+              <div className={`support-thread ${!selected ? "empty" : ""}`}>
+                {selected ? (
+                  <>
+                    <div className="support-contact">
+                      {support && (
+                        <button onClick={() => setSelected(null)} aria-label="Volver a conversaciones">
+                          <ArrowLeft />
+                        </button>
+                      )}
+                      <span className="support-contact-avatar">{contactInitials}</span>
+                      <div>
+                        <strong>{contactName}</strong>
+                        <span>
+                          {support
+                            ? "Atención individual"
+                            : "Solo tú y nuestro equipo pueden ver este chat"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="support-messages" aria-live="polite">
+                      {messages.map((message) => {
+                        const mine = String(message.sender_id) === userId;
+                        const sender = message.profiles as Row | null;
+                        return (
+                          <article className={mine ? "mine" : ""} key={String(message.id)}>
+                            <small>
+                              {mine
+                                ? "Tú"
+                                : support
+                                  ? String(sender?.full_name ?? sender?.email ?? "Cliente")
+                                  : "LEGEND CLUB"}
+                            </small>
+                            <p>{String(message.body)}</p>
+                            <time>
+                              {new Intl.DateTimeFormat("es-BO", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                timeZone: "America/La_Paz",
+                              }).format(new Date(String(message.created_at)))}
+                            </time>
+                          </article>
+                        );
+                      })}
+                      {!messages.length && (
+                        <div className="support-empty">
+                          <Headphones />
+                          <p>Inicia una conversación privada con atención al cliente.</p>
+                        </div>
+                      )}
+                      <div ref={messageEndRef} />
+                    </div>
+
+                    <form className="support-compose" onSubmit={send}>
+                      <button
+                        className="support-attach"
+                        type="button"
+                        title="Envío de archivos disponible próximamente"
+                        aria-label="Adjuntar archivo, disponible próximamente"
+                        disabled
+                      >
+                        <Paperclip />
+                      </button>
+                      <textarea
+                        name="body"
+                        maxLength={2000}
+                        rows={1}
+                        placeholder="Escribe un mensaje…"
+                        aria-label="Mensaje"
+                        required
+                      />
+                      <button className="support-send" disabled={busy} aria-label="Enviar mensaje">
+                        <Send />
+                      </button>
+                    </form>
+                    {error && <small className="support-error">{error}</small>}
+                  </>
+                ) : (
+                  <div className="support-empty">
+                    <MessageCircle />
+                    <p>Selecciona un contacto para responder.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+    </>
+  );
 }
