@@ -909,13 +909,16 @@
 .panel-theme-selector{position:relative;display:block}.panel-theme-selector>summary{min-height:44px;padding:0 11px;display:flex;align-items:center;gap:10px;color:#dceaff;border:1px solid transparent;border-radius:9px;cursor:pointer;list-style:none;font-size:9px;font-weight:700;transition:color .18s,background .18s,border-color .18s}.panel-theme-selector>summary::-webkit-details-marker{display:none}.panel-theme-selector>summary>svg:first-child{width:17px;height:17px;color:#b8ddff}.panel-theme-selector>summary .theme-chevron{width:13px;height:13px;margin-left:auto;transition:transform .2s}.panel-theme-selector[open]>summary{color:#fff;border-color:rgba(190,222,255,.3);background:rgba(132,194,255,.13)}.panel-theme-selector[open]>summary .theme-chevron{transform:rotate(180deg)}
 .panel-theme-selector>.panel-theme-options{margin:5px 0 2px;padding:6px;display:grid;grid-template-columns:1fr;gap:4px;border:1px solid rgba(155,205,255,.2);border-radius:10px;background:rgba(8,32,84,.32)}.panel-theme-selector>.panel-theme-options button{width:100%;height:35px;padding:0 9px;justify-content:flex-start;font-size:9px}.panel-theme-selector>.panel-theme-options button span{display:inline}
 .panel-theme-selector.compact>summary{width:38px;height:38px;min-height:38px;padding:0;justify-content:center;border-color:rgba(184,220,255,.22);background:rgba(13,49,118,.28)}.panel-theme-selector.compact>summary span,.panel-theme-selector.compact>summary .theme-chevron{display:none}.panel-theme-selector.compact>.panel-theme-options{position:absolute;z-index:80;right:0;top:44px;width:150px;background:var(--dash-card,#14233d);box-shadow:0 18px 45px rgba(3,14,42,.35)}.panel-theme-selector.compact>.panel-theme-options button span{display:inline}
-.mobile-nav-toggle,.mobile-sidebar-close,.mobile-sidebar-logout,.sidebar-scrim{display:none}
+.admin-control-shell .dash-header>.mobile-nav-toggle,
+.admin-control-shell .dash-sidebar .mobile-sidebar-close,
+.admin-control-shell .dash-sidebar .mobile-sidebar-logout,
+.admin-control-shell .admin-layout>.sidebar-scrim{display:none!important}
 @media(min-width:761px){.nav-collapsed .panel-theme-selector>summary{width:42px;padding:0;justify-content:center}.nav-collapsed .panel-theme-selector>summary span,.nav-collapsed .panel-theme-selector>summary .theme-chevron{display:none}.nav-collapsed .panel-theme-selector>.panel-theme-options{padding:4px}.nav-collapsed .panel-theme-selector>.panel-theme-options button{width:34px;padding:0;justify-content:center}.nav-collapsed .panel-theme-selector>.panel-theme-options button span{display:none}}
 
 /* Drawer móvil del panel administrativo. */
 @media(max-width:760px){
   .admin-control-shell .dash-header{min-height:72px;padding:9px 12px;display:flex!important;align-items:center;gap:9px}
-  .admin-control-shell .mobile-nav-toggle{width:42px;height:42px;padding:0;display:grid;place-items:center;flex:0 0 auto;color:#fff;border:1px solid rgba(191,225,255,.35);border-radius:10px;background:rgba(9,36,94,.3)}
+  .admin-control-shell .dash-header>.mobile-nav-toggle{width:42px;height:42px;padding:0;display:grid!important;place-items:center;flex:0 0 auto;color:#fff;border:1px solid rgba(191,225,255,.35);border-radius:10px;background:rgba(9,36,94,.3)}
   .admin-control-shell .mobile-nav-toggle svg{width:21px}
   .admin-control-shell .dash-brand{min-width:0;flex:1}.admin-control-shell .dash-brand .brand{min-width:0}.admin-control-shell .dash-brand .brand span{font-size:13px}
   .admin-control-shell .dash-user{margin-left:0}.admin-control-shell .dash-user .desktop-logout{display:none}.admin-control-shell .dash-user>span:not(.dash-avatar){display:none}
@@ -946,6 +949,6 @@
   .admin-control-shell .dash-sidebar .panel-theme-selector>.panel-theme-options{display:grid}.admin-control-shell .dash-sidebar .panel-theme-selector>.panel-theme-options button{width:100%;justify-content:flex-start}.admin-control-shell .dash-sidebar .panel-theme-selector>.panel-theme-options button span{display:inline}
   .admin-control-shell .dash-sidebar .mobile-sidebar-logout{min-height:42px;padding:0 11px;display:flex!important;align-items:center;gap:10px;color:#ffdce4;border:1px solid rgba(255,145,169,.18);border-radius:9px;background:rgba(156,39,67,.12);cursor:pointer;font-size:9px}
   .admin-control-shell .dash-sidebar .mobile-sidebar-logout svg{width:17px}.admin-control-shell .dash-sidebar .mobile-sidebar-logout span{display:inline;opacity:1}
-  .admin-control-shell .sidebar-scrim{position:fixed;z-index:180;inset:0;display:block;border:0;background:rgba(3,10,27,.58);backdrop-filter:blur(3px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s,visibility .25s}
+  .admin-control-shell .admin-layout>.sidebar-scrim{position:fixed;z-index:180;inset:0;display:block!important;border:0;background:rgba(3,10,27,.58);backdrop-filter:blur(3px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s,visibility .25s}
   .admin-control-shell .mobile-nav-open .sidebar-scrim{opacity:1;visibility:visible;pointer-events:auto}
 }
