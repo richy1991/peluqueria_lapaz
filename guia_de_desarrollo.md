@@ -2032,6 +2032,9 @@ Configuracion inicial adoptada, editable por administracion:
 
 Validacion tecnica y operativa:
 [x] Lint, TypeScript y compilacion de produccion completados localmente.
+[x] Migraciones 202608090002 a 202608090004 aplicadas en Supabase de produccion.
+[x] Rutas /caja y /vincular/[code] comprobadas en Vercel de produccion.
+[x] Datos iniciales de recompensas comprobados y acceso anonimo a caja rechazado por backend.
 [x] Restricciones transaccionales contra cobro duplicado de una cita, canjes duplicados y liquidaciones duplicadas.
 [~] Ejecutar prueba operativa en produccion de comisiones con promociones de 0%, 20%, 50% y descuento extraordinario.
 [~] Ejecutar prueba operativa en produccion de cancelacion, anulacion y devolucion.
