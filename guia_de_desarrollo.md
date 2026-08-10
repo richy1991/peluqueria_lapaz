@@ -1958,7 +1958,8 @@ Usuarios y paneles:
 [x] Selector de modos del header corregido para sus enlaces reales, con estados normal, hover y activo claramente diferenciados.
 [x] Apariencia integrada como una única opción desplegable del sidebar; muestra Sistema/Claro/Oscuro y se retrae automáticamente al seleccionar. En el cliente se integra al header y el chat es el único control flotante.
 [x] Sidebar administrativo móvil convertido en drawer con hamburguesa, cierre mediante X/Escape/fondo y acción Cerrar sesión ubicada en el pie del menú.
-[x] Headers privados optimizados para teléfono en dos filas compactas; se ocultan al desplazarse hacia abajo y reaparecen al subir o regresar al inicio.
+[x] Headers privados optimizados para teléfono en una fila compacta; se ocultan al desplazarse hacia abajo y reaparecen al subir o regresar al inicio.
+[x] Patrón móvil unificado para administrador, cajero y peluquero: hamburguesa izquierda, marca central, selector de roles mediante tres puntos a la derecha y drawer compartido con salida inferior.
 [x] Sistema reutilizable de tarjetas privadas con contorno azul, acento lateral, relieve suave y variantes semánticas azul, verde y naranja para indicadores; no afecta al sitio público.
 [x] Alta, vinculacion, edicion y desactivacion de peluqueros.
 [x] Página Equipo agrupada por roles con peluqueros y cajeros activos, altas de ambos perfiles y personal inactivo concentrado en un bloque desplegable al final.

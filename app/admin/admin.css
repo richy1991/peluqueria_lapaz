@@ -991,3 +991,99 @@
   .admin-control-shell .dash-header .mode-switcher{height:34px;padding:3px;gap:2px}
   .admin-control-shell .dash-header .mode-switcher a{min-height:27px;padding:6px 9px;font-size:8px;white-space:nowrap}
 }
+
+/* Patrón móvil unificado: hamburguesa, marca y selector de modo por tres puntos. */
+.mode-switcher-links{display:contents}.mobile-mode-menu{display:none}
+.panel-theme .admin-shell .dash-header>.mobile-nav-toggle,
+.panel-theme .admin-shell .dash-sidebar .mobile-sidebar-close,
+.panel-theme .admin-shell .dash-sidebar .mobile-sidebar-logout,
+.panel-theme .admin-shell .admin-layout>.sidebar-scrim{display:none!important}
+@media(max-width:760px){
+  .panel-theme .admin-shell .dash-header{
+    min-height:58px;height:58px;padding:6px 9px;
+    display:grid!important;grid-template-columns:40px minmax(0,1fr) 40px;grid-template-rows:46px;
+    align-items:center;gap:7px;flex-wrap:nowrap;
+  }
+  .panel-theme .admin-shell .dash-header>.mobile-nav-toggle{
+    width:38px;height:38px;padding:0;display:grid!important;place-items:center;
+    grid-column:1;grid-row:1;color:#fff;border:1px solid rgba(191,225,255,.35);border-radius:10px;background:rgba(9,36,94,.3)
+  }
+  .panel-theme .admin-shell .dash-header>.mobile-nav-toggle svg{width:20px}
+  .panel-theme .admin-shell .dash-header>.dash-brand{min-width:0;margin:0;display:flex;grid-column:2;grid-row:1;justify-self:center}
+  .panel-theme .admin-shell .dash-header .dash-brand>.brand{min-width:0;gap:7px;overflow:hidden}
+  .panel-theme .admin-shell .dash-header .dash-brand .brand-mark{width:38px;height:38px;min-width:38px;border-width:1px;box-shadow:0 0 0 2px #f7f3e8}
+  .panel-theme .admin-shell .dash-header .dash-brand .brand>span:last-child{min-width:0}
+  .panel-theme .admin-shell .dash-header .dash-brand .brand strong{overflow:hidden;font-size:12px;letter-spacing:.09em;text-overflow:ellipsis;white-space:nowrap}
+  .panel-theme .admin-shell .dash-header .dash-brand .brand small{margin-top:3px;font-size:5px}
+  .panel-theme .admin-shell .dash-header .dash-live,.panel-theme .admin-shell .dash-header>.dash-user{display:none!important}
+
+  .panel-theme .admin-shell .dash-header>.mode-switcher,
+  .panel-theme .panel-client-shell .portal-header>.mode-switcher{
+    position:relative;width:38px;height:38px;margin:0;padding:0;display:block;
+    align-self:center;justify-self:end;order:initial;overflow:visible;
+    border:0;background:transparent;box-shadow:none;
+  }
+  .panel-theme .admin-shell .dash-header>.mode-switcher{grid-column:3;grid-row:1}
+  .panel-theme .mode-switcher>.mode-switcher-links{display:none}
+  .panel-theme .mode-switcher>.mobile-mode-menu{display:block}
+  .panel-theme .mobile-mode-menu>summary{
+    width:38px;height:38px;padding:0;display:grid;place-items:center;
+    color:#fff;border:1px solid rgba(191,225,255,.35);border-radius:10px;
+    background:rgba(9,36,94,.3);cursor:pointer;list-style:none;
+  }
+  .panel-theme .mobile-mode-menu>summary::-webkit-details-marker{display:none}
+  .panel-theme .mobile-mode-menu>summary svg{width:21px;height:21px}
+  .panel-theme .mobile-mode-menu[open]>summary{color:#173b80;background:linear-gradient(135deg,#f4faff,#bfe4ff)}
+  .panel-theme .mobile-mode-menu>div{
+    position:absolute;z-index:210;right:0;top:45px;width:205px;padding:8px;
+    display:grid;gap:4px;color:var(--dash-text);
+    border:1px solid var(--dash-line);border-radius:12px;background:var(--dash-card);
+    box-shadow:0 18px 48px rgba(3,15,48,.4);
+  }
+  .panel-theme .mobile-mode-menu>div>small{padding:5px 7px;color:var(--dash-muted);font:800 7px sans-serif;letter-spacing:.15em}
+  .panel-theme .dash-header .mobile-mode-menu>div>a,
+  .panel-theme .portal-header .mobile-mode-menu>div>a{
+    min-height:39px;padding:0 10px;display:flex;align-items:center;gap:8px;justify-content:flex-start;
+    color:var(--dash-muted);border:1px solid transparent;border-radius:8px;background:transparent;
+    font-size:9px;font-weight:700;white-space:nowrap;
+  }
+  .panel-theme .mobile-mode-menu>div>a svg{width:14px;height:14px;color:#3f80ed}
+  .panel-theme .mobile-mode-menu>div>a.active{color:var(--dash-text);border-color:var(--dash-line);background:rgba(66,132,244,.1);box-shadow:none}
+
+  /* El mismo drawer se comparte entre administrador, cajero y peluquero. */
+  .panel-theme .admin-shell .admin-layout,.panel-theme .admin-shell .admin-layout.nav-collapsed{display:block;min-height:calc(100vh - 58px)}
+  .panel-theme .admin-shell .dash-sidebar{
+    position:fixed!important;z-index:190;left:0;top:0;bottom:0;
+    width:min(300px,86vw);height:100dvh;padding:14px 12px;
+    display:flex!important;flex-direction:column;overflow:hidden!important;
+    border-right:1px solid rgba(155,205,255,.24)!important;border-bottom:0;
+    transform:translateX(-105%);visibility:hidden;
+    transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility .3s;
+    box-shadow:24px 0 60px rgba(3,13,40,.38)!important;
+  }
+  .panel-theme.mobile-nav-open .admin-shell .dash-sidebar{transform:translateX(0);visibility:visible}
+  .panel-theme .admin-shell .dash-sidebar-head{height:48px;margin:0 2px 10px;display:flex!important;align-items:center;justify-content:space-between}
+  .panel-theme .admin-shell .dash-sidebar-head p{display:block;opacity:1;color:#9fd5ff}
+  .panel-theme .admin-shell .dash-sidebar .dash-collapse{display:none!important}
+  .panel-theme .admin-shell .dash-sidebar .mobile-sidebar-close{width:38px;height:38px;padding:0;display:grid!important;place-items:center;color:#fff;border:1px solid rgba(190,224,255,.4);border-radius:10px;background:rgba(116,182,255,.15);cursor:pointer}
+  .panel-theme .admin-shell .dash-sidebar .mobile-sidebar-close svg{width:18px}
+  .panel-theme .admin-shell .dash-sidebar nav{min-height:0;padding:0 3px 8px 0;display:grid!important;flex:1 1 auto;align-content:start;gap:5px;overflow-x:hidden;overflow-y:auto}
+  .panel-theme .admin-shell .dash-sidebar nav button,.panel-theme .admin-shell .dash-sidebar nav a{width:100%;min-width:0;padding:0 13px;justify-content:flex-start;gap:12px}
+  .panel-theme .admin-shell .dash-sidebar nav span{display:inline;opacity:1}.panel-theme .admin-shell .dash-sidebar nav i{display:block}
+  .panel-theme .admin-shell .dash-sidebar .dash-sidebar-foot{position:static;display:grid!important;flex:0 0 auto;gap:5px;margin:7px 0 0;padding:9px 0 0;border-top:1px solid rgba(143,197,255,.2)}
+  .panel-theme .admin-shell .dash-sidebar .dash-sidebar-foot>a{min-height:42px;padding:0 11px;display:flex!important;align-items:center;gap:10px;color:#dceaff}
+  .panel-theme .admin-shell .dash-sidebar .mobile-sidebar-logout{min-height:42px;padding:0 11px;display:flex!important;align-items:center;gap:10px;color:#ffdce4;border:1px solid rgba(255,145,169,.18);border-radius:9px;background:rgba(156,39,67,.12);cursor:pointer;font-size:9px}
+  .panel-theme .admin-shell .dash-sidebar .mobile-sidebar-logout svg{width:17px}.panel-theme .admin-shell .dash-sidebar .mobile-sidebar-logout span{display:inline;opacity:1}
+  .panel-theme .admin-shell .admin-layout>.sidebar-scrim{position:fixed;z-index:180;inset:0;display:block!important;border:0;background:rgba(3,10,27,.58);backdrop-filter:blur(3px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s,visibility .25s}
+  .panel-theme.mobile-nav-open .admin-shell .admin-layout>.sidebar-scrim{opacity:1;visibility:visible;pointer-events:auto}
+
+  /* El cliente no tiene sidebar, pero conserva el selector por tres puntos. */
+  .panel-theme .panel-client-shell .portal-header{
+    grid-template-columns:minmax(0,1fr) 38px 38px 38px;grid-template-rows:44px;
+    min-height:58px;height:58px;
+  }
+  .panel-theme .panel-client-shell .portal-header>.brand{grid-column:1;grid-row:1}
+  .panel-theme .panel-client-shell .portal-header>.panel-theme-selector{grid-column:2;grid-row:1}
+  .panel-theme .panel-client-shell .portal-header>.mode-switcher{grid-column:3;grid-row:1}
+  .panel-theme .panel-client-shell .portal-header>.portal-public-link{grid-column:4;grid-row:1}
+}
