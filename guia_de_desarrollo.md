@@ -2042,7 +2042,10 @@ Configuracion inicial adoptada, editable por administracion:
 Validacion tecnica y operativa:
 [x] Lint, TypeScript y compilacion de produccion completados localmente.
 [x] Migraciones 202608090002 a 202608090004 aplicadas en Supabase de produccion.
+[x] Migracion 202608100001 de soporte privado para administradores y cajeros aplicada en produccion.
 [x] Rutas /caja y /vincular/[code] comprobadas en Vercel de produccion.
+[x] /mensajes redirige al panel y la mensajeria se presenta exclusivamente como ventana flotante.
+[x] Paquete de produccion verificado con tema claro, tema oscuro, chat flotante y sidebar desplazable sin superposiciones.
 [x] Datos iniciales de recompensas comprobados y acceso anonimo a caja rechazado por backend.
 [x] Restricciones transaccionales contra cobro duplicado de una cita, canjes duplicados y liquidaciones duplicadas.
 [~] Ejecutar prueba operativa en produccion de comisiones con promociones de 0%, 20%, 50% y descuento extraordinario.
