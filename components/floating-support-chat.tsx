@@ -497,7 +497,7 @@ export function FloatingSupportChat() {
                         );
                       })}
                       {!messages.length && <div className="support-empty"><Headphones /><p>Inicia una conversación privada con atención al cliente.</p></div>}
-                      {peerTyping && <div className="support-typing"><span><i /><i /><i /></span><small>{contactName} está escribiendo</small></div>}
+                      {peerTyping && <div className="support-typing"><span><i /><i /><i /></span><small>Escribiendo…</small></div>}
                       <div ref={messageEndRef} />
                     </div>
 

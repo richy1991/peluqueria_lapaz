@@ -1980,9 +1980,9 @@ Reservas y operacion actual:
 [x] Notificaciones internas visibles y preferencias configurables por el cliente.
 [x] Chat interno solo texto, protegido por participantes y con limite de envio.
 [x] Centro de atención flotante estilo mensajería, sin página independiente y con conversaciones separadas por cliente; incorpora búsqueda, fechas separadoras, estado de envío, envío con Enter, compositor fijo y presentación móvil como hoja inferior.
-[x] Mensajería conectada a Supabase Realtime incluso con la ventana cerrada, con actualización inmediata de conversaciones y mensajes.
+[ ] Mensajería conectada a Supabase Realtime incluso con la ventana cerrada, con actualización inmediata de conversaciones y mensajes. Implementada en código; pendiente aplicar `202608100002_chat_realtime_receipts.sql` en Supabase producción.
 [x] Indicador temporal “escribiendo”, alerta sonora de mensaje entrante, contador global y distintivo de mensajes pendientes por contacto.
-[x] Confirmaciones de lectura persistentes: un check indica enviado y doble check indica que el destinatario correspondiente abrió la conversación.
+[ ] Confirmaciones de lectura persistentes: un check indica enviado y doble check indica que el destinatario correspondiente abrió la conversación. Implementadas en código; pendientes de la migración de producción.
 [x] Chat privado rediseñado con patrón visual tipo Telegram, lista de contactos, avatar, burbujas diferenciadas y compositor anclado siempre visible en escritorio y móvil.
 [x] Clientes aislados entre si; solo el cliente, administradores y cajeros autorizados acceden a cada consulta.
 [x] Arquitectura de conversaciones preparada para incorporar un chatbot de soporte en una fase futura.
