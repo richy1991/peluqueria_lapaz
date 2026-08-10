@@ -1205,6 +1205,8 @@
 .support-header-copy{min-width:0;display:grid;gap:4px}
 .support-header-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .support-close{flex:0 0 auto}
+.support-logo.is-contact{font-size:10px;font-weight:900;letter-spacing:.03em}
+.support-window>header>.support-history{display:none}
 .support-client .support-layout{height:100%;display:grid;grid-template-columns:minmax(0,1fr)}
 .support-client .support-thread{height:100%}
 .support-layout>aside>button>time{margin-left:auto;align-self:flex-start;color:#7185a5;font-size:7px;white-space:nowrap}
@@ -1244,8 +1246,19 @@
   .support-window>header strong{font-size:11px}
   .support-window>header span{font-size:8px}
   .support-layout,.support-client .support-layout{height:100%;min-height:0}
-  .support-thread,.support-client .support-thread{height:100%;min-height:0;grid-template-rows:54px minmax(0,1fr) auto auto}
-  .support-contact{min-height:54px;padding:7px 10px}
+  .support-thread,.support-client .support-thread{height:100%;min-height:0;grid-template-rows:minmax(0,1fr) auto auto}
+  .support-window .support-contact{display:none}
+  .support-history{
+    position:relative;width:36px;height:36px;margin-left:auto!important;padding:0;display:grid!important;place-items:center;
+    color:#fff;border:0;border-radius:50%;background:rgba(255,255,255,.1);cursor:pointer
+  }
+  .support-history:hover{background:rgba(255,255,255,.2)}
+  .support-history svg{width:17px!important;height:17px}
+  .support-history b{
+    position:absolute;right:-3px;top:-4px;min-width:17px;height:17px;padding:0 4px;display:grid;place-items:center;
+    color:#fff;border:2px solid #2877cf;border-radius:999px;background:#ef3f67;font:800 7px/1 sans-serif
+  }
+  .support-history+.support-close{margin-left:2px!important}
   .support-contact-avatar{width:34px;height:34px}
   .support-messages{padding:12px 10px 10px}
   .support-messages article{max-width:86%;padding:9px 38px 8px 11px}

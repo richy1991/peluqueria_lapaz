@@ -8,6 +8,7 @@ import {
   CheckCheck,
   Headphones,
   MessageCircle,
+  MessagesSquare,
   Paperclip,
   Search,
   Send,
@@ -428,11 +429,24 @@ export function FloatingSupportChat() {
       {open && (
         <section className={`support-window ${support ? "support-agent" : "support-client"}`} aria-label="Atención al cliente" role="dialog" aria-modal="true">
           <header>
-            <div className="support-logo"><Headphones /></div>
+            <div className={`support-logo ${support && selected ? "is-contact" : ""}`}>
+              {support && selected ? contactInitials : <Headphones />}
+            </div>
             <div className="support-header-copy">
               <strong>{support && selected ? contactName : "LEGEND CLUB"}</strong>
               <span className={peerTyping ? "is-typing" : ""}><i /> {peerTyping ? "Escribiendo…" : support && selected ? "Conversación activa" : "Atención privada"}</span>
             </div>
+            {support && selected && (
+              <button
+                className="support-history"
+                onClick={() => { selectedRef.current = null; setSelected(null); setPeerTyping(false); }}
+                aria-label="Abrir conversaciones recientes"
+                title="Conversaciones recientes"
+              >
+                <MessagesSquare />
+                {unreadTotal > 0 && <b>{badgeValue(unreadTotal)}</b>}
+              </button>
+            )}
             <button className="support-close" onClick={() => setOpen(false)} aria-label="Cerrar chat" title="Cerrar"><X /></button>
           </header>
 

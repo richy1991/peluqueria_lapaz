@@ -1980,6 +1980,7 @@ Reservas y operacion actual:
 [x] Notificaciones internas visibles y preferencias configurables por el cliente.
 [x] Chat interno solo texto, protegido por participantes y con limite de envio.
 [x] Centro de atención flotante estilo mensajería, sin página independiente y con conversaciones separadas por cliente; incorpora búsqueda, fechas separadoras, estado de envío, envío con Enter, compositor fijo y presentación móvil como hoja inferior.
+[x] Chat móvil sin identidad duplicada: clientes ven únicamente a LEGEND CLUB; administrador y cajero disponen de un botón de conversaciones recientes ordenadas por el último mensaje.
 [x] Mensajería conectada a Supabase Realtime incluso con la ventana cerrada, con actualización inmediata de conversaciones y mensajes. Migración `202608100003_chat_realtime_receipts.sql` aplicada en Supabase producción.
 [x] Indicador temporal “escribiendo”, alerta sonora de mensaje entrante, contador global y distintivo de mensajes pendientes por contacto.
 [x] Confirmaciones de lectura persistentes: un check indica enviado y doble check indica que el destinatario correspondiente abrió la conversación.
