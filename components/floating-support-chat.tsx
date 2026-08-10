@@ -200,11 +200,20 @@ export function FloatingSupportChat() {
 
   const loadMessages = useCallback(async (id: string, markAsRead = false) => {
     if (markAsRead) await markConversationRead(id);
-    const { data, error: loadError } = await supabase
+    let { data, error: loadError } = await supabase
       .from("messages")
       .select("id,conversation_id,body,created_at,sender_id,read_at,read_by,profiles!messages_sender_id_fkey(full_name,email)")
       .eq("conversation_id", id)
       .order("created_at");
+    if (loadError) {
+      const fallback = await supabase
+        .from("messages")
+        .select("id,conversation_id,body,created_at,sender_id,profiles!messages_sender_id_fkey(full_name,email)")
+        .eq("conversation_id", id)
+        .order("created_at");
+      data = fallback.data as typeof data;
+      loadError = fallback.error;
+    }
     if (loadError) setError(loadError.message);
     else if (selectedRef.current === id) setMessages((data ?? []) as unknown as ChatMessage[]);
   }, [markConversationRead, supabase]);
