@@ -1,4 +1,4 @@
--- Mensajería operativa: confirmaciones de lectura y cambios en tiempo real.
+-- Mensajería en tiempo real: confirmaciones de lectura y cambios en vivo.
 alter table public.messages
   add column if not exists read_at timestamptz,
   add column if not exists read_by uuid references public.profiles(id) on delete set null;
