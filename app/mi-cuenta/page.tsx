@@ -9,7 +9,14 @@ import { CancelAppointmentButton, ConfirmReassignmentButton } from "./appointmen
 import { CancelRedemptionButton, ClaimVisitForm, RewardButton } from "./loyalty-actions";
 import { PreferencesForm } from "./preferences-form";
 import { ReferralCode } from "./referral-code";
-import {PanelExperience,PanelThemeSelector} from "@/components/panel-experience";
+import {
+  PanelExperience,
+  PanelMobileLogout,
+  PanelMobileMenuButton,
+  PanelMobileScrim,
+  PanelMobileSidebarClose,
+  PanelThemeSelector,
+} from "@/components/panel-experience";
 
 export const dynamic = "force-dynamic";
 
@@ -33,10 +40,34 @@ export default async function ClientAccountPage() {
   ]);
   const person = profile.data;
   return <PanelExperience><main className="portal-shell panel-client-shell">
-    <header className="portal-header"><Brand /><ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={capabilities.isCashier} /><PanelThemeSelector compact/><Link className="portal-public-link" href="/" aria-label="Ver sitio público"><Globe2/><span>Sitio público</span></Link></header>
-    <section className="portal-hero"><p className="eyebrow">MODO CLIENTE</p><h1>Hola, {person?.full_name ?? user.email?.split("@")[0]}</h1><p>Consulta tus citas, puntos, recompensas y avisos. El botón flotante abre tu conversación privada con LEGEND CLUB.</p></section>
+    <header className="portal-header">
+      <PanelMobileMenuButton />
+      <Brand />
+      <ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={capabilities.isCashier} />
+      <div className="client-desktop-actions">
+        <PanelThemeSelector compact />
+        <Link className="portal-public-link" href="/" aria-label="Ver sitio público"><Globe2/><span>Sitio público</span></Link>
+      </div>
+    </header>
+    <aside className="dash-sidebar client-mobile-sidebar" aria-label="Menú de mi cuenta">
+      <div className="dash-sidebar-head"><p>MI CUENTA</p><PanelMobileSidebarClose /></div>
+      <nav aria-label="Secciones de mi cuenta">
+        <a href="#resumen"><UserRound/><span>Resumen</span></a>
+        <a href="#fidelizacion"><Star/><span>Puntos y recompensas</span></a>
+        <a href="#citas"><CalendarDays/><span>Mis citas</span></a>
+        <a href="#productos"><PackageCheck/><span>Productos apartados</span></a>
+        <a href="#notificaciones"><Bell/><span>Notificaciones</span></a>
+      </nav>
+      <div className="dash-sidebar-foot">
+        <PanelThemeSelector />
+        <Link href="/"><Globe2/><span>Sitio público</span></Link>
+        <PanelMobileLogout />
+      </div>
+    </aside>
+    <PanelMobileScrim />
+    <section id="resumen" className="portal-hero"><p className="eyebrow">MODO CLIENTE</p><h1>Hola, {person?.full_name ?? user.email?.split("@")[0]}</h1><p>Consulta tus citas, puntos, recompensas y avisos. El botón flotante abre tu conversación privada con LEGEND CLUB.</p></section>
     <div className="portal-grid">
-      <section className="portal-card loyalty-balance"><div className="portal-title"><Star/><h2>Mis puntos</h2></div><strong>{loyalty.data?.balance??0}</strong><span>puntos disponibles</span><p>Ganados históricamente: {loyalty.data?.lifetime_earned??0}</p></section>
+      <section id="fidelizacion" className="portal-card loyalty-balance"><div className="portal-title"><Star/><h2>Mis puntos</h2></div><strong>{loyalty.data?.balance??0}</strong><span>puntos disponibles</span><p>Ganados históricamente: {loyalty.data?.lifetime_earned??0}</p></section>
       <section className="portal-card"><div className="portal-title"><Flame/><h2>Mi racha</h2></div><strong className="streak-number">{streak.data?.current_visits??0}</strong><p>visitas consecutivas · mejor racha: {streak.data?.best_visits??0}</p></section>
       <section className="portal-card"><div className="portal-title"><UserRound /><h2>Mi perfil</h2></div><dl><div><dt>Correo</dt><dd>{person?.email}</dd></div><div><dt>Teléfono</dt><dd>{person?.phone ?? "Pendiente de registrar"}</dd></div><div><dt>Estado</dt><dd>{person?.status}</dd></div></dl>{person?.is_blacklisted && <p className="portal-warning">La cuenta tiene una alerta por inasistencias.</p>}{person?.is_blocked && <p className="portal-error">Las nuevas reservas están bloqueadas. Contacta al negocio.</p>}</section>
       <section className="portal-card"><div className="portal-title"><Gift/><h2>Recomienda a un amigo</h2></div><p>Comparte tu código o QR. Los puntos se activan cuando tu referido completa y paga su primera atención.</p>{person?.referral_code&&<ReferralCode code={person.referral_code}/>}</section>
@@ -44,9 +75,9 @@ export default async function ClientAccountPage() {
       <section className="portal-card"><div className="portal-title"><PackageCheck/><h2>Vincular atención</h2></div><p>¿Te atendiste sin cuenta? Introduce el código de tu comprobante.</p><ClaimVisitForm/></section>
       <section className="portal-card"><div className="portal-title"><Star/><h2>Historial de puntos</h2></div><div className="portal-list">{transactions.data?.length?transactions.data.map(item=><article key={item.id}><div><strong>{item.reason}</strong><span>{new Intl.DateTimeFormat("es-BO",{dateStyle:"medium",timeZone:"America/La_Paz"}).format(new Date(item.created_at))}</span></div><b className={item.points>0?"points-positive":"points-negative"}>{item.points>0?"+":""}{item.points}</b></article>):<p className="portal-empty">Aún no tienes movimientos.</p>}</div></section>
       <section className="portal-card"><div className="portal-title"><Gift/><h2>Canjes activos</h2></div><div className="portal-list">{redemptions.data?.length?redemptions.data.map(item=><article key={item.id}><div><strong>{(item.rewards as unknown as {name?:string}|null)?.name}</strong><span>{item.status} · vence {new Intl.DateTimeFormat("es-BO",{dateStyle:"medium",timeZone:"America/La_Paz"}).format(new Date(item.expires_at))}</span></div><b>{item.code}</b>{item.status==="pending"&&<CancelRedemptionButton id={item.id}/>}</article>):<p className="portal-empty">No tienes canjes pendientes.</p>}</div></section>
-      <section className="portal-card portal-wide"><div className="portal-title"><CalendarDays /><h2>Mis citas</h2><Link href="/reservar">Nueva reserva</Link></div><div className="portal-list">{appointments.data?.length ? appointments.data.map((item) => { const canCancel = ["requested","confirmed","pending_client_confirmation"].includes(item.status); return <article key={item.id}><div><strong>{item.service_name_snapshot}</strong><span>{new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeStyle: "short", timeZone: "America/La_Paz" }).format(new Date(item.starts_at))} · {item.status}</span></div><b>Bs {item.price_snapshot}</b>{item.status === "pending_client_confirmation" && <ConfirmReassignmentButton id={item.id} />}{canCancel && <CancelAppointmentButton id={item.id} />}</article>; }) : <p className="portal-empty">Aún no tienes citas registradas.</p>}</div></section>
-      <section className="portal-card"><div className="portal-title"><PackageCheck /><h2>Productos apartados</h2></div><div className="portal-list">{reservations.data?.length ? reservations.data.map((item) => <article key={item.id}><div><strong>{(item.products as unknown as { name?: string } | null)?.name ?? "Producto"}</strong><span>{item.quantity} unidad(es) · {item.status}</span></div></article>) : <p className="portal-empty">No tienes productos apartados.</p>}</div></section>
-      <section className="portal-card"><div className="portal-title"><Bell /><h2>Notificaciones</h2></div><div className="portal-list">{notifications.data?.length ? notifications.data.map((item) => <article key={item.id}><div><strong>{item.title}</strong><span>{item.body}</span></div></article>) : <p className="portal-empty">No tienes avisos nuevos.</p>}</div></section>
+      <section id="citas" className="portal-card portal-wide"><div className="portal-title"><CalendarDays /><h2>Mis citas</h2><Link href="/reservar">Nueva reserva</Link></div><div className="portal-list">{appointments.data?.length ? appointments.data.map((item) => { const canCancel = ["requested","confirmed","pending_client_confirmation"].includes(item.status); return <article key={item.id}><div><strong>{item.service_name_snapshot}</strong><span>{new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeStyle: "short", timeZone: "America/La_Paz" }).format(new Date(item.starts_at))} · {item.status}</span></div><b>Bs {item.price_snapshot}</b>{item.status === "pending_client_confirmation" && <ConfirmReassignmentButton id={item.id} />}{canCancel && <CancelAppointmentButton id={item.id} />}</article>; }) : <p className="portal-empty">Aún no tienes citas registradas.</p>}</div></section>
+      <section id="productos" className="portal-card"><div className="portal-title"><PackageCheck /><h2>Productos apartados</h2></div><div className="portal-list">{reservations.data?.length ? reservations.data.map((item) => <article key={item.id}><div><strong>{(item.products as unknown as { name?: string } | null)?.name ?? "Producto"}</strong><span>{item.quantity} unidad(es) · {item.status}</span></div></article>) : <p className="portal-empty">No tienes productos apartados.</p>}</div></section>
+      <section id="notificaciones" className="portal-card"><div className="portal-title"><Bell /><h2>Notificaciones</h2></div><div className="portal-list">{notifications.data?.length ? notifications.data.map((item) => <article key={item.id}><div><strong>{item.title}</strong><span>{item.body}</span></div></article>) : <p className="portal-empty">No tienes avisos nuevos.</p>}</div></section>
       <section className="portal-card"><div className="portal-title"><Bell/><h2>Preferencias</h2></div><PreferencesForm userId={user.id} current={preferences.data}/></section>
     </div>
   </main></PanelExperience>;
