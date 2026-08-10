@@ -1314,10 +1314,15 @@
 
 @media(max-width:760px){
   .support-window,.support-window.support-agent,.support-window.support-client{
-    inset:var(--support-modal-top,18dvh) 0 auto 0!important;bottom:auto!important;
-    height:var(--support-modal-height,82dvh)!important;max-height:none!important;
-    transition:height .16s ease,top .16s ease
+    inset:var(--support-modal-top,0) auto auto var(--support-modal-left,0)!important;
+    right:auto!important;bottom:auto!important;box-sizing:border-box;
+    width:var(--support-modal-width,100vw)!important;min-width:0!important;max-width:none!important;
+    height:var(--support-modal-height,100dvh)!important;min-height:0!important;max-height:none!important;
+    grid-template-rows:calc(58px + env(safe-area-inset-top)) minmax(0,1fr)!important;
+    border:0!important;border-radius:0!important;
+    transition:height .12s ease,top .12s ease,left .12s ease,width .12s ease
   }
+  .support-window>header{padding-top:env(safe-area-inset-top)}
   .support-window:focus-within{transition:none}
   .support-messages{overscroll-behavior:contain;scroll-behavior:smooth}
   .support-compose{position:relative;z-index:8;flex:0 0 auto}

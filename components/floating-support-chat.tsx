@@ -405,18 +405,21 @@ export function FloatingSupportChat() {
     const updateViewport = () => {
       if (!panel || !isMobile.matches) {
         panel?.style.removeProperty("--support-modal-top");
+        panel?.style.removeProperty("--support-modal-left");
+        panel?.style.removeProperty("--support-modal-width");
         panel?.style.removeProperty("--support-modal-height");
         document.body.style.overflow = previousOverflow;
         return;
       }
       document.body.style.overflow = "hidden";
       const visibleHeight = viewport?.height ?? window.innerHeight;
+      const visibleWidth = viewport?.width ?? document.documentElement.clientWidth;
       const visibleTop = viewport?.offsetTop ?? 0;
-      const keyboardOpen = window.innerHeight - visibleHeight > 110;
-      const modalHeight = keyboardOpen ? visibleHeight : Math.min(visibleHeight * 0.82, 680);
-      const modalTop = visibleTop + visibleHeight - modalHeight;
-      panel.style.setProperty("--support-modal-top", `${Math.max(0, modalTop)}px`);
-      panel.style.setProperty("--support-modal-height", `${Math.max(280, modalHeight)}px`);
+      const visibleLeft = viewport?.offsetLeft ?? 0;
+      panel.style.setProperty("--support-modal-top", `${Math.max(0, visibleTop)}px`);
+      panel.style.setProperty("--support-modal-left", `${Math.max(0, visibleLeft)}px`);
+      panel.style.setProperty("--support-modal-width", `${Math.max(1, visibleWidth)}px`);
+      panel.style.setProperty("--support-modal-height", `${Math.max(1, visibleHeight)}px`);
       window.requestAnimationFrame(() => {
         const thread = messagesRef.current;
         if (thread) thread.scrollTop = thread.scrollHeight;
@@ -431,6 +434,10 @@ export function FloatingSupportChat() {
       viewport?.removeEventListener("resize", updateViewport);
       viewport?.removeEventListener("scroll", updateViewport);
       window.removeEventListener("resize", updateViewport);
+      panel?.style.removeProperty("--support-modal-top");
+      panel?.style.removeProperty("--support-modal-left");
+      panel?.style.removeProperty("--support-modal-width");
+      panel?.style.removeProperty("--support-modal-height");
       document.body.style.overflow = previousOverflow;
     };
   }, [open]);
