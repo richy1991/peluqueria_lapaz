@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminDashboard } from "./admin-dashboard";
 import { getUserCapabilities } from "@/lib/user-capabilities";
 import type { AnalyticsData } from "./admin-analytics";
+import {PanelExperience} from "@/components/panel-experience";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +45,7 @@ export default async function AdminPage() {
   ]);
 
   return (
-    <AdminDashboard
+    <PanelExperience><AdminDashboard
       userEmail={user.email ?? "Administrador"}
       initialServices={services.data ?? []}
       initialGallery={gallery.data ?? []}
@@ -58,6 +59,6 @@ export default async function AdminPage() {
       clients={(profiles.data ?? []).filter((profile) => !profile.user_roles?.some((role) => role.role === "admin" || role.role === "superadmin"))}
       analyticsData={analytics.data?{...(analytics.data as AnalyticsData),marketing:(marketing.data as AnalyticsData["marketing"])??undefined}:null}
       program={{settings:loyaltySettings.data,rewards:rewards.data??[],promotions:promotions.data??[],expenses:expenses.data??[],payouts:payouts.data??[],cashiers:(profiles.data??[]).filter((profile)=>profile.user_roles?.some((role)=>role.role==="cashier"))}}
-    />
+    /></PanelExperience>
   );
 }

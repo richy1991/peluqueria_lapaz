@@ -33,6 +33,6 @@ export function DashboardModal({title,description,triggerLabel,triggerIcon,child
         <header><div className="dash-modal-icon"><Sparkles/></div><div><small>NUEVA OPERACIÓN</small><h2 id={titleId}>{title}</h2>{description&&<p>{description}</p>}</div><button type="button" className="dash-modal-close" onClick={()=>setOpen(false)} aria-label="Cerrar ventana"><X/></button></header>
         <div className="dash-modal-body">{children}</div>
       </section>
-    </div>,document.body)}
+    </div>,document.querySelector<HTMLElement>(".panel-theme")??document.body)}
   </>;
 }

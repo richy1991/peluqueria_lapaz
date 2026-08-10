@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserCapabilities } from "@/lib/user-capabilities";
 import { CashierPanel } from "./cashier-panel";
+import {PanelExperience} from "@/components/panel-experience";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export default async function CashierPage() {
     supabase.from("appointments").select("id,starts_at,service_name_snapshot,profiles!appointments_client_id_fkey(full_name,email),barber_profiles(display_name)").gte("starts_at",start.toISOString()).in("status",["requested","confirmed","in_progress"]).order("starts_at"),
     supabase.from("sales").select("id,paid_total,discount_total,business_share,barber_commission_total,guest_name,paid_at,profiles!sales_client_id_fkey(full_name,email),receipts(id,number)").eq("status","paid").order("paid_at",{ascending:false}).limit(20),
   ]);
-  return <CashierPanel
+  return <PanelExperience><CashierPanel
     userEmail={user.email??"Caja"}
     capabilities={capabilities}
     shift={shift.data}
@@ -31,5 +32,5 @@ export default async function CashierPage() {
     clients={clients.data??[]}
     appointments={appointments.data??[]}
     sales={sales.data??[]}
-  />;
+  /></PanelExperience>;
 }

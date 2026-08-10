@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bell, CalendarDays, Flame, Gift, MessageSquareText, PackageCheck, Star, UserRound } from "lucide-react";
+import { Bell, CalendarDays, Flame, Gift, PackageCheck, Star, UserRound } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { createClient } from "@/lib/supabase/server";
@@ -9,6 +9,7 @@ import { CancelAppointmentButton, ConfirmReassignmentButton } from "./appointmen
 import { CancelRedemptionButton, ClaimVisitForm, RewardButton } from "./loyalty-actions";
 import { PreferencesForm } from "./preferences-form";
 import { ReferralCode } from "./referral-code";
+import {PanelExperience} from "@/components/panel-experience";
 
 export const dynamic = "force-dynamic";
 
@@ -31,9 +32,9 @@ export default async function ClientAccountPage() {
     supabase.from("notification_preferences").select("appointment_notifications,promotion_notifications,chat_notifications,system_notifications,muted_all").eq("user_id",user.id).maybeSingle(),
   ]);
   const person = profile.data;
-  return <main className="portal-shell">
+  return <PanelExperience><main className="portal-shell panel-client-shell">
     <header className="portal-header"><Brand /><ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={capabilities.isCashier} /><Link href="/">Sitio público</Link></header>
-    <section className="portal-hero"><p className="eyebrow">MODO CLIENTE</p><h1>Hola, {person?.full_name ?? user.email?.split("@")[0]}</h1><p>Consulta tus citas, puntos, recompensas y avisos de LEGEND CLUB.</p><Link className="portal-chat-link" href="/mensajes"><MessageSquareText/> Hablar con LEGEND CLUB</Link></section>
+    <section className="portal-hero"><p className="eyebrow">MODO CLIENTE</p><h1>Hola, {person?.full_name ?? user.email?.split("@")[0]}</h1><p>Consulta tus citas, puntos, recompensas y avisos. El botón flotante abre tu conversación privada con LEGEND CLUB.</p></section>
     <div className="portal-grid">
       <section className="portal-card loyalty-balance"><div className="portal-title"><Star/><h2>Mis puntos</h2></div><strong>{loyalty.data?.balance??0}</strong><span>puntos disponibles</span><p>Ganados históricamente: {loyalty.data?.lifetime_earned??0}</p></section>
       <section className="portal-card"><div className="portal-title"><Flame/><h2>Mi racha</h2></div><strong className="streak-number">{streak.data?.current_visits??0}</strong><p>visitas consecutivas · mejor racha: {streak.data?.best_visits??0}</p></section>
@@ -48,5 +49,5 @@ export default async function ClientAccountPage() {
       <section className="portal-card"><div className="portal-title"><Bell /><h2>Notificaciones</h2></div><div className="portal-list">{notifications.data?.length ? notifications.data.map((item) => <article key={item.id}><div><strong>{item.title}</strong><span>{item.body}</span></div></article>) : <p className="portal-empty">No tienes avisos nuevos.</p>}</div></section>
       <section className="portal-card"><div className="portal-title"><Bell/><h2>Preferencias</h2></div><PreferencesForm userId={user.id} current={preferences.data}/></section>
     </div>
-  </main>;
+  </main></PanelExperience>;
 }

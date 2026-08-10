@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Activity, Banknote, CalendarClock, Clock3, History, MessageSquareText, ReceiptText, Scissors, Sparkles } from "lucide-react";
+import { Activity, Banknote, CalendarClock, Clock3, History, ReceiptText, Scissors, Sparkles } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { createClient } from "@/lib/supabase/server";
 import { getUserCapabilities } from "@/lib/user-capabilities";
 import { AppointmentStatusActions } from "./appointment-status-actions";
 import { ExpenseForm } from "./expense-form";
+import {PanelExperience} from "@/components/panel-experience";
 
 export const dynamic = "force-dynamic";
 
@@ -27,9 +28,9 @@ export default async function BarberPage() {
   const appointments=appointmentsResult.data;
   const active = appointments?.filter((item) => !["canceled","completed","no_show"].includes(item.status)) ?? [];
   const pendingTotal=(earnings.data??[]).filter(item=>["pending","approved"].includes(item.status)).reduce((sum,item)=>sum+Number(item.amount),0);
-  return <main className="admin-shell dash-workspace barber-portal">
+  return <PanelExperience><main className="admin-shell dash-workspace barber-portal">
     <header className="admin-header dash-header"><div className="dash-brand"><Brand/><span className="dash-live"><i/> AGENDA SINCRONIZADA</span></div><ModeSwitcher current="barber" isAdmin={capabilities.isAdmin} hasBarber isCashier={capabilities.isCashier}/><div className="dash-user"><span className="dash-avatar">{(user.email??"LC").slice(0,2).toUpperCase()}</span><span>{user.email}<small>Peluquero · {capabilities.barber.display_name}</small></span></div></header>
-    <div className="admin-layout barber-layout"><aside className="admin-nav dash-sidebar"><div className="dash-sidebar-head"><p>MI ESTACIÓN</p></div><nav><a href="#resumen"><Activity/><span>Resumen</span><i/></a><a href="#agenda"><CalendarClock/><span>Agenda</span></a><a href="#finanzas"><History/><span>Mis finanzas</span></a><Link href="/mensajes"><MessageSquareText/><span>Mensajes</span></Link></nav><div className="dash-sidebar-foot"><Link href="/"><Sparkles/><span>Web pública</span></Link></div></aside><section className="barber-content" id="resumen">
+    <div className="admin-layout barber-layout"><aside className="admin-nav dash-sidebar"><div className="dash-sidebar-head"><p>MI ESTACIÓN</p></div><nav><a href="#resumen"><Activity/><span>Resumen</span><i/></a><a href="#agenda"><CalendarClock/><span>Agenda</span></a><a href="#finanzas"><History/><span>Mis finanzas</span></a></nav><div className="dash-sidebar-foot"><Link href="/"><Sparkles/><span>Web pública</span></Link></div></aside><section className="barber-content" id="resumen">
     <section className="portal-hero dash-role-hero"><div><p className="eyebrow">MODO PELUQUERO</p><h1>Hola, {capabilities.barber.display_name}</h1><p>{active.length} cita(s) pendiente(s) para hoy.</p></div><div className="barber-pulse"><span><i/>{active.length} activas</span><Clock3/></div></section>
     <div className="portal-grid dash-portal-grid">
       <section className="portal-card"><div className="portal-title"><Banknote/><h2>Ganancia pendiente</h2></div><strong className="streak-number">Bs {pendingTotal.toFixed(2)}</strong><p>Comisiones e incentivos aún no pagados.</p></section>
@@ -40,5 +41,5 @@ export default async function BarberPage() {
       <section className="portal-card"><div className="portal-title"><ReceiptText/><h2>Insumos</h2></div><ExpenseForm/><div className="portal-list">{expenses.data?.map(item=><article key={item.id}><div><strong>{item.concept}</strong><span>{item.status}</span></div><b>Bs {Number(item.amount).toFixed(2)}</b></article>)}</div></section>
       <section className="portal-card"><div className="portal-title"><Banknote/><h2>Liquidaciones</h2></div><div className="portal-list">{payouts.data?.length?payouts.data.map(item=><article key={item.id}><div><strong>{item.period_start} — {item.period_end}</strong><span>{item.status}</span></div><b>Bs {Number(item.total_amount).toFixed(2)}</b></article>):<p className="portal-empty">Aún no existen liquidaciones.</p>}</div></section>
     </div></section></div>
-  </main>;
+  </main></PanelExperience>;
 }

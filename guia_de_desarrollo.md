@@ -1949,6 +1949,8 @@ Usuarios y paneles:
 [x] Sistema visual LEGEND OS compartido para administrador, cajero y peluquero, con sidebar contextual y header operativo.
 [x] Formularios de creacion y edicion presentados como componentes modales reutilizables.
 [x] Animaciones de entrada, estados, tarjetas y ventanas con alternativa accesible para movimiento reducido.
+[x] Tema de panel automatico segun el dispositivo, con seleccion persistente entre sistema, claro y oscuro.
+[x] Contraste de textos, fondos, inputs, selects, modales y estados revisado para ambos temas.
 [x] Alta, vinculacion, edicion y desactivacion de peluqueros.
 [x] Administracion y bloqueo manual de clientes.
 [~] Existe una invitacion administrativa pendiente; falta que el negocio complete y pruebe el ingreso del administrador invitado.
@@ -1965,6 +1967,9 @@ Reservas y operacion actual:
 [x] Cierre de emergencia y reprogramacion/notificacion interna a nivel de base de datos.
 [x] Notificaciones internas visibles y preferencias configurables por el cliente.
 [x] Chat interno solo texto, protegido por participantes y con limite de envio.
+[x] Centro de atencion flotante estilo mensajeria, sin pagina independiente y con conversaciones separadas por cliente.
+[x] Clientes aislados entre si; solo el cliente, administradores y cajeros autorizados acceden a cada consulta.
+[x] Arquitectura de conversaciones preparada para incorporar un chatbot de soporte en una fase futura.
 [x] Registro de atenciones sin reserva y vinculacion posterior del cliente.
 
 Estadisticas:

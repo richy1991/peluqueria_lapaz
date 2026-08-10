@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BarChart3, CalendarClock, ChevronLeft, ChevronRight, CircleDollarSign, ImagePlus, LogOut, MessageSquareText, PackagePlus, Save, Scissors, ShieldCheck, Sparkles, Store, UserPlus, Users } from "lucide-react";
+import { BarChart3, CalendarClock, ChevronLeft, ChevronRight, CircleDollarSign, ImagePlus, LogOut, PackagePlus, Save, Scissors, ShieldCheck, Sparkles, Store, UserPlus, Users } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { createClient } from "@/lib/supabase/client";
@@ -318,7 +318,7 @@ export function AdminDashboard({
         <aside className="admin-nav dash-sidebar">
           <div className="dash-sidebar-head"><p>CONTROL CENTRAL</p><button className="dash-collapse" onClick={()=>setNavCollapsed(value=>!value)} aria-label={navCollapsed?"Expandir menú":"Contraer menú"}>{navCollapsed?<ChevronRight/>:<ChevronLeft/>}</button></div>
           <nav>{navigation.map(([id,label,Icon])=><button title={label} className={section===id?"active":""} key={id} onClick={()=>setSection(id)}><Icon/><span>{label}</span>{section===id&&<i/>}</button>)}</nav>
-          <div className="dash-sidebar-foot"><Link href="/mensajes"><MessageSquareText/><span>Mensajes</span></Link><Link href="/" target="_blank"><Sparkles/><span>Ver sitio público</span></Link></div>
+          <div className="dash-sidebar-foot"><Link href="/" target="_blank"><Sparkles/><span>Ver sitio público</span></Link></div>
         </aside>
         <section className="admin-content">
           {message && <p className="admin-message">{message}</p>}
