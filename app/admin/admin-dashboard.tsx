@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BarChart3, CalendarClock, CircleDollarSign, ImagePlus, LogOut, Menu, PackagePlus, Save, Scissors, ShieldCheck, Sparkles, Store, UserPlus, Users, X } from "lucide-react";
+import { BarChart3, CalendarClock, CircleDollarSign, ImagePlus, LogOut, Menu, PackagePlus, Save, Scissors, ShieldCheck, Sparkles, Store, UserPlus, UserRoundCog, Users, X } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { createClient } from "@/lib/supabase/client";
@@ -22,6 +22,7 @@ type AdminDashboardProps = {
   initialGallery: Row[];
   initialProducts: Row[];
   barbers: Row[];
+  cashiers: Row[];
   initialSettings: Record<string, unknown> | null;
   isSuperadmin: boolean;
   adminUsers: AdminUser[];
@@ -29,7 +30,7 @@ type AdminDashboardProps = {
   initialAppointments: Row[];
   clients: Row[];
   analyticsData: AnalyticsData | null;
-  program: {settings:Row|null;rewards:Row[];promotions:Row[];expenses:Row[];payouts:Row[];cashiers:Row[]};
+  program: {settings:Row|null;rewards:Row[];promotions:Row[];expenses:Row[];payouts:Row[]};
 };
 
 async function optimizeImage(file: File) {
@@ -71,6 +72,7 @@ export function AdminDashboard({
   initialGallery,
   initialProducts,
   barbers,
+  cashiers,
   initialSettings,
   isSuperadmin,
   adminUsers,
@@ -288,6 +290,29 @@ export function AdminDashboard({
     if(linkError)return failAction(linkError); finishAction(`Cuenta ${email} vinculada o pendiente de su primer ingreso con Google.`);
   }
 
+  async function addCashier(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    startAction();
+    const form = new FormData(event.currentTarget);
+    const email = String(form.get("email") ?? "").trim().toLowerCase();
+    const { error: cashierError } = await createClient().rpc("set_cashier_role", {
+      target_email: email,
+      enabled: true,
+    });
+    if (cashierError) return failAction(cashierError);
+    finishAction(`Cajero ${email} habilitado.`);
+  }
+
+  async function toggleCashier(email: string, enabled: boolean) {
+    startAction();
+    const { error: cashierError } = await createClient().rpc("set_cashier_role", {
+      target_email: email,
+      enabled,
+    });
+    if (cashierError) return failAction(cashierError);
+    finishAction(enabled ? "Acceso de caja reactivado." : "Cajero movido a personal inactivo.");
+  }
+
   async function updateProduct(event: FormEvent<HTMLFormElement>, item: Row) {
     event.preventDefault(); startAction();
     try { const form=new FormData(event.currentTarget); const file=form.get("image"); const imagePath=file instanceof File&&file.size?await uploadImage(file,"products"):String(item.image_path??"")||null;
@@ -303,6 +328,11 @@ export function AdminDashboard({
   }
 
   const settings = initialSettings ?? {};
+  const activeBarbers = barbers.filter((item) => Boolean(item.active));
+  const inactiveBarbers = barbers.filter((item) => !item.active);
+  const activeCashiers = cashiers.filter((item) => Boolean(item.active));
+  const inactiveCashiers = cashiers.filter((item) => !item.active);
+  const inactiveTeamCount = inactiveBarbers.length + inactiveCashiers.length;
   const navigation:Array<[string,string,LucideIcon]>=[
     ["agenda","Agenda",CalendarClock],["estadisticas","Estadísticas",BarChart3],["programa","Caja y fidelización",CircleDollarSign],["clientes","Clientes",Users],["negocio","Negocio",Store],["servicios","Servicios",Scissors],["galeria","Galería",ImagePlus],["productos","Productos",PackagePlus],["equipo","Equipo",UserPlus],...(isSuperadmin?[["administradores","Administradores",ShieldCheck] as [string,string,LucideIcon]]:[]),
   ];
@@ -328,7 +358,7 @@ export function AdminDashboard({
 
           {section === "estadisticas" && <AdminAnalytics data={analyticsData} />}
 
-          {section === "programa" && <AdminProgram settings={program.settings} rewards={program.rewards} promotions={program.promotions} expenses={program.expenses} payouts={program.payouts} cashiers={program.cashiers} barbers={barbers} products={initialProducts} />}
+          {section === "programa" && <AdminProgram settings={program.settings} rewards={program.rewards} promotions={program.promotions} expenses={program.expenses} payouts={program.payouts} barbers={barbers} products={initialProducts} />}
 
           {section === "clientes" && <div className="admin-panel"><div className="admin-title"><Users /><div><p>USUARIOS</p><h1>Clientes</h1></div></div><p className="admin-help">Puedes dar de baja cuentas antiguas o bloquear manualmente a clientes reincidentes. Ninguna cuenta se elimina físicamente.</p><div className="admin-list client-admin-list">{clients.length?clients.map((item)=><article key={item.id}><div><strong>{String(item.full_name??item.email)}</strong><span>{String(item.email)} · {String(item.phone??"Sin teléfono")} · {String(item.status)} · {String(item.no_show_count)} inasistencia(s)</span>{Boolean(item.is_blacklisted)&&<small className="admin-alert">Lista negra informativa</small>}</div><ClientAdminActions id={item.id} status={String(item.status)} blocked={Boolean(item.is_blocked)}/></article>):<p className="admin-help">Todavía no existen clientes registrados.</p>}</div></div>}
 
@@ -383,7 +413,38 @@ export function AdminDashboard({
             <div className="admin-list editable-list">{initialProducts.map((item)=><article key={item.id}><div><strong>{String(item.name)}</strong><span>Bs {String(item.price)} · stock {String(item.stock)} · {String(item.status)}</span></div><div className="dash-row-actions"><button onClick={()=>toggleStatus("products",item.id,item.status==="active"?"inactive":"active")}>{item.status==="active"?"Desactivar":"Activar"}</button><DashboardModal title={`Editar ${String(item.name)}`} description="Actualiza la ficha comercial y el inventario." triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateProduct(event,item)} acceptCharset="UTF-8"><label>Nombre<input name="name" defaultValue={String(item.name)} required/></label><label>Categoría<input name="category" defaultValue={String(item.category??"")}/></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description??"")}/></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" defaultValue={Number(item.price)} required/></label><label>Stock<input name="stock" type="number" min="0" defaultValue={Number(item.stock)} required/></label><label className="wide">Nueva imagen opcional<input name="image" type="file" accept="image/jpeg,image/png,image/webp"/></label><button className="button button-dark wide" disabled={busy}>Guardar producto</button></form></DashboardModal></div></article>)}</div>
           </div>}
 
-          {section === "equipo" && <div className="admin-panel"><div className="admin-title"><Scissors/><div><p>PERSONAL</p><h1>Peluqueros</h1></div></div><div className="dash-section-intro"><p>Crea perfiles y vincula las cuentas Google del equipo.</p><DashboardModal title="Crear peluquero" description="Podrás vincular su cuenta incluso después de crear el perfil." triggerLabel="Nuevo peluquero" triggerIcon={<UserPlus/>}><form className="admin-form" onSubmit={registerBarber} acceptCharset="UTF-8"><label>Correo Google<input name="email" type="email" required/></label><label>Nombre público<input name="public_name" required/></label><label className="wide">Especialidades separadas por comas<input name="specialties" placeholder="Fades, Barba, Cortes clásicos"/></label><label className="wide">Biografía<textarea name="biography"/></label><button className="button button-dark wide" disabled={busy}>Crear nuevo peluquero</button></form></DashboardModal></div><div className="admin-list editable-list">{barbers.map((item)=><article key={item.id}><div><strong>{String(item.display_name)}</strong><span>{item.active?"Activo":"Inactivo"} · {Array.isArray(item.specialties)?item.specialties.join(", "):""} · {item.user_id?"Cuenta vinculada":"Sin cuenta Google"}</span></div><div className="dash-row-actions"><button disabled={busy} onClick={()=>toggleBarber(item.id,!Boolean(item.active))}>{item.active?"Desactivar":"Activar"}</button><DashboardModal title={`Editar ${String(item.display_name)}`} description="Actualiza su perfil público o vincula el acceso Google." triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateBarber(event,item.id)} acceptCharset="UTF-8"><label>Nombre público<input name="display_name" defaultValue={String(item.display_name)} required/></label><label>Especialidades<input name="specialties" defaultValue={Array.isArray(item.specialties)?item.specialties.join(", "):""}/></label><label className="wide">Biografía<textarea name="bio" defaultValue={String(item.bio??"")}/></label><button className="button button-dark wide" disabled={busy}>Guardar información</button></form>{!item.user_id&&<form className="link-account-form" onSubmit={(event)=>linkBarber(event,item.id)}><input name="account_email" type="email" placeholder="correo Google del peluquero" required/><button disabled={busy}>Vincular cuenta Google</button></form>}</DashboardModal></div></article>)}</div></div>}
+          {section === "equipo" && <div className="admin-panel team-panel">
+            <div className="admin-title"><Users/><div><p>PERSONAL</p><h1>Equipo</h1></div></div>
+            <div className="dash-section-intro team-intro">
+              <p>Gestiona al personal que trabaja en el negocio, organizado por rol y estado operativo.</p>
+              <div className="team-create-actions">
+                <DashboardModal title="Crear peluquero" description="Podrás vincular su cuenta incluso después de crear el perfil." triggerLabel="Nuevo peluquero" triggerIcon={<UserPlus/>}>
+                  <form className="admin-form" onSubmit={registerBarber} acceptCharset="UTF-8"><label>Correo Google<input name="email" type="email" required/></label><label>Nombre público<input name="public_name" required/></label><label className="wide">Especialidades separadas por comas<input name="specialties" placeholder="Fades, Barba, Cortes clásicos"/></label><label className="wide">Biografía<textarea name="biography"/></label><button className="button button-dark wide" disabled={busy}>Crear nuevo peluquero</button></form>
+                </DashboardModal>
+                <DashboardModal title="Integrar nuevo cajero" description="La persona debe iniciar sesión con Google una vez antes de recibir acceso de caja." triggerLabel="Nuevo cajero" triggerIcon={<UserRoundCog/>}>
+                  <form className="admin-form" onSubmit={addCashier} acceptCharset="UTF-8"><label className="wide">Correo de la cuenta Google<input name="email" type="email" inputMode="email" autoComplete="email" required/></label><button className="button button-dark wide" disabled={busy}>Habilitar acceso de caja</button></form>
+                </DashboardModal>
+              </div>
+            </div>
+
+            <section className="team-role-section">
+              <header><div><Scissors/><span><small>ROL OPERATIVO</small><h2>Peluqueros</h2></span></div><b>{activeBarbers.length} activos</b></header>
+              <div className="admin-list editable-list team-list">{activeBarbers.length ? activeBarbers.map((item)=><article key={item.id}><div><strong>{String(item.display_name)}</strong><span><i className="team-status-dot"/> Activo · {Array.isArray(item.specialties)?item.specialties.join(", "):"Sin especialidades"} · {item.user_id?"Cuenta vinculada":"Sin cuenta Google"}</span></div><div className="dash-row-actions"><button disabled={busy} onClick={()=>toggleBarber(item.id,false)}>Desactivar</button><DashboardModal title={`Editar ${String(item.display_name)}`} description="Actualiza su perfil público o vincula el acceso Google." triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateBarber(event,item.id)} acceptCharset="UTF-8"><label>Nombre público<input name="display_name" defaultValue={String(item.display_name)} required/></label><label>Especialidades<input name="specialties" defaultValue={Array.isArray(item.specialties)?item.specialties.join(", "):""}/></label><label className="wide">Biografía<textarea name="bio" defaultValue={String(item.bio??"")}/></label><button className="button button-dark wide" disabled={busy}>Guardar información</button></form>{!item.user_id&&<form className="link-account-form" onSubmit={(event)=>linkBarber(event,item.id)}><input name="account_email" type="email" placeholder="correo Google del peluquero" required/><button disabled={busy}>Vincular cuenta Google</button></form>}</DashboardModal></div></article>) : <p className="admin-help">No hay peluqueros activos.</p>}</div>
+            </section>
+
+            <section className="team-role-section">
+              <header><div><UserRoundCog/><span><small>ROL OPERATIVO</small><h2>Cajeros</h2></span></div><b>{activeCashiers.length} activos</b></header>
+              <div className="admin-list team-list">{activeCashiers.length ? activeCashiers.map((item)=>{const profile=item.profiles as Row|null;const email=String(profile?.email??"");return <article key={item.id}><div><strong>{String(profile?.full_name??profile?.email??"Cajero")}</strong><span><i className="team-status-dot"/> Activo · {email} · Acceso a terminal de caja</span></div><button disabled={busy||!email} onClick={()=>toggleCashier(email,false)}>Desactivar</button></article>}) : <p className="admin-help">No hay cajeros activos.</p>}</div>
+            </section>
+
+            <details className="inactive-team">
+              <summary><span>Ver personal inactivo</span><b>{inactiveTeamCount}</b></summary>
+              <div className="inactive-team-content">
+                <section><h3>Peluqueros inactivos</h3><div className="admin-list team-list">{inactiveBarbers.length ? inactiveBarbers.map((item)=><article key={item.id}><div><strong>{String(item.display_name)}</strong><span>Inactivo · {Array.isArray(item.specialties)?item.specialties.join(", "):"Sin especialidades"}</span></div><button disabled={busy} onClick={()=>toggleBarber(item.id,true)}>Reactivar</button></article>) : <p className="admin-help">No hay peluqueros inactivos.</p>}</div></section>
+                <section><h3>Cajeros inactivos</h3><div className="admin-list team-list">{inactiveCashiers.length ? inactiveCashiers.map((item)=>{const profile=item.profiles as Row|null;const email=String(profile?.email??"");return <article key={item.id}><div><strong>{String(profile?.full_name??profile?.email??"Cajero")}</strong><span>Inactivo · {email}</span></div><button disabled={busy||!email} onClick={()=>toggleCashier(email,true)}>Reactivar</button></article>}) : <p className="admin-help">No hay cajeros inactivos.</p>}</div></section>
+              </div>
+            </details>
+          </div>}
 
           {section === "administradores" && isSuperadmin && <div className="admin-panel">
             <div className="admin-title"><ShieldCheck /><div><p>SEGURIDAD</p><h1>Administradores</h1></div></div>

@@ -879,3 +879,19 @@
   ){border-left-width:4px}
   .panel-theme :is(.admin-metrics,.analytics-kpis,.cashier-kpis,.analytics-snapshot) > :is(div,article){border-left-width:5px}
 }
+
+/* Directorio de equipo agrupado por rol y estado. */
+.team-intro{gap:20px}.team-create-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:9px}
+.team-role-section{margin-top:18px;overflow:hidden;border:1px solid var(--dash-line);border-left:4px solid #3478f6;border-radius:14px;background:rgba(63,127,242,.035)}
+.team-role-section:nth-of-type(2){border-left-color:#16a47a}
+.team-role-section>header{min-height:68px;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;gap:15px;border-bottom:1px solid var(--dash-line);background:rgba(61,121,232,.065)}
+.team-role-section>header>div{display:flex;align-items:center;gap:12px}.team-role-section>header>div>svg{width:38px;height:38px;padding:9px;color:var(--dash-cyan);border:1px solid var(--dash-line);border-radius:10px;background:rgba(64,133,244,.08)}
+.team-role-section>header span{display:grid;gap:3px}.team-role-section>header small{color:var(--dash-cyan);font:800 8px sans-serif;letter-spacing:.14em}.team-role-section>header h2{margin:0;color:var(--dash-text);font:600 22px var(--serif)}
+.team-role-section>header>b{padding:7px 10px;color:var(--dash-cyan);border:1px solid var(--dash-line);border-radius:999px;background:rgba(66,137,246,.07);font-size:9px;text-transform:uppercase}
+.team-list{margin:0;padding:0 16px;border-top:0}.team-list>article:last-child{border-bottom:0}.team-list .team-status-dot{width:7px;height:7px;display:inline-block;border-radius:50%;background:#13a47a;box-shadow:0 0 9px rgba(19,164,122,.55)}
+.inactive-team{margin-top:24px;overflow:hidden;border:1px solid var(--dash-line);border-radius:13px;background:rgba(75,112,178,.035)}
+.inactive-team>summary{min-height:54px;padding:0 17px;display:flex;align-items:center;gap:12px;color:var(--dash-text);cursor:pointer;list-style:none;font-size:11px;font-weight:800}.inactive-team>summary::-webkit-details-marker{display:none}.inactive-team>summary::before{content:"+";width:25px;height:25px;display:grid;place-items:center;color:var(--dash-cyan);border:1px solid var(--dash-line);border-radius:7px;background:rgba(65,129,245,.07);font-size:16px}.inactive-team[open]>summary::before{content:"−"}.inactive-team>summary>b{margin-left:auto;min-width:28px;padding:5px 8px;text-align:center;color:var(--dash-muted);border-radius:999px;background:rgba(75,112,178,.1);font-size:9px}.inactive-team-content{padding:0 17px 17px;display:grid;grid-template-columns:1fr 1fr;gap:14px;border-top:1px solid var(--dash-line)}
+.inactive-team-content>section{min-width:0;padding-top:16px}.inactive-team-content h3{margin:0 0 8px;color:var(--dash-muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+.panel-theme[data-panel-theme="light"] .team-role-section{background:rgba(238,246,255,.78)}.panel-theme[data-panel-theme="light"] .team-role-section>header{background:#e4f0ff}.panel-theme[data-panel-theme="light"] .inactive-team{background:#edf5ff}
+.panel-theme[data-panel-theme="dark"] .team-role-section{background:rgba(15,29,52,.72)}.panel-theme[data-panel-theme="dark"] .team-role-section>header{background:#192c4a}.panel-theme[data-panel-theme="dark"] .inactive-team{background:#111e35}
+@media(max-width:760px){.team-intro{align-items:stretch}.team-create-actions{display:grid;grid-template-columns:1fr}.team-create-actions>.dash-action{width:100%}.team-role-section>header{align-items:flex-start}.inactive-team-content{grid-template-columns:1fr}.team-list{padding:0 10px}}

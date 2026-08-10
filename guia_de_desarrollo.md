@@ -1957,6 +1957,8 @@ Usuarios y paneles:
 [x] Selector de modos del header corregido para sus enlaces reales, con estados normal, hover y activo claramente diferenciados.
 [x] Sistema reutilizable de tarjetas privadas con contorno azul, acento lateral, relieve suave y variantes semánticas azul, verde y naranja para indicadores; no afecta al sitio público.
 [x] Alta, vinculacion, edicion y desactivacion de peluqueros.
+[x] Página Equipo agrupada por roles con peluqueros y cajeros activos, altas de ambos perfiles y personal inactivo concentrado en un bloque desplegable al final.
+[x] Perfil persistente de cajero con estado activo/inactivo para retirar y reactivar acceso sin perder su pertenencia histórica al equipo.
 [x] Administracion y bloqueo manual de clientes.
 [~] Existe una invitacion administrativa pendiente; falta que el negocio complete y pruebe el ingreso del administrador invitado.
 [ ] Confirmar al menos dos administradores operativos si se mantiene la regla de continuidad definida en la guia original.
