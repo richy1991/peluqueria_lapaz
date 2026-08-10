@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import {
   ArrowLeft,
@@ -63,7 +63,8 @@ export function FloatingSupportChat() {
   const [draft, setDraft] = useState("");
   const [peerTyping, setPeerTyping] = useState(false);
 
-  const messageEndRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const composeRef = useRef<HTMLFormElement>(null);
   const typingChannelRef = useRef<RealtimeChannel | null>(null);
@@ -82,6 +83,18 @@ export function FloatingSupportChat() {
   useEffect(() => { userIdRef.current = userId; }, [userId]);
   useEffect(() => { supportRef.current = support; }, [support]);
   useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
+
+  const focusMessageInput = useCallback((delay = 0) => {
+    const focus = () => {
+      const input = messageInputRef.current;
+      if (!input || input.disabled || !selectedRef.current) return;
+      input.focus({ preventScroll: true });
+      const length = input.value.length;
+      input.setSelectionRange(length, length);
+    };
+    window.requestAnimationFrame(focus);
+    if (delay > 0) window.setTimeout(focus, delay);
+  }, []);
 
   const unlockAudio = useCallback(() => {
     if (!audioContextRef.current) audioContextRef.current = new AudioContext();
@@ -274,7 +287,7 @@ export function FloatingSupportChat() {
     setMessages([]);
     setPeerTyping(false);
     await loadMessages(id, true);
-    window.setTimeout(() => messageInputRef.current?.focus(), 80);
+    focusMessageInput(80);
   }
 
   async function send(event: FormEvent<HTMLFormElement>) {
@@ -300,7 +313,7 @@ export function FloatingSupportChat() {
       payload: { userId: userIdRef.current, typing: false },
     });
     await loadMessages(target);
-    window.requestAnimationFrame(() => messageInputRef.current?.focus());
+    focusMessageInput(80);
   }
 
   useEffect(() => {
@@ -377,8 +390,56 @@ export function FloatingSupportChat() {
   }, [loadMessages]);
 
   useEffect(() => {
-    messageEndRef.current?.scrollIntoView({ block: "end" });
-  }, [messages, peerTyping]);
+    const thread = messagesRef.current;
+    if (thread) thread.scrollTo({ top: thread.scrollHeight, behavior: "smooth" });
+    if (open && selected) focusMessageInput(60);
+  }, [focusMessageInput, messages, open, peerTyping, selected]);
+
+  useEffect(() => {
+    if (!open) return;
+    const panel = panelRef.current;
+    const viewport = window.visualViewport;
+    const isMobile = window.matchMedia("(max-width: 760px)");
+    const previousOverflow = document.body.style.overflow;
+
+    const updateViewport = () => {
+      if (!panel || !isMobile.matches) {
+        panel?.style.removeProperty("--support-modal-top");
+        panel?.style.removeProperty("--support-modal-height");
+        document.body.style.overflow = previousOverflow;
+        return;
+      }
+      document.body.style.overflow = "hidden";
+      const visibleHeight = viewport?.height ?? window.innerHeight;
+      const visibleTop = viewport?.offsetTop ?? 0;
+      const keyboardOpen = window.innerHeight - visibleHeight > 110;
+      const modalHeight = keyboardOpen ? visibleHeight : Math.min(visibleHeight * 0.82, 680);
+      const modalTop = visibleTop + visibleHeight - modalHeight;
+      panel.style.setProperty("--support-modal-top", `${Math.max(0, modalTop)}px`);
+      panel.style.setProperty("--support-modal-height", `${Math.max(280, modalHeight)}px`);
+      window.requestAnimationFrame(() => {
+        const thread = messagesRef.current;
+        if (thread) thread.scrollTop = thread.scrollHeight;
+      });
+    };
+
+    updateViewport();
+    viewport?.addEventListener("resize", updateViewport);
+    viewport?.addEventListener("scroll", updateViewport);
+    window.addEventListener("resize", updateViewport);
+    return () => {
+      viewport?.removeEventListener("resize", updateViewport);
+      viewport?.removeEventListener("scroll", updateViewport);
+      window.removeEventListener("resize", updateViewport);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
+  const handlePanelClick = useCallback((event: ReactMouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest("button,input,textarea,select,a,[data-no-refocus='true']")) return;
+    focusMessageInput(20);
+  }, [focusMessageInput]);
 
   useEffect(() => {
     if (!open) return;
@@ -427,7 +488,7 @@ export function FloatingSupportChat() {
       )}
 
       {open && (
-        <section className={`support-window ${support ? "support-agent" : "support-client"}`} aria-label="Atención al cliente" role="dialog" aria-modal="true">
+        <section ref={panelRef} onClick={handlePanelClick} className={`support-window ${support ? "support-agent" : "support-client"}`} aria-label="Atención al cliente" role="dialog" aria-modal="true">
           <header>
             <div className={`support-logo ${support && selected ? "is-contact" : ""}`}>
               {support && selected ? contactInitials : <Headphones />}
@@ -490,7 +551,7 @@ export function FloatingSupportChat() {
                       </div>
                     </div>
 
-                    <div className="support-messages" aria-live="polite">
+                    <div ref={messagesRef} className="support-messages" aria-live="polite">
                       {messages.map((message, index) => {
                         const mine = message.sender_id === userId;
                         const previous = messages[index - 1];
@@ -512,7 +573,6 @@ export function FloatingSupportChat() {
                       })}
                       {!messages.length && <div className="support-empty"><Headphones /><p>Inicia una conversación privada con atención al cliente.</p></div>}
                       {peerTyping && <div className="support-typing"><span><i /><i /><i /></span><small>Escribiendo…</small></div>}
-                      <div ref={messageEndRef} />
                     </div>
 
                     <form ref={composeRef} className="support-compose" onSubmit={send}>
