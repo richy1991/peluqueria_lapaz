@@ -1,9 +1,11 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import {
   ArrowLeft,
   Check,
+  CheckCheck,
   Headphones,
   MessageCircle,
   Paperclip,
@@ -13,150 +15,360 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
-type Row = Record<string, unknown>;
+type Profile = { full_name?: string | null; email?: string | null };
+type Conversation = {
+  id: string;
+  subject?: string;
+  status?: string;
+  updated_at?: string;
+  created_by?: string;
+  profiles?: Profile | null;
+};
+type ChatMessage = {
+  id: string;
+  conversation_id: string;
+  body: string;
+  created_at: string;
+  sender_id: string;
+  read_at?: string | null;
+  read_by?: string | null;
+  profiles?: Profile | null;
+};
+
+function displayName(conversation?: Conversation) {
+  return conversation?.profiles?.full_name
+    ?? conversation?.profiles?.email
+    ?? conversation?.subject
+    ?? "Cliente";
+}
+
+function badgeValue(value: number) {
+  return value > 99 ? "99+" : String(value);
+}
 
 export function FloatingSupportChat() {
+  const supabase = useMemo(() => createClient(), []);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [userId, setUserId] = useState("");
   const [support, setSupport] = useState(false);
-  const [conversations, setConversations] = useState<Row[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Row[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [unreadByConversation, setUnreadByConversation] = useState<Record<string, number>>({});
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState("");
+  const [peerTyping, setPeerTyping] = useState(false);
+
   const messageEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const composeRef = useRef<HTMLFormElement>(null);
+  const typingChannelRef = useRef<RealtimeChannel | null>(null);
+  const typingStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const peerTypingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingBroadcastRef = useRef(0);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const openRef = useRef(false);
+  const selectedRef = useRef<string | null>(null);
+  const userIdRef = useRef("");
+  const supportRef = useRef(false);
+  const conversationsRef = useRef<Conversation[]>([]);
 
-  async function loadMessages(id: string) {
-    const { data, error: loadError } = await createClient()
-      .from("messages")
-      .select("id,body,created_at,sender_id,profiles!messages_sender_id_fkey(full_name,email)")
-      .eq("conversation_id", id)
-      .order("created_at");
+  useEffect(() => { openRef.current = open; }, [open]);
+  useEffect(() => { selectedRef.current = selected; }, [selected]);
+  useEffect(() => { userIdRef.current = userId; }, [userId]);
+  useEffect(() => { supportRef.current = support; }, [support]);
+  useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
 
-    if (loadError) setError(loadError.message);
-    else setMessages((data ?? []) as unknown as Row[]);
-  }
+  const unlockAudio = useCallback(() => {
+    if (!audioContextRef.current) audioContextRef.current = new AudioContext();
+    if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
+    return audioContextRef.current;
+  }, []);
 
-  async function initialize() {
-    setOpen(true);
-    setLoading(true);
-    setError("");
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      setError("Inicia sesión para conversar con LEGEND CLUB.");
-      setLoading(false);
-      return;
+  const playIncomingSound = useCallback(() => {
+    try {
+      const audio = unlockAudio();
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(660, audio.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(880, audio.currentTime + 0.11);
+      gain.gain.setValueAtTime(0.0001, audio.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.11, audio.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.2);
+      oscillator.connect(gain);
+      gain.connect(audio.destination);
+      oscillator.start();
+      oscillator.stop(audio.currentTime + 0.21);
+    } catch {
+      // Algunos navegadores bloquean audio hasta la primera interacción del usuario.
     }
+  }, [unlockAudio]);
 
-    setUserId(user.id);
-    const [{ data: isAdmin }, { data: isCashier }] = await Promise.all([
-      supabase.rpc("is_admin"),
-      supabase.rpc("is_cashier"),
-    ]);
-    const isSupport = Boolean(isAdmin || isCashier);
-    setSupport(isSupport);
+  useEffect(() => {
+    const enableSound = () => unlockAudio();
+    window.addEventListener("pointerdown", enableSound, { once: true });
+    return () => window.removeEventListener("pointerdown", enableSound);
+  }, [unlockAudio]);
 
-    let rows: Row[] = [];
-    let target: string | null = null;
-
+  const fetchConversations = useCallback(async (isSupport: boolean, createMissing = false) => {
     if (isSupport) {
       const { data, error: conversationError } = await supabase
         .from("conversations")
         .select("id,subject,status,updated_at,created_by,profiles!conversations_created_by_fkey(full_name,email)")
         .order("updated_at", { ascending: false })
         .limit(100);
-
-      if (conversationError) setError(conversationError.message);
-      rows = (data ?? []) as unknown as Row[];
-      target = String(rows[0]?.id ?? "") || null;
-    } else {
-      const { data: id, error: conversationError } = await supabase.rpc(
-        "get_or_create_support_conversation",
-      );
-      if (conversationError) setError(conversationError.message);
-      else {
-        target = String(id);
-        const { data } = await supabase
-          .from("conversations")
-          .select("id,subject,status,updated_at")
-          .eq("id", id)
-          .single();
-        if (data) rows = [data];
-      }
+      if (conversationError) throw conversationError;
+      return (data ?? []) as unknown as Conversation[];
     }
 
+    const conversationResult = await supabase
+      .from("conversations")
+      .select("id,subject,status,updated_at,created_by")
+      .order("updated_at", { ascending: false })
+      .limit(1);
+    let data = conversationResult.data;
+    const conversationError = conversationResult.error;
+    if (conversationError) throw conversationError;
+
+    if (!data?.length && createMissing) {
+      const { data: id, error: createError } = await supabase.rpc("get_or_create_support_conversation");
+      if (createError) throw createError;
+      const result = await supabase
+        .from("conversations")
+        .select("id,subject,status,updated_at,created_by")
+        .eq("id", id)
+        .single();
+      if (result.error) throw result.error;
+      data = [result.data];
+    }
+    return (data ?? []) as unknown as Conversation[];
+  }, [supabase]);
+
+  const refreshUnread = useCallback(async (
+    rows: Conversation[],
+    currentUserId: string,
+    isSupport: boolean,
+  ) => {
+    if (!rows.length || !currentUserId) {
+      setUnreadByConversation({});
+      return;
+    }
+    const ids = rows.map((item) => item.id);
+    const { data, error: unreadError } = await supabase
+      .from("messages")
+      .select("conversation_id,sender_id,read_at")
+      .in("conversation_id", ids)
+      .is("read_at", null);
+    if (unreadError) return;
+
+    const creators = new Map(rows.map((item) => [item.id, item.created_by]));
+    const counts: Record<string, number> = {};
+    for (const message of data ?? []) {
+      const conversationId = String(message.conversation_id);
+      const senderId = String(message.sender_id);
+      const incoming = isSupport
+        ? senderId === String(creators.get(conversationId) ?? "")
+        : senderId !== currentUserId;
+      if (incoming) counts[conversationId] = (counts[conversationId] ?? 0) + 1;
+    }
+    setUnreadByConversation(counts);
+  }, [supabase]);
+
+  const refreshIndex = useCallback(async (createMissing = false) => {
+    const currentUserId = userIdRef.current;
+    if (!currentUserId) return [] as Conversation[];
+    const rows = await fetchConversations(supportRef.current, createMissing);
+    conversationsRef.current = rows;
     setConversations(rows);
-    setSelected(target);
-    if (target) await loadMessages(target);
-    setLoading(false);
+    await refreshUnread(rows, currentUserId, supportRef.current);
+    return rows;
+  }, [fetchConversations, refreshUnread]);
+
+  const markConversationRead = useCallback(async (id: string) => {
+    if (!id || document.visibilityState !== "visible") return;
+    const { error: readError } = await supabase.rpc("mark_chat_conversation_read", {
+      target_conversation: id,
+    });
+    if (!readError) {
+      setUnreadByConversation((current) => ({ ...current, [id]: 0 }));
+    }
+  }, [supabase]);
+
+  const loadMessages = useCallback(async (id: string, markAsRead = false) => {
+    if (markAsRead) await markConversationRead(id);
+    const { data, error: loadError } = await supabase
+      .from("messages")
+      .select("id,conversation_id,body,created_at,sender_id,read_at,read_by,profiles!messages_sender_id_fkey(full_name,email)")
+      .eq("conversation_id", id)
+      .order("created_at");
+    if (loadError) setError(loadError.message);
+    else if (selectedRef.current === id) setMessages((data ?? []) as unknown as ChatMessage[]);
+  }, [markConversationRead, supabase]);
+
+  const bootstrap = useCallback(async (createMissing = false) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { rows: [] as Conversation[], isSupport: false, currentUserId: "" };
+    const [{ data: isAdmin }, { data: isCashier }] = await Promise.all([
+      supabase.rpc("is_admin"),
+      supabase.rpc("is_cashier"),
+    ]);
+    const isSupport = Boolean(isAdmin || isCashier);
+    userIdRef.current = user.id;
+    supportRef.current = isSupport;
+    setUserId(user.id);
+    setSupport(isSupport);
+    const rows = await fetchConversations(isSupport, createMissing);
+    conversationsRef.current = rows;
+    setConversations(rows);
+    await refreshUnread(rows, user.id, isSupport);
+    return { rows, isSupport, currentUserId: user.id };
+  }, [fetchConversations, refreshUnread, supabase]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void bootstrap(false).catch(() => undefined), 0);
+    return () => window.clearTimeout(timer);
+  }, [bootstrap]);
+
+  async function initialize() {
+    unlockAudio();
+    openRef.current = true;
+    setOpen(true);
+    setLoading(true);
+    setError("");
+    try {
+      const result = userIdRef.current
+        ? { rows: await refreshIndex(true), currentUserId: userIdRef.current }
+        : await bootstrap(true);
+      if (!result.currentUserId) {
+        setError("Inicia sesión para conversar con LEGEND CLUB.");
+        return;
+      }
+      const target = selectedRef.current ?? result.rows[0]?.id ?? null;
+      selectedRef.current = target;
+      setSelected(target);
+      if (target) await loadMessages(target, true);
+    } catch (chatError) {
+      setError(chatError instanceof Error ? chatError.message : "No se pudo abrir el chat.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function choose(id: string) {
+    selectedRef.current = id;
     setSelected(id);
     setMessages([]);
-    await loadMessages(id);
+    setPeerTyping(false);
+    await loadMessages(id, true);
     window.setTimeout(() => messageInputRef.current?.focus(), 80);
   }
 
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selected) return;
-
+    const target = selectedRef.current;
     const body = draft.trim();
-    if (!body) return;
-
+    if (!target || !body) return;
     setBusy(true);
     setError("");
-    const { error: sendError } = await createClient().rpc("send_chat_message", {
-      target_conversation: selected,
+    const { error: sendError } = await supabase.rpc("send_chat_message", {
+      target_conversation: target,
       message_body: body,
     });
     setBusy(false);
-
     if (sendError) {
       setError(sendError.message);
       return;
     }
-
     setDraft("");
-    await loadMessages(selected);
+    void typingChannelRef.current?.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { userId: userIdRef.current, typing: false },
+    });
+    await loadMessages(target);
     window.requestAnimationFrame(() => messageInputRef.current?.focus());
   }
 
   useEffect(() => {
-    if (!open || !selected) return;
-    const supabase = createClient();
+    if (!userId) return;
     const channel = supabase
-      .channel(`support-${selected}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${selected}`,
-        },
-        () => void loadMessages(selected),
-      )
+      .channel(`support-inbox-${userId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, async (payload) => {
+        const row = (payload.eventType === "DELETE" ? payload.old : payload.new) as Partial<ChatMessage>;
+        const conversationId = String(row.conversation_id ?? "");
+        if (!conversationId) return;
+        const rows = await refreshIndex(false).catch(() => conversationsRef.current);
+        const conversation = rows.find((item) => item.id === conversationId);
+        const incoming = supportRef.current
+          ? String(row.sender_id) === String(conversation?.created_by ?? "")
+          : String(row.sender_id) !== userIdRef.current;
+        if (payload.eventType === "INSERT" && incoming) playIncomingSound();
+        if (openRef.current && selectedRef.current === conversationId) {
+          const visible = document.visibilityState === "visible";
+          await loadMessages(conversationId, visible);
+        }
+      })
       .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [loadMessages, playIncomingSound, refreshIndex, supabase, userId]);
 
+  useEffect(() => {
+    if (!open || !selected || !userId) return;
+    const channel = supabase
+      .channel(`support-typing-${selected}`, { config: { broadcast: { self: false } } })
+      .on("broadcast", { event: "typing" }, ({ payload }) => {
+        if (String(payload?.userId) === userIdRef.current) return;
+        if (peerTypingTimerRef.current) clearTimeout(peerTypingTimerRef.current);
+        const active = Boolean(payload?.typing);
+        setPeerTyping(active);
+        if (active) {
+          peerTypingTimerRef.current = setTimeout(() => setPeerTyping(false), 2600);
+        }
+      })
+      .subscribe();
+    typingChannelRef.current = channel;
     return () => {
+      typingChannelRef.current = null;
+      if (peerTypingTimerRef.current) clearTimeout(peerTypingTimerRef.current);
       void supabase.removeChannel(channel);
     };
-  }, [open, selected]);
+  }, [open, selected, supabase, userId]);
+
+  useEffect(() => {
+    const channel = typingChannelRef.current;
+    if (!channel || !open || !selected || !userId) return;
+    if (typingStopTimerRef.current) clearTimeout(typingStopTimerRef.current);
+    const now = Date.now();
+    if (draft.trim() && now - lastTypingBroadcastRef.current > 650) {
+      lastTypingBroadcastRef.current = now;
+      void channel.send({ type: "broadcast", event: "typing", payload: { userId, typing: true } });
+    }
+    typingStopTimerRef.current = setTimeout(() => {
+      void channel.send({ type: "broadcast", event: "typing", payload: { userId, typing: false } });
+    }, 1250);
+    return () => {
+      if (typingStopTimerRef.current) clearTimeout(typingStopTimerRef.current);
+    };
+  }, [draft, open, selected, userId]);
+
+  useEffect(() => {
+    const markVisibleConversation = () => {
+      const target = selectedRef.current;
+      if (document.visibilityState === "visible" && openRef.current && target) {
+        void loadMessages(target, true);
+      }
+    };
+    document.addEventListener("visibilitychange", markVisibleConversation);
+    return () => document.removeEventListener("visibilitychange", markVisibleConversation);
+  }, [loadMessages]);
 
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ block: "end" });
-  }, [messages]);
+  }, [messages, peerTyping]);
 
   useEffect(() => {
     if (!open) return;
@@ -167,26 +379,15 @@ export function FloatingSupportChat() {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [open]);
 
-  const filtered = conversations.filter((item) => {
-    const owner = item.profiles as Row | null;
-    return String(owner?.full_name ?? owner?.email ?? item.subject ?? "")
-      .toLowerCase()
-      .includes(query.toLowerCase());
-  });
+  const filtered = conversations.filter((item) => displayName(item)
+    .toLowerCase()
+    .includes(query.toLowerCase()));
+  const selectedConversation = conversations.find((item) => item.id === selected);
+  const contactName = support ? displayName(selectedConversation) : "Soporte LEGEND CLUB";
+  const contactInitials = support ? contactName.slice(0, 2).toUpperCase() : "LC";
+  const unreadTotal = Object.values(unreadByConversation).reduce((total, value) => total + value, 0);
 
-  const selectedOwner = useMemo(() => {
-    const conversation = conversations.find((item) => String(item.id) === selected);
-    return conversation?.profiles as Row | null;
-  }, [conversations, selected]);
-
-  const contactName = support
-    ? String(selectedOwner?.full_name ?? selectedOwner?.email ?? "Cliente")
-    : "Soporte LEGEND CLUB";
-  const contactInitials = support
-    ? contactName.slice(0, 2).toUpperCase()
-    : "LC";
-
-  function formatConversationTime(value: unknown) {
+  function formatConversationTime(value?: string) {
     if (!value) return "";
     return new Intl.DateTimeFormat("es-BO", {
       day: "2-digit",
@@ -194,78 +395,59 @@ export function FloatingSupportChat() {
       hour: "2-digit",
       minute: "2-digit",
       timeZone: "America/La_Paz",
-    }).format(new Date(String(value)));
+    }).format(new Date(value));
   }
 
-  function formatMessageDate(value: unknown) {
+  function formatMessageDate(value: string) {
     return new Intl.DateTimeFormat("es-BO", {
       weekday: "long",
       day: "numeric",
       month: "long",
       timeZone: "America/La_Paz",
-    }).format(new Date(String(value)));
+    }).format(new Date(value));
   }
 
   return (
     <>
       {!open && (
-        <button className="support-fab" onClick={initialize} aria-label="Abrir atención al cliente">
+        <button className="support-fab" onClick={initialize} aria-label={unreadTotal ? `Abrir chat, ${unreadTotal} mensajes sin leer` : "Abrir atención al cliente"}>
           <MessageCircle />
-          <i />
+          {unreadTotal > 0 ? <b className="support-unread-badge">{badgeValue(unreadTotal)}</b> : <i />}
         </button>
       )}
 
       {open && (
-        <section
-          className={`support-window ${support ? "support-agent" : "support-client"}`}
-          aria-label="Atención al cliente"
-          role="dialog"
-          aria-modal="true"
-        >
+        <section className={`support-window ${support ? "support-agent" : "support-client"}`} aria-label="Atención al cliente" role="dialog" aria-modal="true">
           <header>
             <div className="support-logo"><Headphones /></div>
             <div className="support-header-copy">
               <strong>{support && selected ? contactName : "LEGEND CLUB"}</strong>
-              <span><i /> {support && selected ? "Conversación activa" : "Atención privada"}</span>
+              <span className={peerTyping ? "is-typing" : ""}><i /> {peerTyping ? "Escribiendo…" : support && selected ? "Conversación activa" : "Atención privada"}</span>
             </div>
             <button className="support-close" onClick={() => setOpen(false)} aria-label="Cerrar chat" title="Cerrar"><X /></button>
           </header>
 
           {loading ? (
-            <div className="support-loading">
-              <MessageCircle />
-              <p>Conectando con atención…</p>
-            </div>
+            <div className="support-loading"><MessageCircle /><p>Conectando con atención…</p></div>
           ) : error && !userId ? (
             <div className="support-loading"><p>{error}</p></div>
           ) : (
             <div className="support-layout">
               {support && (
                 <aside className={selected ? "has-selection" : ""}>
-                  <div className="support-search">
-                    <Search />
-                    <input
-                      value={query}
-                      onChange={(event) => setQuery(event.target.value)}
-                      placeholder="Buscar contacto"
-                    />
-                  </div>
+                  <div className="support-search"><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar contacto" /></div>
                   <small>CONVERSACIONES</small>
                   {filtered.map((item) => {
-                    const owner = item.profiles as Row | null;
-                    const name = String(owner?.full_name ?? owner?.email ?? item.subject ?? "Cliente");
+                    const name = displayName(item);
+                    const unread = unreadByConversation[item.id] ?? 0;
                     return (
-                      <button
-                        className={String(item.id) === selected ? "active" : ""}
-                        key={String(item.id)}
-                        onClick={() => choose(String(item.id))}
-                      >
+                      <button className={item.id === selected ? "active" : ""} key={item.id} onClick={() => choose(item.id)}>
                         <span>{name.slice(0, 2).toUpperCase()}</span>
-                        <div>
-                          <strong>{name}</strong>
-                          <small>{String(item.status) === "open" ? "Conversación activa" : "Cerrada"}</small>
-                        </div>
-                        <time>{formatConversationTime(item.updated_at)}</time>
+                        <div><strong>{name}</strong><small>{item.status === "open" ? "Conversación activa" : "Cerrada"}</small></div>
+                        <span className="support-conversation-meta">
+                          <time>{formatConversationTime(item.updated_at)}</time>
+                          {unread > 0 && <b className="support-contact-unread">{badgeValue(unread)}</b>}
+                        </span>
                       </button>
                     );
                   })}
@@ -277,74 +459,41 @@ export function FloatingSupportChat() {
                 {selected ? (
                   <>
                     <div className="support-contact">
-                      {support && (
-                        <button onClick={() => setSelected(null)} aria-label="Volver a conversaciones">
-                          <ArrowLeft />
-                        </button>
-                      )}
+                      {support && <button onClick={() => { selectedRef.current = null; setSelected(null); setPeerTyping(false); }} aria-label="Volver a conversaciones"><ArrowLeft /></button>}
                       <span className="support-contact-avatar">{contactInitials}</span>
                       <div>
                         <strong>{contactName}</strong>
-                        <span>
-                          {support
-                            ? "Atención individual"
-                            : "Solo tú y nuestro equipo pueden ver este chat"}
-                        </span>
+                        <span className={peerTyping ? "is-typing" : ""}>{peerTyping ? "Escribiendo…" : support ? "Atención individual" : "Solo tú y nuestro equipo pueden ver este chat"}</span>
                       </div>
                     </div>
 
                     <div className="support-messages" aria-live="polite">
                       {messages.map((message, index) => {
-                        const mine = String(message.sender_id) === userId;
-                        const sender = message.profiles as Row | null;
+                        const mine = message.sender_id === userId;
                         const previous = messages[index - 1];
-                        const currentDay = new Date(String(message.created_at)).toLocaleDateString("es-BO", { timeZone: "America/La_Paz" });
-                        const previousDay = previous
-                          ? new Date(String(previous.created_at)).toLocaleDateString("es-BO", { timeZone: "America/La_Paz" })
-                          : "";
+                        const currentDay = new Date(message.created_at).toLocaleDateString("es-BO", { timeZone: "America/La_Paz" });
+                        const previousDay = previous ? new Date(previous.created_at).toLocaleDateString("es-BO", { timeZone: "America/La_Paz" }) : "";
                         return (
-                          <div className="support-message-row" key={String(message.id)}>
+                          <div className="support-message-row" key={message.id}>
                             {currentDay !== previousDay && <div className="support-date"><span>{formatMessageDate(message.created_at)}</span></div>}
                             <article className={mine ? "mine" : ""}>
-                              <small>
-                                {mine
-                                  ? "Tú"
-                                  : support
-                                    ? String(sender?.full_name ?? sender?.email ?? "Cliente")
-                                    : "LEGEND CLUB"}
-                              </small>
-                              <p>{String(message.body)}</p>
+                              <small>{mine ? "Tú" : support ? message.profiles?.full_name ?? message.profiles?.email ?? "Cliente" : "LEGEND CLUB"}</small>
+                              <p>{message.body}</p>
                               <time>
-                                {new Intl.DateTimeFormat("es-BO", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                  timeZone: "America/La_Paz",
-                                }).format(new Date(String(message.created_at)))}
-                                {mine && <Check aria-label="Enviado" />}
+                                {new Intl.DateTimeFormat("es-BO", { hour: "2-digit", minute: "2-digit", timeZone: "America/La_Paz" }).format(new Date(message.created_at))}
+                                {mine && (message.read_at ? <CheckCheck className="is-read" aria-label="Leído" /> : <Check aria-label="Enviado" />)}
                               </time>
                             </article>
                           </div>
                         );
                       })}
-                      {!messages.length && (
-                        <div className="support-empty">
-                          <Headphones />
-                          <p>Inicia una conversación privada con atención al cliente.</p>
-                        </div>
-                      )}
+                      {!messages.length && <div className="support-empty"><Headphones /><p>Inicia una conversación privada con atención al cliente.</p></div>}
+                      {peerTyping && <div className="support-typing"><span><i /><i /><i /></span><small>{contactName} está escribiendo</small></div>}
                       <div ref={messageEndRef} />
                     </div>
 
                     <form ref={composeRef} className="support-compose" onSubmit={send}>
-                      <button
-                        className="support-attach"
-                        type="button"
-                        title="Envío de archivos disponible próximamente"
-                        aria-label="Adjuntar archivo, disponible próximamente"
-                        disabled
-                      >
-                        <Paperclip />
-                      </button>
+                      <button className="support-attach" type="button" title="Envío de archivos disponible próximamente" aria-label="Adjuntar archivo, disponible próximamente" disabled><Paperclip /></button>
                       <textarea
                         ref={messageInputRef}
                         name="body"
@@ -362,17 +511,12 @@ export function FloatingSupportChat() {
                         aria-label="Mensaje"
                         required
                       />
-                      <button className="support-send" disabled={busy || !draft.trim()} aria-label="Enviar mensaje">
-                        <Send />
-                      </button>
+                      <button className="support-send" disabled={busy || !draft.trim()} aria-label="Enviar mensaje"><Send /></button>
                     </form>
                     {error && <small className="support-error">{error}</small>}
                   </>
                 ) : (
-                  <div className="support-empty">
-                    <MessageCircle />
-                    <p>Selecciona un contacto para responder.</p>
-                  </div>
+                  <div className="support-empty"><MessageCircle /><p>Selecciona un contacto para responder.</p></div>
                 )}
               </div>
             </div>
