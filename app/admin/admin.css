@@ -1225,10 +1225,10 @@
   .panel-theme .admin-shell .dash-header>.mobile-nav-toggle,
   .panel-theme .panel-client-shell .portal-header>.mobile-nav-toggle,
   .panel-theme :is(.dash-header,.portal-header) .mobile-mode-menu>summary{
-    border:0!important;box-shadow:none!important
+    border:0!important;background:transparent!important;box-shadow:none!important
   }
-  .panel-theme .admin-shell .dash-header>.mobile-nav-toggle,
-  .panel-theme .panel-client-shell .portal-header>.mobile-nav-toggle{background:transparent!important}
+  .panel-theme .admin-shell .dash-header>.dash-brand,
+  .panel-theme .panel-client-shell .portal-header>.brand{justify-self:start!important}
   .panel-theme :is(.dash-header,.portal-header) :is(.mobile-nav-toggle,.mobile-mode-menu>summary):hover,
   .panel-theme :is(.dash-header,.portal-header) :is(.mobile-nav-toggle,.mobile-mode-menu>summary):focus-visible{
     background:rgba(225,241,255,.12)!important;outline:0

@@ -1959,7 +1959,7 @@ Usuarios y paneles:
 [x] Apariencia integrada como una única opción desplegable del sidebar en todos los roles; muestra Sistema/Claro/Oscuro y se retrae automáticamente al seleccionar. El chat es el único control flotante.
 [x] Sidebar administrativo móvil convertido en drawer con hamburguesa, cierre mediante X/Escape/fondo y acción Cerrar sesión ubicada en el pie del menú.
 [x] Headers privados optimizados para teléfono en una fila compacta; se ocultan al desplazarse hacia abajo y reaparecen al subir o regresar al inicio.
-[x] Patrón móvil unificado para administrador, cajero, peluquero y cliente: hamburguesa izquierda, marca central, selector de roles mediante tres puntos a la derecha y drawer compartido con navegación, apariencia, sitio público y salida inferior.
+[x] Patrón móvil unificado para administrador, cajero, peluquero y cliente: hamburguesa y marca no interactiva alineadas a la izquierda, selector de roles transparente mediante tres puntos a la derecha y drawer compartido con navegación, apariencia, sitio público y salida inferior. El header no duplica el acceso al sitio público.
 [x] Sistema reutilizable de tarjetas privadas con contorno azul, acento lateral, relieve suave y variantes semánticas azul, verde y naranja para indicadores; no afecta al sitio público.
 [x] Alta, vinculacion, edicion y desactivacion de peluqueros.
 [x] Página Equipo agrupada por roles con peluqueros y cajeros activos, altas de ambos perfiles y personal inactivo concentrado en un bloque desplegable al final.
@@ -1984,7 +1984,7 @@ Reservas y operacion actual:
 [x] Modal de chat compacto con el mismo patrón en escritorio y teléfono: una conversación visible y acceso al historial desde el encabezado.
 [x] Modal móvil adaptado a las cuatro coordenadas de `visualViewport`: ocupa todo el ancho y queda anclado al borde superior visible; su borde inferior se ajusta dinámicamente al teclado, desplaza únicamente el hilo y recupera el foco al enviar, recibir o tocar una zona no interactiva.
 [x] Mensajería conectada a Supabase Realtime incluso con la ventana cerrada, con actualización inmediata de conversaciones y mensajes. Migración `202608100003_chat_realtime_receipts.sql` aplicada en Supabase producción.
-[x] Indicador temporal “escribiendo”, alerta sonora de mensaje entrante, contador global y distintivo de mensajes pendientes por contacto.
+[x] Indicador temporal “escribiendo”, alerta sonora de dos tonos para cada mensaje entrante mientras el panel está abierto, contador global y distintivo de mensajes pendientes por contacto.
 [x] Confirmaciones de lectura persistentes: un check indica enviado y doble check indica que el destinatario correspondiente abrió la conversación.
 [x] Chat privado rediseñado con patrón visual tipo Telegram, lista de contactos, avatar, burbujas diferenciadas y compositor anclado siempre visible en escritorio y móvil.
 [x] Clientes aislados entre si; solo el cliente, administradores y cajeros autorizados acceden a cada consulta.

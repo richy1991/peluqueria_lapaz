@@ -96,36 +96,46 @@ export function FloatingSupportChat() {
     if (delay > 0) window.setTimeout(focus, delay);
   }, []);
 
-  const unlockAudio = useCallback(() => {
+  const unlockAudio = useCallback(async () => {
     if (!audioContextRef.current) audioContextRef.current = new AudioContext();
-    if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
+    if (audioContextRef.current.state === "suspended") await audioContextRef.current.resume();
     return audioContextRef.current;
   }, []);
 
-  const playIncomingSound = useCallback(() => {
+  const playIncomingSound = useCallback(async () => {
     try {
-      const audio = unlockAudio();
-      const oscillator = audio.createOscillator();
-      const gain = audio.createGain();
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(660, audio.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(880, audio.currentTime + 0.11);
-      gain.gain.setValueAtTime(0.0001, audio.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.11, audio.currentTime + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.2);
-      oscillator.connect(gain);
-      gain.connect(audio.destination);
-      oscillator.start();
-      oscillator.stop(audio.currentTime + 0.21);
+      const audio = await unlockAudio();
+      if (audio.state !== "running") return;
+      const start = audio.currentTime;
+      const tone = (frequency: number, delay: number, duration: number) => {
+        const oscillator = audio.createOscillator();
+        const gain = audio.createGain();
+        const beginsAt = start + delay;
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(frequency, beginsAt);
+        gain.gain.setValueAtTime(0.0001, beginsAt);
+        gain.gain.exponentialRampToValueAtTime(0.15, beginsAt + 0.025);
+        gain.gain.exponentialRampToValueAtTime(0.0001, beginsAt + duration);
+        oscillator.connect(gain);
+        gain.connect(audio.destination);
+        oscillator.start(beginsAt);
+        oscillator.stop(beginsAt + duration + 0.02);
+      };
+      tone(740, 0, 0.18);
+      tone(988, 0.2, 0.24);
     } catch {
       // Algunos navegadores bloquean audio hasta la primera interacción del usuario.
     }
   }, [unlockAudio]);
 
   useEffect(() => {
-    const enableSound = () => unlockAudio();
+    const enableSound = () => { void unlockAudio(); };
     window.addEventListener("pointerdown", enableSound, { once: true });
-    return () => window.removeEventListener("pointerdown", enableSound);
+    window.addEventListener("keydown", enableSound, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", enableSound);
+      window.removeEventListener("keydown", enableSound);
+    };
   }, [unlockAudio]);
 
   const fetchConversations = useCallback(async (isSupport: boolean, createMissing = false) => {
@@ -257,7 +267,7 @@ export function FloatingSupportChat() {
   }, [bootstrap]);
 
   async function initialize() {
-    unlockAudio();
+    void unlockAudio();
     openRef.current = true;
     setOpen(true);
     setLoading(true);
@@ -329,7 +339,7 @@ export function FloatingSupportChat() {
         const incoming = supportRef.current
           ? String(row.sender_id) === String(conversation?.created_by ?? "")
           : String(row.sender_id) !== userIdRef.current;
-        if (payload.eventType === "INSERT" && incoming) playIncomingSound();
+        if (payload.eventType === "INSERT" && incoming) void playIncomingSound();
         if (openRef.current && selectedRef.current === conversationId) {
           const visible = document.visibilityState === "visible";
           await loadMessages(conversationId, visible);

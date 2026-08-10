@@ -42,11 +42,10 @@ export default async function ClientAccountPage() {
   return <PanelExperience><main className="portal-shell panel-client-shell">
     <header className="portal-header">
       <PanelMobileMenuButton />
-      <Brand />
+      <Brand linked={false} />
       <ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={capabilities.isCashier} />
       <div className="client-desktop-actions">
         <PanelThemeSelector compact />
-        <Link className="portal-public-link" href="/" aria-label="Ver sitio público"><Globe2/><span>Sitio público</span></Link>
       </div>
     </header>
     <aside className="dash-sidebar client-mobile-sidebar" aria-label="Menú de mi cuenta">

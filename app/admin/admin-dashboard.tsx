@@ -351,7 +351,7 @@ export function AdminDashboard({
     <main className="admin-shell admin-control-shell">
       <header className="admin-header dash-header">
         <PanelMobileMenuButton/>
-        <div className="dash-brand"><Brand /><span className="dash-live"><i/> SISTEMA EN LÍNEA</span></div>
+        <div className="dash-brand"><Brand linked={false} /><span className="dash-live"><i/> SISTEMA EN LÍNEA</span></div>
         <ModeSwitcher current="admin" isAdmin hasBarber={hasBarber} isCashier={!isSuperadmin} showClient={!isSuperadmin} />
         <div className="dash-user"><span className="dash-avatar">{userEmail.slice(0,2).toUpperCase()}</span><span>{userEmail}<small>Administrador</small></span><button className="desktop-logout" onClick={logout}><LogOut size={16} /> Salir</button></div>
       </header>
