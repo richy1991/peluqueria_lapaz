@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import {
   ArrowLeft,
@@ -35,6 +35,7 @@ type ChatMessage = {
   read_by?: string | null;
   profiles?: Profile | null;
 };
+type PanelPosition = { left: number; top: number };
 
 function displayName(conversation?: Conversation) {
   return conversation?.profiles?.full_name
@@ -62,6 +63,8 @@ export function FloatingSupportChat() {
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState("");
   const [peerTyping, setPeerTyping] = useState(false);
+  const [panelPosition, setPanelPosition] = useState<PanelPosition | null>(null);
+  const [draggingPanel, setDraggingPanel] = useState(false);
 
   const panelRef = useRef<HTMLElement>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -77,6 +80,13 @@ export function FloatingSupportChat() {
   const userIdRef = useRef("");
   const supportRef = useRef(false);
   const conversationsRef = useRef<Conversation[]>([]);
+  const dragStateRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startLeft: number;
+    startTop: number;
+  } | null>(null);
 
   useEffect(() => { openRef.current = open; }, [open]);
   useEffect(() => { selectedRef.current = selected; }, [selected]);
@@ -280,9 +290,14 @@ export function FloatingSupportChat() {
         setError("Inicia sesión para conversar con LEGEND CLUB.");
         return;
       }
-      const target = selectedRef.current ?? result.rows[0]?.id ?? null;
+      const target = supportRef.current ? null : selectedRef.current ?? result.rows[0]?.id ?? null;
       selectedRef.current = target;
       setSelected(target);
+      if (supportRef.current) {
+        setMessages([]);
+        setPeerTyping(false);
+        setQuery("");
+      }
       if (target) await loadMessages(target, true);
     } catch (chatError) {
       setError(chatError instanceof Error ? chatError.message : "No se pudo abrir el chat.");
@@ -458,6 +473,56 @@ export function FloatingSupportChat() {
     focusMessageInput(20);
   }, [focusMessageInput]);
 
+  const startPanelDrag = useCallback((event: ReactPointerEvent<HTMLElement>) => {
+    if (event.button !== 0 || window.matchMedia("(max-width: 760px)").matches) return;
+    const target = event.target as HTMLElement;
+    if (target.closest("button,input,textarea,select,a,[data-no-drag='true']")) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    const rect = panel.getBoundingClientRect();
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startLeft: rect.left,
+      startTop: rect.top,
+    };
+    setPanelPosition({ left: rect.left, top: rect.top });
+    setDraggingPanel(true);
+    event.preventDefault();
+  }, []);
+
+  useEffect(() => {
+    if (!draggingPanel) return;
+    const previousUserSelect = document.body.style.userSelect;
+    document.body.style.userSelect = "none";
+    const move = (event: PointerEvent) => {
+      const drag = dragStateRef.current;
+      const panel = panelRef.current;
+      if (!drag || !panel || event.pointerId !== drag.pointerId) return;
+      const margin = 8;
+      const maxLeft = Math.max(margin, window.innerWidth - panel.offsetWidth - margin);
+      const maxTop = Math.max(margin, window.innerHeight - panel.offsetHeight - margin);
+      const left = Math.min(maxLeft, Math.max(margin, drag.startLeft + event.clientX - drag.startX));
+      const top = Math.min(maxTop, Math.max(margin, drag.startTop + event.clientY - drag.startY));
+      setPanelPosition({ left, top });
+    };
+    const stop = (event: PointerEvent) => {
+      if (event.pointerId !== dragStateRef.current?.pointerId) return;
+      dragStateRef.current = null;
+      setDraggingPanel(false);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
+    return () => {
+      document.body.style.userSelect = previousUserSelect;
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
+    };
+  }, [draggingPanel]);
+
   useEffect(() => {
     if (!open) return;
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -505,8 +570,16 @@ export function FloatingSupportChat() {
       )}
 
       {open && (
-        <section ref={panelRef} onClick={handlePanelClick} className={`support-window ${support ? "support-agent" : "support-client"}`} aria-label="Atención al cliente" role="dialog" aria-modal="true">
-          <header>
+        <section
+          ref={panelRef}
+          onClick={handlePanelClick}
+          style={panelPosition ? { left: panelPosition.left, top: panelPosition.top, right: "auto", bottom: "auto" } : undefined}
+          className={`support-window ${support ? "support-agent" : "support-client"} ${draggingPanel ? "is-dragging" : ""}`}
+          aria-label="Atención al cliente"
+          role="dialog"
+          aria-modal="true"
+        >
+          <header onPointerDown={startPanelDrag} data-drag-handle="true" title="Arrastra para mover el chat">
             <div className={`support-logo ${support && selected ? "is-contact" : ""}`}>
               {support && selected ? contactInitials : <Headphones />}
             </div>

@@ -1296,7 +1296,11 @@
 @keyframes supportPresence{50%{opacity:.35;transform:scale(.75)}}
 
 /* Un solo hilo visible: patrón compacto compartido por escritorio y teléfono. */
-.support-window.support-agent,.support-window.support-client{width:min(430px,calc(100vw - 30px));height:min(650px,calc(100vh - 120px))}
+.support-window.support-agent,.support-window.support-client{width:min(390px,calc(100vw - 30px));height:min(640px,calc(100vh - 120px))}
+.support-window>header[data-drag-handle="true"]{cursor:grab;touch-action:none;user-select:none}
+.support-window.is-dragging{animation:none;box-shadow:0 42px 130px rgba(3,14,42,.62)}
+.support-window.is-dragging>header[data-drag-handle="true"]{cursor:grabbing}
+.support-send:disabled{cursor:not-allowed;opacity:.38;filter:saturate(.35);box-shadow:none;transform:none}
 .support-agent .support-layout{grid-template-columns:minmax(0,1fr)}
 .support-agent .support-thread{display:none}
 .support-agent .support-layout>aside.has-selection{display:none}
@@ -1323,6 +1327,7 @@
     transition:height .12s ease,top .12s ease,left .12s ease,width .12s ease
   }
   .support-window>header{padding-top:env(safe-area-inset-top)}
+  .support-window>header[data-drag-handle="true"]{cursor:default;touch-action:auto}
   .support-window:focus-within{transition:none}
   .support-messages{overscroll-behavior:contain;scroll-behavior:smooth}
   .support-compose{position:relative;z-index:8;flex:0 0 auto}

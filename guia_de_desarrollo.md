@@ -1981,7 +1981,8 @@ Reservas y operacion actual:
 [x] Chat interno solo texto, protegido por participantes y con limite de envio.
 [x] Centro de atención flotante estilo mensajería, sin página independiente y con conversaciones separadas por cliente; incorpora búsqueda, fechas separadoras, estado de envío, envío con Enter, compositor fijo y presentación móvil como hoja inferior.
 [x] Chat móvil sin identidad duplicada: clientes ven únicamente a LEGEND CLUB; administrador y cajero disponen de un botón de conversaciones recientes ordenadas por el último mensaje.
-[x] Modal de chat compacto con el mismo patrón en escritorio y teléfono: una conversación visible y acceso al historial desde el encabezado.
+[x] Modal de chat compacto: en escritorio adopta proporción de teléfono de 390 px y puede arrastrarse desde el encabezado sin salir de la pantalla; en móvil ocupa el viewport visible.
+[x] El personal abre primero el historial ordenado por actividad reciente y elige qué cliente atender; el cliente accede directamente a su conversación privada. El envío permanece bloqueado mientras el mensaje esté vacío.
 [x] Modal móvil adaptado a las cuatro coordenadas de `visualViewport`: ocupa todo el ancho y queda anclado al borde superior visible; su borde inferior se ajusta dinámicamente al teclado, desplaza únicamente el hilo y recupera el foco al enviar, recibir o tocar una zona no interactiva.
 [x] Mensajería conectada a Supabase Realtime incluso con la ventana cerrada, con actualización inmediata de conversaciones y mensajes. Migración `202608100003_chat_realtime_receipts.sql` aplicada en Supabase producción.
 [x] Indicador temporal “escribiendo”, alerta sonora de dos tonos para cada mensaje entrante mientras el panel está abierto, contador global y distintivo de mensajes pendientes por contacto.
