@@ -645,3 +645,23 @@
 .panel-floating-tools>details>summary,.panel-theme .support-fab{color:#fff;border-color:rgba(159,210,255,.26);background:linear-gradient(145deg,#274d9e,#17336f);box-shadow:0 14px 40px rgba(13,35,91,.35)}
 .panel-theme .support-fab{background:linear-gradient(145deg,#429ff0,#315dda)}
 .panel-theme .support-fab i{border-color:#315dda;background:#5ce6b5}
+
+/* Corrección de cascada: el chrome del panel siempre usa la identidad azul v2. */
+.panel-theme[data-panel-theme="light"] .admin-header.dash-header,
+.panel-theme[data-panel-theme="dark"] .admin-header.dash-header{
+  color:#f5f9ff!important;
+  border-bottom-color:rgba(156,207,255,.22)!important;
+  background:linear-gradient(105deg,#1d3d86 0%,#2854c7 58%,#2747a3 100%)!important;
+  box-shadow:0 12px 35px rgba(19,47,112,.25)!important;
+}
+.panel-theme[data-panel-theme="light"] .admin-nav.dash-sidebar,
+.panel-theme[data-panel-theme="dark"] .admin-nav.dash-sidebar{
+  color:#c8daf7!important;
+  border-color:rgba(137,184,255,.18)!important;
+  background:linear-gradient(180deg,#1d3d86 0%,#203d80 62%,#1b356f 100%)!important;
+  box-shadow:15px 0 38px rgba(19,47,112,.16)!important;
+}
+.panel-theme[data-panel-theme="light"] .admin-header.dash-header :is(.brand,.dash-user,.dash-user span),
+.panel-theme[data-panel-theme="dark"] .admin-header.dash-header :is(.brand,.dash-user,.dash-user span){color:#f5f9ff}
+.panel-theme[data-panel-theme="light"] .admin-nav.dash-sidebar .dash-sidebar-head p,
+.panel-theme[data-panel-theme="dark"] .admin-nav.dash-sidebar .dash-sidebar-head p{color:#8fd6ff}
