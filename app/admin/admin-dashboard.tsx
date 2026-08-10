@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BarChart3, CalendarClock, ChevronLeft, ChevronRight, CircleDollarSign, ImagePlus, LogOut, PackagePlus, Save, Scissors, ShieldCheck, Sparkles, Store, UserPlus, Users } from "lucide-react";
+import { BarChart3, CalendarClock, CircleDollarSign, ImagePlus, LogOut, Menu, PackagePlus, Save, Scissors, ShieldCheck, Sparkles, Store, UserPlus, Users, X } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { createClient } from "@/lib/supabase/client";
@@ -316,7 +316,7 @@ export function AdminDashboard({
       </header>
       <div className={`admin-layout ${navCollapsed?"nav-collapsed":""}`}>
         <aside className="admin-nav dash-sidebar">
-          <div className="dash-sidebar-head"><p>CONTROL CENTRAL</p><button className="dash-collapse" onClick={()=>setNavCollapsed(value=>!value)} aria-label={navCollapsed?"Expandir menú":"Contraer menú"}>{navCollapsed?<ChevronRight/>:<ChevronLeft/>}</button></div>
+          <div className="dash-sidebar-head"><p>CONTROL CENTRAL</p><button className="dash-collapse" type="button" onClick={()=>setNavCollapsed(value=>!value)} aria-label={navCollapsed?"Abrir menú lateral":"Cerrar menú lateral"} aria-expanded={!navCollapsed} title={navCollapsed?"Abrir menú":"Cerrar menú"}>{navCollapsed?<Menu/>:<X/>}</button></div>
           <nav>{navigation.map(([id,label,Icon])=><button title={label} className={section===id?"active":""} key={id} onClick={()=>setSection(id)}><Icon/><span>{label}</span>{section===id&&<i/>}</button>)}</nav>
           <div className="dash-sidebar-foot"><Link href="/" target="_blank"><Sparkles/><span>Ver sitio público</span></Link></div>
         </aside>
