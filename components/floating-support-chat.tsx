@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
+  Check,
   Headphones,
   MessageCircle,
   Paperclip,
@@ -25,7 +26,10 @@ export function FloatingSupportChat() {
   const [selected, setSelected] = useState<string | null>(null);
   const [messages, setMessages] = useState<Row[]>([]);
   const [query, setQuery] = useState("");
+  const [draft, setDraft] = useState("");
   const messageEndRef = useRef<HTMLDivElement>(null);
+  const messageInputRef = useRef<HTMLTextAreaElement>(null);
+  const composeRef = useRef<HTMLFormElement>(null);
 
   async function loadMessages(id: string) {
     const { data, error: loadError } = await createClient()
@@ -100,14 +104,14 @@ export function FloatingSupportChat() {
     setSelected(id);
     setMessages([]);
     await loadMessages(id);
+    window.setTimeout(() => messageInputRef.current?.focus(), 80);
   }
 
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selected) return;
 
-    const form = new FormData(event.currentTarget);
-    const body = String(form.get("body") ?? "").trim();
+    const body = draft.trim();
     if (!body) return;
 
     setBusy(true);
@@ -123,8 +127,9 @@ export function FloatingSupportChat() {
       return;
     }
 
-    event.currentTarget.reset();
+    setDraft("");
     await loadMessages(selected);
+    window.requestAnimationFrame(() => messageInputRef.current?.focus());
   }
 
   useEffect(() => {
@@ -153,6 +158,15 @@ export function FloatingSupportChat() {
     messageEndRef.current?.scrollIntoView({ block: "end" });
   }, [messages]);
 
+  useEffect(() => {
+    if (!open) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [open]);
+
   const filtered = conversations.filter((item) => {
     const owner = item.profiles as Row | null;
     return String(owner?.full_name ?? owner?.email ?? item.subject ?? "")
@@ -172,6 +186,26 @@ export function FloatingSupportChat() {
     ? contactName.slice(0, 2).toUpperCase()
     : "LC";
 
+  function formatConversationTime(value: unknown) {
+    if (!value) return "";
+    return new Intl.DateTimeFormat("es-BO", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "America/La_Paz",
+    }).format(new Date(String(value)));
+  }
+
+  function formatMessageDate(value: unknown) {
+    return new Intl.DateTimeFormat("es-BO", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      timeZone: "America/La_Paz",
+    }).format(new Date(String(value)));
+  }
+
   return (
     <>
       {!open && (
@@ -185,14 +219,16 @@ export function FloatingSupportChat() {
         <section
           className={`support-window ${support ? "support-agent" : "support-client"}`}
           aria-label="Atención al cliente"
+          role="dialog"
+          aria-modal="true"
         >
           <header>
             <div className="support-logo"><Headphones /></div>
-            <div>
-              <strong>LEGEND CLUB</strong>
-              <span><i /> Atención privada</span>
+            <div className="support-header-copy">
+              <strong>{support && selected ? contactName : "LEGEND CLUB"}</strong>
+              <span><i /> {support && selected ? "Conversación activa" : "Atención privada"}</span>
             </div>
-            <button onClick={() => setOpen(false)} aria-label="Cerrar chat"><X /></button>
+            <button className="support-close" onClick={() => setOpen(false)} aria-label="Cerrar chat" title="Cerrar"><X /></button>
           </header>
 
           {loading ? (
@@ -229,6 +265,7 @@ export function FloatingSupportChat() {
                           <strong>{name}</strong>
                           <small>{String(item.status) === "open" ? "Conversación activa" : "Cerrada"}</small>
                         </div>
+                        <time>{formatConversationTime(item.updated_at)}</time>
                       </button>
                     );
                   })}
@@ -257,27 +294,36 @@ export function FloatingSupportChat() {
                     </div>
 
                     <div className="support-messages" aria-live="polite">
-                      {messages.map((message) => {
+                      {messages.map((message, index) => {
                         const mine = String(message.sender_id) === userId;
                         const sender = message.profiles as Row | null;
+                        const previous = messages[index - 1];
+                        const currentDay = new Date(String(message.created_at)).toLocaleDateString("es-BO", { timeZone: "America/La_Paz" });
+                        const previousDay = previous
+                          ? new Date(String(previous.created_at)).toLocaleDateString("es-BO", { timeZone: "America/La_Paz" })
+                          : "";
                         return (
-                          <article className={mine ? "mine" : ""} key={String(message.id)}>
-                            <small>
-                              {mine
-                                ? "Tú"
-                                : support
-                                  ? String(sender?.full_name ?? sender?.email ?? "Cliente")
-                                  : "LEGEND CLUB"}
-                            </small>
-                            <p>{String(message.body)}</p>
-                            <time>
-                              {new Intl.DateTimeFormat("es-BO", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                timeZone: "America/La_Paz",
-                              }).format(new Date(String(message.created_at)))}
-                            </time>
-                          </article>
+                          <div className="support-message-row" key={String(message.id)}>
+                            {currentDay !== previousDay && <div className="support-date"><span>{formatMessageDate(message.created_at)}</span></div>}
+                            <article className={mine ? "mine" : ""}>
+                              <small>
+                                {mine
+                                  ? "Tú"
+                                  : support
+                                    ? String(sender?.full_name ?? sender?.email ?? "Cliente")
+                                    : "LEGEND CLUB"}
+                              </small>
+                              <p>{String(message.body)}</p>
+                              <time>
+                                {new Intl.DateTimeFormat("es-BO", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  timeZone: "America/La_Paz",
+                                }).format(new Date(String(message.created_at)))}
+                                {mine && <Check aria-label="Enviado" />}
+                              </time>
+                            </article>
+                          </div>
                         );
                       })}
                       {!messages.length && (
@@ -289,7 +335,7 @@ export function FloatingSupportChat() {
                       <div ref={messageEndRef} />
                     </div>
 
-                    <form className="support-compose" onSubmit={send}>
+                    <form ref={composeRef} className="support-compose" onSubmit={send}>
                       <button
                         className="support-attach"
                         type="button"
@@ -300,14 +346,23 @@ export function FloatingSupportChat() {
                         <Paperclip />
                       </button>
                       <textarea
+                        ref={messageInputRef}
                         name="body"
+                        value={draft}
+                        onChange={(event) => setDraft(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" && !event.shiftKey) {
+                            event.preventDefault();
+                            composeRef.current?.requestSubmit();
+                          }
+                        }}
                         maxLength={2000}
                         rows={1}
                         placeholder="Escribe un mensaje…"
                         aria-label="Mensaje"
                         required
                       />
-                      <button className="support-send" disabled={busy} aria-label="Enviar mensaje">
+                      <button className="support-send" disabled={busy || !draft.trim()} aria-label="Enviar mensaje">
                         <Send />
                       </button>
                     </form>

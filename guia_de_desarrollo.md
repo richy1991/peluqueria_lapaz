@@ -1979,7 +1979,7 @@ Reservas y operacion actual:
 [x] Cierre de emergencia y reprogramacion/notificacion interna a nivel de base de datos.
 [x] Notificaciones internas visibles y preferencias configurables por el cliente.
 [x] Chat interno solo texto, protegido por participantes y con limite de envio.
-[x] Centro de atencion flotante estilo mensajeria, sin pagina independiente y con conversaciones separadas por cliente.
+[x] Centro de atención flotante estilo mensajería, sin página independiente y con conversaciones separadas por cliente; incorpora búsqueda, fechas separadoras, estado de envío, envío con Enter, compositor fijo y presentación móvil como hoja inferior.
 [x] Chat privado rediseñado con patrón visual tipo Telegram, lista de contactos, avatar, burbujas diferenciadas y compositor anclado siempre visible en escritorio y móvil.
 [x] Clientes aislados entre si; solo el cliente, administradores y cajeros autorizados acceden a cada consulta.
 [x] Arquitectura de conversaciones preparada para incorporar un chatbot de soporte en una fase futura.
