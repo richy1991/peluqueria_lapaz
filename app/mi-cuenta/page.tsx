@@ -9,7 +9,7 @@ import { CancelAppointmentButton, ConfirmReassignmentButton } from "./appointmen
 import { CancelRedemptionButton, ClaimVisitForm, RewardButton } from "./loyalty-actions";
 import { PreferencesForm } from "./preferences-form";
 import { ReferralCode } from "./referral-code";
-import {PanelExperience} from "@/components/panel-experience";
+import {PanelExperience,PanelThemeSelector} from "@/components/panel-experience";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +33,7 @@ export default async function ClientAccountPage() {
   ]);
   const person = profile.data;
   return <PanelExperience><main className="portal-shell panel-client-shell">
-    <header className="portal-header"><Brand /><ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={capabilities.isCashier} /><Link href="/">Sitio público</Link></header>
+    <header className="portal-header"><Brand /><ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={capabilities.isCashier} /><PanelThemeSelector compact/><Link href="/">Sitio público</Link></header>
     <section className="portal-hero"><p className="eyebrow">MODO CLIENTE</p><h1>Hola, {person?.full_name ?? user.email?.split("@")[0]}</h1><p>Consulta tus citas, puntos, recompensas y avisos. El botón flotante abre tu conversación privada con LEGEND CLUB.</p></section>
     <div className="portal-grid">
       <section className="portal-card loyalty-balance"><div className="portal-title"><Star/><h2>Mis puntos</h2></div><strong>{loyalty.data?.balance??0}</strong><span>puntos disponibles</span><p>Ganados históricamente: {loyalty.data?.lifetime_earned??0}</p></section>

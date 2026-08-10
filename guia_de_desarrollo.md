@@ -1949,12 +1949,14 @@ Usuarios y paneles:
 [x] Sistema visual LEGEND OS compartido para administrador, cajero y peluquero, con sidebar contextual y header operativo.
 [x] Sidebar de escritorio dividido en cabecera, navegacion desplazable y pie estable sin superposiciones.
 [x] Sidebar de escritorio contraíble a 76 px con control hamburguesa/X accesible, etiquetas retiradas correctamente del layout y botones de navegación con contraste reforzado.
+[x] Navegación administrativa ordenada por frecuencia operativa; Negocio y Estadísticas se agrupan al final como herramientas de menor uso.
 [x] Formularios de creacion y edicion presentados como componentes modales reutilizables.
 [x] Animaciones de entrada, estados, tarjetas y ventanas con alternativa accesible para movimiento reducido.
 [x] Tema de panel automatico segun el dispositivo, con seleccion persistente entre sistema, claro y oscuro.
 [x] Contraste de textos, fondos, inputs, selects, modales y estados revisado para ambos temas.
 [x] Paleta visual privada LEGEND OS v2 aplicada con azul institucional, azul real, índigo, celeste, azul hielo y azul noche; header y sidebar forman una estructura coherente y la página pública permanece sin cambios.
 [x] Selector de modos del header corregido para sus enlaces reales, con estados normal, hover y activo claramente diferenciados.
+[x] Selector Sistema/Claro/Oscuro integrado en el sidebar de administrador, caja y peluquero, y en el header del cliente; el chat es el único control flotante del área de trabajo.
 [x] Sistema reutilizable de tarjetas privadas con contorno azul, acento lateral, relieve suave y variantes semánticas azul, verde y naranja para indicadores; no afecta al sitio público.
 [x] Alta, vinculacion, edicion y desactivacion de peluqueros.
 [x] Página Equipo agrupada por roles con peluqueros y cajeros activos, altas de ambos perfiles y personal inactivo concentrado en un bloque desplegable al final.

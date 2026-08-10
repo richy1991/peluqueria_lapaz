@@ -11,6 +11,7 @@ import { AppointmentAdminActions, ClientAdminActions } from "./admin-operations"
 import { AdminAnalytics, type AnalyticsData } from "./admin-analytics";
 import { AdminProgram } from "./admin-program";
 import { DashboardModal } from "@/components/dashboard-modal";
+import { PanelThemeSelector } from "@/components/panel-experience";
 import type {LucideIcon} from "lucide-react";
 
 type Row = Record<string, unknown> & { id: string };
@@ -334,7 +335,16 @@ export function AdminDashboard({
   const inactiveCashiers = cashiers.filter((item) => !item.active);
   const inactiveTeamCount = inactiveBarbers.length + inactiveCashiers.length;
   const navigation:Array<[string,string,LucideIcon]>=[
-    ["agenda","Agenda",CalendarClock],["estadisticas","Estadísticas",BarChart3],["programa","Caja y fidelización",CircleDollarSign],["clientes","Clientes",Users],["negocio","Negocio",Store],["servicios","Servicios",Scissors],["galeria","Galería",ImagePlus],["productos","Productos",PackagePlus],["equipo","Equipo",UserPlus],...(isSuperadmin?[["administradores","Administradores",ShieldCheck] as [string,string,LucideIcon]]:[]),
+    ["agenda","Agenda",CalendarClock],
+    ["programa","Caja y fidelización",CircleDollarSign],
+    ["clientes","Clientes",Users],
+    ["equipo","Equipo",UserPlus],
+    ["servicios","Servicios",Scissors],
+    ["productos","Productos",PackagePlus],
+    ["galeria","Galería",ImagePlus],
+    ["negocio","Negocio",Store],
+    ["estadisticas","Estadísticas",BarChart3],
+    ...(isSuperadmin?[["administradores","Administradores",ShieldCheck] as [string,string,LucideIcon]]:[]),
   ];
 
   return (
@@ -347,8 +357,8 @@ export function AdminDashboard({
       <div className={`admin-layout ${navCollapsed?"nav-collapsed":""}`}>
         <aside className="admin-nav dash-sidebar">
           <div className="dash-sidebar-head"><p>CONTROL CENTRAL</p><button className="dash-collapse" type="button" onClick={()=>setNavCollapsed(value=>!value)} aria-label={navCollapsed?"Abrir menú lateral":"Cerrar menú lateral"} aria-expanded={!navCollapsed} title={navCollapsed?"Abrir menú":"Cerrar menú"}>{navCollapsed?<Menu/>:<X/>}</button></div>
-          <nav>{navigation.map(([id,label,Icon])=><button title={label} className={section===id?"active":""} key={id} onClick={()=>setSection(id)}><Icon/><span>{label}</span>{section===id&&<i/>}</button>)}</nav>
-          <div className="dash-sidebar-foot"><Link href="/" target="_blank"><Sparkles/><span>Ver sitio público</span></Link></div>
+          <nav>{navigation.map(([id,label,Icon])=><button title={label} className={`${section===id?"active":""} ${id==="negocio"?"nav-secondary-start":""}`} key={id} onClick={()=>setSection(id)}><Icon/><span>{label}</span>{section===id&&<i/>}</button>)}</nav>
+          <div className="dash-sidebar-foot"><PanelThemeSelector/><Link href="/" target="_blank"><Sparkles/><span>Ver sitio público</span></Link></div>
         </aside>
         <section className="admin-content">
           {message && <p className="admin-message">{message}</p>}

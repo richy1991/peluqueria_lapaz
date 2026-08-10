@@ -15,8 +15,26 @@ function subscribe(callback:()=>void){
 function snapshot():`${Preference}:${"light"|"dark"}`{const saved=localStorage.getItem("legend-panel-theme");const preference:Preference=saved==="light"||saved==="dark"?saved:"system";const resolved=preference==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):preference;return `${preference}:${resolved}`;}
 function serverSnapshot():`${Preference}:${"light"|"dark"}`{return "system:light";}
 
+function selectTheme(next:Preference){
+  if(next==="system")localStorage.removeItem("legend-panel-theme");
+  else localStorage.setItem("legend-panel-theme",next);
+  window.dispatchEvent(new Event(EVENT));
+}
+
+export function PanelThemeSelector({compact=false}:{compact?:boolean}){
+  const value=useSyncExternalStore(subscribe,snapshot,serverSnapshot);
+  const[preference]=value.split(":") as [Preference,"light"|"dark"];
+  return <section className={`panel-theme-selector ${compact?"compact":""}`} aria-label="Apariencia del panel">
+    <small>APARIENCIA</small>
+    <div>
+      <button type="button" title="Usar tema del dispositivo" aria-pressed={preference==="system"} className={preference==="system"?"active":""} onClick={()=>selectTheme("system")}><Monitor/><span>Sistema</span></button>
+      <button type="button" title="Usar tema claro" aria-pressed={preference==="light"} className={preference==="light"?"active":""} onClick={()=>selectTheme("light")}><Sun/><span>Claro</span></button>
+      <button type="button" title="Usar tema oscuro" aria-pressed={preference==="dark"} className={preference==="dark"?"active":""} onClick={()=>selectTheme("dark")}><Moon/><span>Oscuro</span></button>
+    </div>
+  </section>;
+}
+
 export function PanelExperience({children}:{children:ReactNode}){
-  const value=useSyncExternalStore(subscribe,snapshot,serverSnapshot);const[preference,resolved]=value.split(":") as [Preference,"light"|"dark"];
-  function select(next:Preference){if(next==="system")localStorage.removeItem("legend-panel-theme");else localStorage.setItem("legend-panel-theme",next);window.dispatchEvent(new Event(EVENT));}
-  return <div className="panel-theme" data-panel-theme={resolved} suppressHydrationWarning>{children}<aside className="panel-floating-tools" aria-label="Preferencias del panel"><details><summary aria-label="Cambiar tema">{preference==="system"?<Monitor/>:resolved==="dark"?<Moon/>:<Sun/>}</summary><div><small>APARIENCIA</small><button className={preference==="system"?"active":""} onClick={()=>select("system")}><Monitor/>Sistema</button><button className={preference==="light"?"active":""} onClick={()=>select("light")}><Sun/>Claro</button><button className={preference==="dark"?"active":""} onClick={()=>select("dark")}><Moon/>Oscuro</button></div></details><FloatingSupportChat/></aside></div>;
+  const value=useSyncExternalStore(subscribe,snapshot,serverSnapshot);const[,resolved]=value.split(":") as [Preference,"light"|"dark"];
+  return <div className="panel-theme" data-panel-theme={resolved} suppressHydrationWarning>{children}<aside className="panel-floating-tools" aria-label="Atención al cliente"><FloatingSupportChat/></aside></div>;
 }
