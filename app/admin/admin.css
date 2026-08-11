@@ -997,6 +997,7 @@
 .team-role-section>header span{display:grid;gap:3px}.team-role-section>header small{color:var(--dash-cyan);font:800 8px sans-serif;letter-spacing:.14em}.team-role-section>header h2{margin:0;color:var(--dash-text);font:600 22px var(--serif)}
 .team-role-section>header>b{padding:7px 10px;color:var(--dash-cyan);border:1px solid var(--dash-line);border-radius:999px;background:rgba(66,137,246,.07);font-size:9px;text-transform:uppercase}
 .team-list{margin:0;padding:0 16px;border-top:0}.team-list>article:last-child{border-bottom:0}.team-list .team-status-dot{width:7px;height:7px;display:inline-block;border-radius:50%;background:#13a47a;box-shadow:0 0 9px rgba(19,164,122,.55)}
+.team-pending{margin:0 16px 15px;padding-top:13px;border-top:1px dashed var(--dash-line)}.team-pending h3{margin:0 0 6px;color:var(--dash-muted);font-size:8px;letter-spacing:.1em;text-transform:uppercase}.team-pending .team-list{padding:0}.team-pending article>b{padding:6px 9px;color:#f0ae55;border:1px solid rgba(240,174,85,.28);border-radius:999px;background:rgba(240,174,85,.08);font-size:8px;text-transform:uppercase}
 .inactive-team{margin-top:24px;overflow:hidden;border:1px solid var(--dash-line);border-radius:13px;background:rgba(75,112,178,.035)}
 .inactive-team>summary{min-height:54px;padding:0 17px;display:flex;align-items:center;gap:12px;color:var(--dash-text);cursor:pointer;list-style:none;font-size:11px;font-weight:800}.inactive-team>summary::-webkit-details-marker{display:none}.inactive-team>summary::before{content:"+";width:25px;height:25px;display:grid;place-items:center;color:var(--dash-cyan);border:1px solid var(--dash-line);border-radius:7px;background:rgba(65,129,245,.07);font-size:16px}.inactive-team[open]>summary::before{content:"−"}.inactive-team>summary>b{margin-left:auto;min-width:28px;padding:5px 8px;text-align:center;color:var(--dash-muted);border-radius:999px;background:rgba(75,112,178,.1);font-size:9px}.inactive-team-content{padding:0 17px 17px;display:grid;grid-template-columns:1fr 1fr;gap:14px;border-top:1px solid var(--dash-line)}
 .inactive-team-content>section{min-width:0;padding-top:16px}.inactive-team-content h3{margin:0 0 8px;color:var(--dash-muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
@@ -1301,6 +1302,14 @@
 .support-window.is-dragging{animation:none;box-shadow:0 42px 130px rgba(3,14,42,.62)}
 .support-window.is-dragging>header[data-drag-handle="true"]{cursor:grabbing}
 .support-send:disabled{cursor:not-allowed;opacity:.38;filter:saturate(.35);box-shadow:none;transform:none}
+.dashboard-toast{
+  position:fixed;z-index:320;right:22px;top:96px;width:min(390px,calc(100vw - 28px));padding:14px 14px;
+  display:grid;grid-template-columns:25px minmax(0,1fr) 28px;align-items:start;gap:11px;
+  color:#eaf4ff;border:1px solid rgba(130,198,255,.32);border-radius:14px;
+  background:linear-gradient(145deg,#17346b,#102550);box-shadow:0 22px 65px rgba(3,14,42,.42);
+  animation:dashDrop .3s cubic-bezier(.2,.8,.2,1) both
+}
+.dashboard-toast>svg{width:22px;height:22px;color:#68e0a5}.dashboard-toast>div{min-width:0}.dashboard-toast strong{display:block;font-size:11px;letter-spacing:.02em}.dashboard-toast p{margin:4px 0 0;color:#c8dcf5;font-size:9px;line-height:1.5}.dashboard-toast>button{width:28px;height:28px;padding:0;display:grid;place-items:center;color:#dceaff;border:0;border-radius:8px;background:transparent;cursor:pointer}.dashboard-toast>button:hover{background:rgba(255,255,255,.1)}.dashboard-toast>button svg{width:15px}.dashboard-toast-error{border-color:rgba(255,126,145,.42);background:linear-gradient(145deg,#63253a,#39192a)}.dashboard-toast-error>svg{color:#ff9caf}.dashboard-toast-error p{color:#ffd8df}
 .support-agent .support-layout{grid-template-columns:minmax(0,1fr)}
 .support-agent .support-thread{display:none}
 .support-agent .support-layout>aside.has-selection{display:none}
@@ -1317,6 +1326,7 @@
 .support-window>header>.support-history+.support-close{margin-left:2px}
 
 @media(max-width:760px){
+  .dashboard-toast{top:68px;right:10px;width:calc(100vw - 20px)}
   .support-window,.support-window.support-agent,.support-window.support-client{
     inset:var(--support-modal-top,0) auto auto var(--support-modal-left,0)!important;
     right:auto!important;bottom:auto!important;box-sizing:border-box;

@@ -1961,9 +1961,10 @@ Usuarios y paneles:
 [x] Headers privados optimizados para teléfono en una fila compacta; se ocultan al desplazarse hacia abajo y reaparecen al subir o regresar al inicio.
 [x] Patrón móvil unificado para administrador, cajero, peluquero y cliente: hamburguesa y marca no interactiva alineadas a la izquierda, selector de roles transparente mediante tres puntos a la derecha y drawer compartido con navegación, apariencia, sitio público y salida inferior. El header no duplica el acceso al sitio público.
 [x] Sistema reutilizable de tarjetas privadas con contorno azul, acento lateral, relieve suave y variantes semánticas azul, verde y naranja para indicadores; no afecta al sitio público.
-[x] Alta, vinculacion, edicion y desactivacion de peluqueros.
-[x] Página Equipo agrupada por roles con peluqueros y cajeros activos, altas de ambos perfiles y personal inactivo concentrado en un bloque desplegable al final.
-[x] Perfil persistente de cajero con estado activo/inactivo para retirar y reactivar acceso sin perder su pertenencia histórica al equipo.
+[x] Alta, vinculación, edición y desactivación de peluqueros; la ficha se crea y aparece inmediatamente aunque la cuenta Google todavía esté pendiente.
+[x] Página Equipo agrupada por roles con peluqueros y cajeros activos, invitaciones de cajero pendientes visibles, altas de ambos perfiles y personal inactivo concentrado en un bloque desplegable al final.
+[x] Perfil persistente de cajero con estado activo/inactivo e invitación previa al primer ingreso Google para retirar y reactivar acceso sin perder su pertenencia histórica al equipo.
+[x] Retroalimentación administrativa mediante toast de éxito o error; las operaciones actualizan los datos con `router.refresh()` sin recargar toda la página y los modales se cierran únicamente al confirmar éxito.
 [x] Administracion y bloqueo manual de clientes.
 [~] Existe una invitacion administrativa pendiente; falta que el negocio complete y pruebe el ingreso del administrador invitado.
 [ ] Confirmar al menos dos administradores operativos si se mantiene la regla de continuidad definida en la guia original.
@@ -2062,6 +2063,7 @@ Validacion tecnica y operativa:
 [x] Lint, TypeScript y compilacion de produccion completados localmente.
 [x] Migraciones 202608090002 a 202608090004 aplicadas en Supabase de produccion.
 [x] Migracion 202608100001 de soporte privado para administradores y cajeros aplicada en produccion.
+[x] Migración 202608100004 de altas consistentes e invitaciones del equipo aplicada y verificada en Supabase producción.
 [x] Rutas /caja y /vincular/[code] comprobadas en Vercel de produccion.
 [x] /mensajes redirige al panel y la mensajeria se presenta exclusivamente como ventana flotante.
 [x] Paquete de produccion verificado con tema claro, tema oscuro, chat flotante y sidebar desplazable sin superposiciones.

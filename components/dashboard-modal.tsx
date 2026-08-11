@@ -25,6 +25,11 @@ export function DashboardModal({title,description,triggerLabel,triggerIcon,child
     window.addEventListener("keydown",close);
     return()=>{document.body.style.overflow=previous;window.removeEventListener("keydown",close);};
   },[open]);
+  useEffect(()=>{
+    const closeAfterSuccess=()=>setOpen(false);
+    window.addEventListener("legend-dashboard-operation-success",closeAfterSuccess);
+    return()=>window.removeEventListener("legend-dashboard-operation-success",closeAfterSuccess);
+  },[]);
   return <>
     <button type="button" className={`dash-action dash-action-${variant}`} onClick={()=>setOpen(true)}>{triggerIcon??<Plus/>}<span>{triggerLabel}</span></button>
     {open&&createPortal(<div className="dash-modal-backdrop" role="presentation" onMouseDown={(event)=>{if(event.target===event.currentTarget)setOpen(false);}}>

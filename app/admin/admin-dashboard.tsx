@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BarChart3, CalendarClock, CircleDollarSign, ImagePlus, LogOut, Menu, PackagePlus, Save, Scissors, ShieldCheck, Sparkles, Store, UserPlus, UserRoundCog, Users, X } from "lucide-react";
@@ -11,6 +11,7 @@ import { AppointmentAdminActions, ClientAdminActions } from "./admin-operations"
 import { AdminAnalytics, type AnalyticsData } from "./admin-analytics";
 import { AdminProgram } from "./admin-program";
 import { DashboardModal } from "@/components/dashboard-modal";
+import { DashboardToast, type DashboardToastData } from "@/components/dashboard-toast";
 import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelThemeSelector } from "@/components/panel-experience";
 import type {LucideIcon} from "lucide-react";
 
@@ -24,6 +25,7 @@ type AdminDashboardProps = {
   initialProducts: Row[];
   barbers: Row[];
   cashiers: Row[];
+  pendingCashiers: Row[];
   initialSettings: Record<string, unknown> | null;
   isSuperadmin: boolean;
   adminUsers: AdminUser[];
@@ -74,6 +76,7 @@ export function AdminDashboard({
   initialProducts,
   barbers,
   cashiers,
+  pendingCashiers,
   initialSettings,
   isSuperadmin,
   adminUsers,
@@ -85,31 +88,38 @@ export function AdminDashboard({
 }: AdminDashboardProps) {
   const router = useRouter();
   const [section, setSection] = useState(isSuperadmin ? "administradores" : "agenda");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [toast, setToast] = useState<DashboardToastData | null>(null);
   const [busy, setBusy] = useState(false);
   const [navCollapsed,setNavCollapsed]=useState(false);
+  const toastIdRef = useRef(0);
+
+  function showToast(type: "success" | "error", text: string) {
+    toastIdRef.current += 1;
+    setToast({ id: toastIdRef.current, type, message: text });
+  }
 
   function startAction() {
     setBusy(true);
-    setMessage("");
-    setError("");
+    setToast(null);
   }
 
   function finishAction(text: string) {
     setBusy(false);
-    setMessage(text);
-    window.setTimeout(() => window.location.reload(), 650);
+    showToast("success", text);
+    window.dispatchEvent(new Event("legend-dashboard-operation-success"));
+    router.refresh();
   }
 
   function failAction(reason: unknown) {
     setBusy(false);
-    if (reason instanceof Error) return setError(reason.message);
+    if (reason instanceof Error) return showToast("error", reason.message);
     if (reason && typeof reason === "object" && "message" in reason) {
-      return setError(String(reason.message));
+      return showToast("error", String(reason.message));
     }
-    setError("No se pudo completar la operación.");
+    showToast("error", "No se pudo completar la operación.");
   }
+
+  const closeToast = useCallback(() => setToast(null), []);
 
   async function saveBusiness(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -269,7 +279,7 @@ export function AdminDashboard({
       biography: String(form.get("biography") ?? "").trim() || null,
     });
     if (registerError) return failAction(registerError);
-    finishAction("Peluquero registrado. Si la cuenta aún no existe, se activará al ingresar con Google.");
+    finishAction("Peluquero agregado correctamente. Su ficha ya aparece en Equipo y el acceso se activará con Google.");
   }
 
   async function toggleBarber(id: string, enabled: boolean) {
@@ -301,7 +311,7 @@ export function AdminDashboard({
       enabled: true,
     });
     if (cashierError) return failAction(cashierError);
-    finishAction(`Cajero ${email} habilitado.`);
+    finishAction(`Cajero ${email} agregado correctamente. Si todavía no ingresó con Google, su acceso quedó pendiente.`);
   }
 
   async function toggleCashier(email: string, enabled: boolean) {
@@ -349,6 +359,7 @@ export function AdminDashboard({
 
   return (
     <main className="admin-shell admin-control-shell">
+      <DashboardToast toast={toast} onClose={closeToast}/>
       <header className="admin-header dash-header">
         <PanelMobileMenuButton/>
         <div className="dash-brand"><Brand linked={false} /><span className="dash-live"><i/> SISTEMA EN LÍNEA</span></div>
@@ -363,9 +374,6 @@ export function AdminDashboard({
         </aside>
         <PanelMobileScrim/>
         <section className="admin-content">
-          {message && <p className="admin-message">{message}</p>}
-          {error && <p className="admin-error">{error}</p>}
-
           {section === "agenda" && <div className="admin-panel"><div className="admin-title"><CalendarClock /><div><p>OPERACIÓN</p><h1>Reservas y agenda</h1></div></div><div className="admin-metrics"><div><strong>{initialAppointments.filter((item)=>["requested","confirmed","pending_client_confirmation"].includes(String(item.status))).length}</strong><span>Próximas o pendientes</span></div><div><strong>{initialAppointments.filter((item)=>item.status==="needs_reschedule").length}</strong><span>Por reprogramar</span></div><div><strong>{initialAppointments.length}</strong><span>Últimas reservas</span></div></div><div className="admin-list appointment-admin-list">{initialAppointments.length?initialAppointments.map((item)=>{const client=item.profiles as {full_name?:string;phone?:string;email?:string;is_blacklisted?:boolean}|null;const barber=item.barber_profiles as {display_name?:string}|null;return <article key={item.id}><div><strong>{String(item.service_name_snapshot)} · {new Intl.DateTimeFormat("es-BO",{dateStyle:"medium",timeStyle:"short",timeZone:"America/La_Paz"}).format(new Date(String(item.starts_at)))}</strong><span>{client?.full_name??client?.email??"Cliente"} · {client?.phone??"Sin teléfono"} · {barber?.display_name??"Sin asignar"} · {String(item.status)}</span>{client?.is_blacklisted&&<small className="admin-alert">Alerta por inasistencias</small>}</div><AppointmentAdminActions id={item.id} barbers={barbers as Array<{id:string;display_name:string;active?:boolean}>}/></article>}):<p className="admin-help">Todavía no existen reservas.</p>}</div></div>}
 
           {section === "estadisticas" && <AdminAnalytics data={analyticsData} />}
@@ -447,6 +455,7 @@ export function AdminDashboard({
             <section className="team-role-section">
               <header><div><UserRoundCog/><span><small>ROL OPERATIVO</small><h2>Cajeros</h2></span></div><b>{activeCashiers.length} activos</b></header>
               <div className="admin-list team-list">{activeCashiers.length ? activeCashiers.map((item)=>{const profile=item.profiles as Row|null;const email=String(profile?.email??"");return <article key={item.id}><div><strong>{String(profile?.full_name??profile?.email??"Cajero")}</strong><span><i className="team-status-dot"/> Activo · {email} · Acceso a terminal de caja</span></div><button disabled={busy||!email} onClick={()=>toggleCashier(email,false)}>Desactivar</button></article>}) : <p className="admin-help">No hay cajeros activos.</p>}</div>
+              {pendingCashiers.length>0&&<div className="team-pending"><h3>Accesos pendientes de Google</h3><div className="admin-list team-list">{pendingCashiers.map((item)=><article key={item.id}><div><strong>{String(item.email)}</strong><span>Invitación guardada · se activará automáticamente en su primer ingreso</span></div><b>Pendiente</b></article>)}</div></div>}
             </section>
 
             <details className="inactive-team">
