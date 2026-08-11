@@ -2053,8 +2053,8 @@ Configuracion inicial adoptada, editable por administracion:
 [x] Recompensas iniciales de 20% y 50% con limites de descuento.
 [x] Racha inicial de 3 visitas dentro de 35 dias y bonificacion de 5 puntos.
 [x] Incentivo inicial de 10% por venta recomendada de producto.
-[x] Periodicidad flexible mediante seleccion de fecha inicial y final de liquidacion.
-[x] Insumos sujetos a revision administrativa antes del reembolso completo.
+[x] Liquidacion operativa diaria por peluquero al finalizar cada jornada.
+[x] Insumos sujetos a revision desde Caja antes del reembolso completo.
 [~] La administracion debe designar las cuentas concretas que tendran capacidad de cajero.
 [x] Formas registrables: efectivo, QR, transferencia, tarjeta y otro.
 [ ] Factura fiscal e integracion SIAT: fuera del alcance actual; requiere proyecto y autorizacion separados.
@@ -2078,6 +2078,32 @@ Validacion tecnica y operativa:
 [~] Ejecutar vinculacion completa con cliente invitado y una segunda cuenta Google.
 [~] Ejecutar matriz RLS con cuentas reales de cajero, peluquero, administrador, cliente y superadmin.
 [~] Conciliar una liquidacion real contra ventas y gastos del periodo.
+
+56. AJUSTES DE CONTENIDO PUBLICO Y CIERRE DIARIO DE CAJA (11 DE AGOSTO DE 2026)
+
+Contenido publico:
+[x] La portada muestra solo los tres productos mas recientes y disponibles.
+[x] Boton Ver todos los productos y pagina de catalogo con todos los productos activos con stock.
+[x] La portada muestra una seleccion reciente de la galeria y ofrece acceso a la galeria completa.
+[x] Los peluqueros activos pueden editar nombre publico, biografia, especialidades y fotografia desde su panel.
+[x] Los peluqueros pueden publicar trabajos propios con consentimiento del cliente.
+[x] Los peluqueros pueden publicar modelos de referencia únicamente cuando registran el enlace de la fuente.
+[x] El administrador puede ocultar, editar y eliminar publicaciones de la galeria.
+[x] El sitio publico obtiene todos los peluqueros activos directamente desde la base de datos.
+
+Caja y equipo:
+[x] Cobro de cita existente y atencion sin reserva desde una misma operacion.
+[x] Registro conjunto de servicio, producto, peluquero, recomendador, referido, promocion, canje y forma de pago.
+[x] Comprobante interno correlativo generado por cada venta pagada.
+[x] Reversion auditada de ventas sin eliminacion fisica.
+[x] Apertura, movimientos, cierre, monto esperado, monto contado y diferencia de caja.
+[x] Revision de gastos del equipo trasladada al panel de Caja.
+[x] Preparacion de liquidacion individual por peluquero limitada a la jornada diaria.
+[x] Pago de liquidacion desde Caja con registro automatico del egreso y metodo de pago.
+[x] La liquidacion diaria conserva la comision del peluquero sobre el precio normal, suma incentivos y reembolsa gastos aprobados sin duplicarlos.
+[x] Liquidaciones y gastos retirados del programa comercial administrativo; un administrador puede gestionarlos entrando al modo Caja.
+[x] Migraciones 202608100005 y 202608110001 aplicadas y verificadas en Supabase de produccion.
+[~] Probar una jornada real completa: apertura, ventas, gasto, liquidacion, pago y cierre conciliado.
 
 FUERA DE ALCANCE DE LA AMPLIACION ACTUAL
 Procesamiento de pagos online.

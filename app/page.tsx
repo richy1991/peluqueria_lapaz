@@ -151,6 +151,7 @@ export default async function HomePage() {
                 />
               ))}
             </div>
+            <div className="center-action"><Link className="button button-dark" href="/galeria">Ver toda la galería <ArrowRight size={17}/></Link></div>
           </div>
         </section>
 
@@ -163,7 +164,8 @@ export default async function HomePage() {
               </div>
               <p>Productos seleccionados por el equipo. Consulta disponibilidad y apártalos por 24 horas.</p>
             </div>
-            <ProductCatalog products={products} />
+            <ProductCatalog products={products.slice(0,3)} />
+            <div className="center-action"><Link className="button button-dark" href="/productos">Ver todos los productos <ArrowRight size={17}/></Link></div>
           </div>
         </section>
 

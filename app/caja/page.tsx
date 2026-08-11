@@ -13,7 +13,9 @@ export default async function CashierPage() {
   const capabilities = await getUserCapabilities(user.id);
   if (!capabilities.isCashier) notFound();
   const start = new Date(); start.setHours(0,0,0,0);
-  const [shift,services,barbers,products,clients,appointments,sales] = await Promise.all([
+  const end = new Date(start); end.setDate(end.getDate() + 1);
+  const workDate = new Intl.DateTimeFormat("en-CA", { timeZone: "America/La_Paz" }).format(new Date());
+  const [shift,services,barbers,products,clients,appointments,sales,earnings,expenses,payouts] = await Promise.all([
     supabase.from("cash_shifts").select("*").eq("opened_by",user.id).eq("status","open").maybeSingle(),
     supabase.from("services").select("id,name,price").eq("status","active").order("name"),
     supabase.from("barber_profiles").select("id,display_name,commission_percent").eq("active",true).order("display_name"),
@@ -21,6 +23,9 @@ export default async function CashierPage() {
     supabase.from("profiles").select("id,full_name,email,phone,referral_code").eq("status","active").order("full_name").limit(300),
     supabase.from("appointments").select("id,starts_at,service_name_snapshot,profiles!appointments_client_id_fkey(full_name,email),barber_profiles(display_name)").gte("starts_at",start.toISOString()).in("status",["requested","confirmed","in_progress"]).order("starts_at"),
     supabase.from("sales").select("id,paid_total,discount_total,business_share,barber_commission_total,guest_name,paid_at,profiles!sales_client_id_fkey(full_name,email),receipts(id,number)").eq("status","paid").order("paid_at",{ascending:false}).limit(20),
+    supabase.from("barber_earnings").select("id,barber_id,kind,amount,status,created_at").in("status",["pending","approved"]).gte("created_at",start.toISOString()).lt("created_at",end.toISOString()),
+    supabase.from("barber_expenses").select("id,barber_id,concept,amount,status,created_at,barber_profiles(display_name)").in("status",["pending","approved"]).gte("created_at",start.toISOString()).lt("created_at",end.toISOString()).order("created_at",{ascending:false}),
+    supabase.from("payouts").select("id,barber_id,period_start,period_end,commission_amount,incentive_amount,reimbursement_amount,total_amount,status,paid_at,barber_profiles(display_name)").eq("period_start",workDate).eq("period_end",workDate).order("created_at",{ascending:false}),
   ]);
   return <PanelExperience><CashierPanel
     userEmail={user.email??"Caja"}
@@ -32,5 +37,9 @@ export default async function CashierPage() {
     clients={clients.data??[]}
     appointments={appointments.data??[]}
     sales={sales.data??[]}
+    earnings={earnings.data??[]}
+    expenses={expenses.data??[]}
+    payouts={payouts.data??[]}
+    workDate={workDate}
   /></PanelExperience>;
 }

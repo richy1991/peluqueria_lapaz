@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircle2, CircleAlert, X } from "lucide-react";
 
 export type DashboardToastData = {
@@ -8,6 +8,25 @@ export type DashboardToastData = {
   type: "success" | "error";
   message: string;
 };
+
+export const DASHBOARD_TOAST_EVENT = "legend-dashboard-toast";
+
+export function DashboardToastHost() {
+  const [toast, setToast] = useState<DashboardToastData | null>(null);
+  const idRef = useRef(0);
+  const close = useCallback(() => setToast(null), []);
+  useEffect(() => {
+    const receive = (event: Event) => {
+      const detail = (event as CustomEvent<{ type?: "success" | "error"; message?: string }>).detail;
+      if (!detail?.message) return;
+      idRef.current += 1;
+      setToast({ id: idRef.current, type: detail.type === "error" ? "error" : "success", message: detail.message });
+    };
+    window.addEventListener(DASHBOARD_TOAST_EVENT, receive);
+    return () => window.removeEventListener(DASHBOARD_TOAST_EVENT, receive);
+  }, []);
+  return <DashboardToast toast={toast} onClose={close} />;
+}
 
 export function DashboardToast({ toast, onClose }: { toast: DashboardToastData | null; onClose: () => void }) {
   useEffect(() => {

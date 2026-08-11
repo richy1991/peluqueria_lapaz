@@ -30,7 +30,8 @@ export function ProductCatalog({ products }: { products: PublicProduct[] }) {
 
     if (!user) {
       window.sessionStorage.setItem(pendingProductKey, productId);
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/?product_auth=complete#productos")}`;
+      const returnPath = `${window.location.pathname}?product_auth=complete#productos`;
+      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(returnPath)}`;
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo },

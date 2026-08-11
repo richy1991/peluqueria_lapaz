@@ -12,6 +12,7 @@ import {
 import { ChevronDown, LogOut, Menu, Monitor, Moon, Palette, Sun, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FloatingSupportChat } from "@/components/floating-support-chat";
+import { DashboardToastHost } from "@/components/dashboard-toast";
 import { createClient } from "@/lib/supabase/client";
 
 type Preference = "system" | "light" | "dark";
@@ -177,6 +178,7 @@ export function PanelExperience({ children }: { children: ReactNode }) {
     <MobileNavigationContext.Provider value={navigation}>
       <div className={`panel-theme ${headerHidden ? "panel-header-hidden" : ""} ${mobileNavOpen ? "mobile-nav-open" : ""}`} data-panel-theme={resolved} suppressHydrationWarning>
         {children}
+        <DashboardToastHost />
         <aside className="panel-floating-tools" aria-label="Atención al cliente"><FloatingSupportChat /></aside>
       </div>
     </MobileNavigationContext.Provider>

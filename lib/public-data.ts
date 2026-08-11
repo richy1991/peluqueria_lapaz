@@ -196,3 +196,44 @@ export async function getPublicData() {
     };
   }
 }
+
+export async function getPublicProducts() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("id,name,description,category,price,stock,image_path")
+    .eq("status", "active")
+    .gt("stock", 0)
+    .order("created_at", { ascending: false });
+  if (error) return [] as PublicProduct[];
+  return (data ?? []).map((item) => ({
+    id: item.id,
+    name: item.name,
+    description: item.description ?? "Producto seleccionado por nuestro equipo.",
+    category: item.category ?? "Cuidado",
+    price: Number(item.price),
+    stock: item.stock,
+    image: publicImageUrl(supabase, item.image_path),
+  })) as PublicProduct[];
+}
+
+export async function getPublicGallery() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("gallery_posts")
+    .select("id,title,image_path,source_type,source_url,barber_profiles(display_name)")
+    .eq("status", "published")
+    .order("featured", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error || !data?.length) {
+    return fallbackGallery.map((image, index) => ({ id: `fallback-${index}`, title: `Trabajo destacado ${index + 1}`, image }));
+  }
+  return data.map((item) => ({
+    id: item.id,
+    title: item.title,
+    image: publicImageUrl(supabase, item.image_path) ?? fallbackGallery[0],
+    sourceType: item.source_type ?? "own_work",
+    sourceUrl: item.source_url ?? null,
+    barberName: (item.barber_profiles as unknown as { display_name?: string } | null)?.display_name ?? null,
+  }));
+}
