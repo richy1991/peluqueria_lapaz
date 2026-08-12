@@ -34,13 +34,15 @@ export async function BarberView({ section }: { section: BarberSection }) {
 
   const start = new Date(); start.setHours(0, 0, 0, 0);
   const end = new Date(start); end.setDate(end.getDate() + 1);
-  const [appointmentsResult, earnings, expenses, payouts, profileResult, galleryResult] = await Promise.all([
-    supabase.from("appointments").select("id,starts_at,ends_at,status,service_name_snapshot,notes,reference_image_path,profiles!appointments_client_id_fkey(full_name,phone,is_blacklisted)").eq("barber_id", capabilities.barber.id).gte("starts_at", start.toISOString()).lt("starts_at", end.toISOString()).order("starts_at"),
+  const [appointmentsResult, earnings, expenses, payouts, profileResult, galleryResult, servicesResult, productsResult] = await Promise.all([
+    supabase.from("appointments").select("id,service_id,starts_at,ends_at,status,service_name_snapshot,notes,reference_image_path,profiles!appointments_client_id_fkey(full_name,phone,is_blacklisted)").eq("barber_id", capabilities.barber.id).gte("starts_at", start.toISOString()).lt("starts_at", end.toISOString()).order("starts_at"),
     supabase.from("barber_earnings").select("id,kind,amount,status,created_at,sale_items(name_snapshot)").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(50),
     supabase.from("barber_expenses").select("id,concept,amount,status,created_at").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(20),
     supabase.from("payouts").select("id,period_start,period_end,total_amount,status,paid_at").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(20),
     supabase.from("barber_profiles").select("id,display_name,bio,specialties,photo_path").eq("id", capabilities.barber.id).single(),
     supabase.from("gallery_posts").select("id,title,status,source_type,created_at").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(12),
+    supabase.from("services").select("id,name,price").eq("status", "active").order("name"),
+    supabase.from("products").select("id,name,price,stock").eq("status", "active").gt("stock", 0).order("name"),
   ]);
 
   const appointments = appointmentsResult.data ?? [];
@@ -73,7 +75,7 @@ export async function BarberView({ section }: { section: BarberSection }) {
           {section === "agenda" && <>
             <section className="portal-card"><div className="portal-title"><Activity /><h2>Resumen de hoy</h2></div><strong className="streak-number">{active.length}</strong><p>cita(s) pendientes o en proceso.</p></section>
             <section className="portal-card"><div className="portal-title"><Clock3 /><h2>Próxima cita</h2></div>{active[0] ? <div className="next-appointment"><strong>{active[0].service_name_snapshot}</strong><span>{new Intl.DateTimeFormat("es-BO", { timeStyle: "short", timeZone: "America/La_Paz" }).format(new Date(active[0].starts_at))}</span></div> : <p className="portal-empty">No quedan citas pendientes hoy.</p>}</section>
-            <section className="portal-card portal-wide"><div className="portal-title"><CalendarClock /><h2>Agenda del día</h2></div><div className="portal-list agenda-list">{appointments.length ? appointments.map((item) => { const client = item.profiles as unknown as { full_name?: string; phone?: string; is_blacklisted?: boolean } | null; return <article key={item.id}><span className="agenda-time">{new Intl.DateTimeFormat("es-BO", { timeStyle: "short", timeZone: "America/La_Paz" }).format(new Date(item.starts_at))}</span><div><strong>{item.service_name_snapshot}</strong><span>{client?.full_name ?? "Cliente"} · {client?.phone ?? "Sin teléfono"} · {item.status}</span>{client?.is_blacklisted && <small className="portal-warning">Alerta de inasistencias</small>}</div><AppointmentStatusActions id={item.id} status={item.status} /></article>; }) : <p className="portal-empty">No hay citas asignadas para hoy.</p>}</div></section>
+            <section className="portal-card portal-wide"><div className="portal-title"><CalendarClock /><h2>Agenda del día</h2></div><div className="portal-list agenda-list">{appointments.length ? appointments.map((item) => { const client = item.profiles as unknown as { full_name?: string; phone?: string; is_blacklisted?: boolean } | null; return <article key={item.id}><span className="agenda-time">{new Intl.DateTimeFormat("es-BO", { timeStyle: "short", timeZone: "America/La_Paz" }).format(new Date(item.starts_at))}</span><div><strong>{item.service_name_snapshot}</strong><span>{client?.full_name ?? "Cliente"} · {client?.phone ?? "Sin teléfono"} · {item.status === "pending_payment" ? "pendiente de cobro" : item.status}</span>{client?.is_blacklisted && <small className="portal-warning">Alerta de inasistencias</small>}</div><AppointmentStatusActions id={item.id} status={item.status} defaultServiceId={item.service_id} services={servicesResult.data ?? []} products={productsResult.data ?? []} /></article>; }) : <p className="portal-empty">No hay citas asignadas para hoy.</p>}</div></section>
           </>}
 
           {section === "perfil" && profileResult.data && <section className="portal-card portal-wide"><PublicProfileManager userId={user.id} profile={profileResult.data} gallery={galleryResult.data ?? []} view="profile" /></section>}

@@ -2086,8 +2086,10 @@ Validacion tecnica y operativa:
 [x] `/barbero/perfil` permite editar la informacion publica y fotografia del peluquero.
 [x] `/barbero/balance` presenta comisiones, incentivos, gastos y liquidaciones.
 [x] `/barbero/trabajos` administra las publicaciones propias del peluquero.
-[x] El panel de Caja utiliza pantallas independientes para operacion, liquidaciones, gastos e historial.
-[x] `/caja` concentra apertura, cobros, movimientos y cierre del turno.
+[x] El panel de Caja utiliza pantallas independientes para servicios, productos, libro diario, liquidaciones, gastos e historial.
+[x] `/caja` prioriza la cola de cobros de servicios y las atenciones sin reserva.
+[x] `/caja/productos` registra ventas independientes de productos.
+[x] `/caja/movimientos` contiene apertura, movimientos con glosa, cierre e impresión del libro diario.
 [x] `/caja/liquidaciones` prepara y paga liquidaciones diarias.
 [x] `/caja/gastos` revisa gastos e insumos del equipo.
 [x] `/caja/historial` muestra ventas, comprobantes y reversiones.
@@ -2112,6 +2114,28 @@ Validacion tecnica y operativa:
 [ ] Configurar dominio personalizado de Supabase si se desea sustituir `supabase.co` en la pantalla OAuth.
 [ ] Confirmar CAPTCHA/Turnstile y limites de Auth desde el dashboard de Supabase.
 [ ] Configurar regla WAF de Vercel para abuso L7 de login y reservas.
+
+59. FLUJO DE ATENCION, COBRO Y LIBRO DIARIO (12 DE AGOSTO DE 2026)
+
+[x] La venta exclusiva de productos está separada del cobro de servicios.
+[x] El formulario de servicio inicia sin producto y ofrece un check para añadirlo cuando corresponda.
+[x] Caja puede corregir el servicio reservado antes del pago.
+[x] Caja puede añadir un servicio extra y un producto imprevisto antes de emitir el comprobante.
+[x] El peluquero puede informar servicio realizado, servicio extra, producto, cantidad y observación.
+[x] Al finalizar la atención, el peluquero la envía a estado `pending_payment` en vez de marcarla pagada o completada.
+[x] La cita pendiente aparece en la cola de caja y se actualiza mediante Realtime.
+[x] La atención solo cambia a `completed` después de registrar el pago.
+[x] Los servicios adicionales mantienen la comisión configurada del peluquero sobre su precio normal.
+[x] Los descuentos y promociones siguen reduciendo la participación del negocio, no la comisión del peluquero.
+[x] El dashboard principal de caja muestra cantidades operativas, sin saldos ni totales monetarios visibles.
+[x] El libro diario registra ventas, ingresos, egresos, devoluciones y ajustes con fecha, método y glosa.
+[x] El libro diario puede imprimirse para la rendición al final del turno.
+[x] El cierre y conciliación del turno se realiza desde el libro diario.
+[x] Migración `202608120002_cashier_queue_and_daily_ledger.sql` creada con políticas RLS y funciones transaccionales.
+[x] Migración `202608120002_cashier_queue_and_daily_ledger.sql` aplicada en Supabase producción.
+[x] Ajuste `202608120003_cashier_claim_code_search_path.sql` aplicado y RPC nuevo validado sin errores.
+[ ] Probar en producción el circuito completo: reserva, inicio, envío a caja, cambio de servicio, extra, producto, cobro y comprobante.
+[ ] Verificar impresión física o PDF del libro diario con una jornada real.
 
 FUERA DE ALCANCE DE LA AMPLIACION ACTUAL
 Procesamiento de pagos online.
