@@ -9,7 +9,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { ChevronDown, LogOut, Menu, Monitor, Moon, Palette, Sun, X } from "lucide-react";
+import { LogOut, Menu, Monitor, Moon, Palette, Sun, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FloatingSupportChat } from "@/components/floating-support-chat";
 import { DashboardToastHost } from "@/components/dashboard-toast";
@@ -68,13 +68,11 @@ export function PanelThemeSelector({ compact = false }: { compact?: boolean }) {
     <details ref={detailsRef} className={`panel-theme-selector ${compact ? "compact" : ""}`}>
       <summary aria-label="Seleccionar apariencia">
         <Palette />
-        <span>Apariencia</span>
-        <ChevronDown className="theme-chevron" />
       </summary>
       <div className="panel-theme-options" role="group" aria-label="Seleccionar tema">
-        <button type="button" aria-pressed={preference === "system"} className={preference === "system" ? "active" : ""} onClick={() => choose("system")}><Monitor /><span>Sistema</span></button>
-        <button type="button" aria-pressed={preference === "light"} className={preference === "light" ? "active" : ""} onClick={() => choose("light")}><Sun /><span>Claro</span></button>
-        <button type="button" aria-pressed={preference === "dark"} className={preference === "dark" ? "active" : ""} onClick={() => choose("dark")}><Moon /><span>Oscuro</span></button>
+        <button type="button" title="Usar tema del sistema" aria-label="Usar tema del sistema" aria-pressed={preference === "system"} className={preference === "system" ? "active" : ""} onClick={() => choose("system")}><Monitor /></button>
+        <button type="button" title="Usar tema claro" aria-label="Usar tema claro" aria-pressed={preference === "light"} className={preference === "light" ? "active" : ""} onClick={() => choose("light")}><Sun /></button>
+        <button type="button" title="Usar tema oscuro" aria-label="Usar tema oscuro" aria-pressed={preference === "dark"} className={preference === "dark" ? "active" : ""} onClick={() => choose("dark")}><Moon /></button>
       </div>
     </details>
   );

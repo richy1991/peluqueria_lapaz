@@ -2096,6 +2096,23 @@ Validacion tecnica y operativa:
 [x] Las cuentas administrativas, de caja o peluqueria que intentan abrir `/mi-cuenta` son redirigidas a su panel laboral.
 [x] TypeScript y ESLint verificados despues de la reorganizacion modular.
 
+58. ENDURECIMIENTO VISUAL Y DE SEGURIDAD (12 DE AGOSTO DE 2026)
+
+[x] Contraste explicito para campos, codigos, placeholders y botones deshabilitados del portal privado.
+[x] Selector de apariencia reducido a iconos con nombres accesibles para lectores de pantalla.
+[x] Variables de entorno preferidas para URL y publishable, con respaldo exclusivamente público para no romper el despliegue; ninguna clave secreta en cliente.
+[x] Confirmado que no existen claves secretas de Supabase o Google dentro del repositorio ni su historial.
+[x] Cabeceras HTTP de seguridad configuradas globalmente.
+[x] Dependencias de produccion auditadas con cero vulnerabilidades conocidas.
+[x] Insercion anonima de analitica no utilizada revocada.
+[x] Limites de abuso para codigos de comprobante, reservas, apartados, canjes y mensajes.
+[x] Analizador de base enlazada ejecutado y error de la funcion de caja corregido.
+[x] Migracion `202608120001_security_hardening.sql` aplicada en Supabase produccion.
+[x] Informe tecnico documentado en `SECURITY_AUDIT.md`.
+[ ] Configurar dominio personalizado de Supabase si se desea sustituir `supabase.co` en la pantalla OAuth.
+[ ] Confirmar CAPTCHA/Turnstile y limites de Auth desde el dashboard de Supabase.
+[ ] Configurar regla WAF de Vercel para abuso L7 de login y reservas.
+
 FUERA DE ALCANCE DE LA AMPLIACION ACTUAL
 Procesamiento de pagos online.
 Pasarela de pagos.
