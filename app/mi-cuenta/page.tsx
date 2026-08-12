@@ -25,6 +25,9 @@ export default async function ClientAccountPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
   const capabilities = await getUserCapabilities(user.id);
+  if (capabilities.isAdmin) redirect("/admin");
+  if (capabilities.isCashier) redirect("/caja");
+  if (capabilities.barber) redirect("/barbero");
   await supabase.rpc("refresh_my_loyalty");
   const [profile, appointments, reservations, notifications,loyalty,transactions,rewards,redemptions,streak,preferences] = await Promise.all([
     supabase.from("profiles").select("full_name,email,phone,status,no_show_count,is_blacklisted,is_blocked,referral_code").eq("id", user.id).single(),

@@ -6,7 +6,13 @@ import {PanelExperience} from "@/components/panel-experience";
 
 export const dynamic = "force-dynamic";
 
-export default async function CashierPage() {
+export type CashierSection = "operacion" | "liquidaciones" | "gastos" | "historial";
+
+export default function CashierPage() {
+  return <CashierPageView section="operacion" />;
+}
+
+export async function CashierPageView({ section }: { section: CashierSection }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -41,5 +47,6 @@ export default async function CashierPage() {
     expenses={expenses.data??[]}
     payouts={payouts.data??[]}
     workDate={workDate}
+    section={section}
   /></PanelExperience>;
 }

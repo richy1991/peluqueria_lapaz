@@ -51,7 +51,7 @@ async function uploadBarberImage(file: File, userId: string, folder: "profile" |
   return path;
 }
 
-export function PublicProfileManager({ userId, profile, gallery }: { userId: string; profile: BarberProfile; gallery: GalleryItem[] }) {
+export function PublicProfileManager({ userId, profile, gallery, view }: { userId: string; profile: BarberProfile; gallery: GalleryItem[]; view: "profile" | "gallery" }) {
   const [busy, setBusy] = useState(false);
   const photoUrl = useMemo(() => profile.photo_path
     ? createClient().storage.from("public-media").getPublicUrl(profile.photo_path).data.publicUrl
@@ -120,7 +120,7 @@ export function PublicProfileManager({ userId, profile, gallery }: { userId: str
   }
 
   return <section className="barber-public-manager">
-    <div className="barber-profile-summary">
+    {view === "profile" && <div className="barber-profile-summary">
       <div className="barber-profile-photo">{photoUrl ? <Image src={photoUrl} alt={`Perfil de ${profile.display_name}`} width={82} height={82} unoptimized /> : <Camera />}</div>
       <div><small>PERFIL PÚBLICO</small><h3>{profile.display_name}</h3><p>{profile.bio || "Agrega una presentación para que los clientes te conozcan."}</p><span>{profile.specialties?.join(" · ") || "Especialidades por definir"}</span></div>
       <DashboardModal title="Editar mi perfil público" description="Estos datos se mostrarán en la sección Equipo del sitio." triggerLabel="Editar perfil" triggerIcon={<UserRoundPen />}>
@@ -132,9 +132,9 @@ export function PublicProfileManager({ userId, profile, gallery }: { userId: str
           <button className="button button-dark wide" disabled={busy}>{busy ? "Guardando…" : "Guardar perfil"}</button>
         </form>
       </DashboardModal>
-    </div>
+    </div>}
 
-    <div className="barber-gallery-management">
+    {view === "gallery" && <div className="barber-gallery-management">
       <div><small>MI PORTAFOLIO</small><h3>Publicaciones recientes</h3><p>Publica trabajos propios autorizados o referencias indicando su fuente.</p></div>
       <DashboardModal title="Publicar en la galería" description="La imagen quedará visible en el sitio público." triggerLabel="Nueva publicación" triggerIcon={<ImagePlus />}>
         <form className="admin-form" onSubmit={publishGallery} acceptCharset="UTF-8">
@@ -148,6 +148,6 @@ export function PublicProfileManager({ userId, profile, gallery }: { userId: str
         </form>
       </DashboardModal>
       <div className="barber-gallery-list">{gallery.length ? gallery.map((item) => <article key={item.id}><div><strong>{item.title}</strong><span>{item.source_type === "reference" ? "Referencia" : "Trabajo propio"} · {item.status}</span></div><time>{new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeZone: "America/La_Paz" }).format(new Date(item.created_at))}</time></article>) : <p>Aún no publicaste imágenes.</p>}</div>
-    </div>
+    </div>}
   </section>;
 }
