@@ -53,6 +53,13 @@ export function CashierPanel(props: Props) {
 
   async function sell(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const form = event.currentTarget; const data = new FormData(form);
+    const searchInput = form.elements.namedItem("client_search") as HTMLInputElement | null;
+    if (!data.get("appointment_id") && data.get("customer_mode") === "existing" && !data.get("client_id")) {
+      searchInput?.setCustomValidity("Selecciona un cliente de los resultados de búsqueda.");
+      searchInput?.reportValidity();
+      return;
+    }
+    searchInput?.setCustomValidity("");
     const response = await call("register_counter_sale_v3", {
       target_appointment_id: String(data.get("appointment_id") ?? "") || null,
       target_client_id: String(data.get("client_id") ?? "") || null,
@@ -146,7 +153,7 @@ function OpenShift({ onSubmit, busy }: { onSubmit: (event: FormEvent<HTMLFormEle
 function ServiceDashboard({ appointments, clients, services, barbers, products, sales, busy, onSubmit }: { appointments: Row[]; clients: Row[]; services: Row[]; barbers: Row[]; products: Row[]; sales: Row[]; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
   return <><div className="cashier-kpis cashier-safe-kpis"><article><small>COBROS EN COLA</small><strong>{appointments.length}</strong><span>atenciones listas para cobrar</span></article><article><small>ATENCIONES PROCESADAS</small><strong>{sales.filter(sale => Boolean(sale.paid_at)).length}</strong><span>operaciones recientes</span></article><article><small>ESTADO</small><strong>LISTA</strong><span>terminal disponible</span></article></div>
     <section className="admin-panel cashier-queue"><div className="dash-list-head"><div><small>ACTUALIZACIÓN AUTOMÁTICA</small><h2>Cobros pendientes</h2></div><ReceiptText /></div><p className="admin-help">Cuando el peluquero termina una atención, aparece aquí con los cambios y extras informados.</p><div className="admin-list">{appointments.length ? appointments.map(appointment => <QueueItem key={appointment.id} appointment={appointment} clients={clients} services={services} barbers={barbers} products={products} busy={busy} onSubmit={onSubmit} />) : <p className="admin-help">No hay cobros pendientes. Puedes registrar una atención sin reserva.</p>}</div></section>
-    <section className="admin-panel cashier-quick-action"><div><small>CLIENTE SIN RESERVA</small><h2>Cobro directo de servicio</h2><p>Selecciona el servicio y peluquero. Activa productos únicamente si el cliente añade una compra.</p></div><DashboardModal title="Cobrar servicio" description="Atención sin reserva previa." triggerLabel="Nuevo cobro" triggerIcon={<Scissors />} size="large"><ServiceSaleForm clients={clients} services={services} barbers={barbers} products={products} busy={busy} onSubmit={onSubmit} /></DashboardModal></section></>;
+    <section className="admin-panel cashier-quick-action"><div><small>CLIENTE SIN RESERVA</small><h2>Cobro directo de servicio</h2><p>Busca una cuenta existente o registra un cliente nuevo. Para nuevos clientes, el comprobante generará su código y QR de vinculación.</p></div><DashboardModal title="Cobrar servicio" description="Atención sin reserva previa." triggerLabel="Nuevo cobro" triggerIcon={<Scissors />} size="large"><ServiceSaleForm clients={clients} services={services} barbers={barbers} products={products} busy={busy} onSubmit={onSubmit} /></DashboardModal></section></>;
 }
 
 function QueueItem({ appointment, clients, services, barbers, products, busy, onSubmit }: { appointment: Row; clients: Row[]; services: Row[]; barbers: Row[]; products: Row[]; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
@@ -157,7 +164,69 @@ function QueueItem({ appointment, clients, services, barbers, products, busy, on
   return <article><div><strong>{client?.full_name ?? "Cliente"} · {String(appointment.service_name_snapshot)}</strong><span>{barber?.display_name ?? "Peluquero"}{details?.notes ? ` · ${String(details.notes)}` : ""}</span></div><DashboardModal title={`Cobrar a ${client?.full_name ?? "cliente"}`} description="Puedes corregir el servicio y añadir extras antes de confirmar." triggerLabel="Revisar y cobrar" triggerIcon={<ReceiptText />} size="large"><ServiceSaleForm appointment={appointment} checkout={details ?? null} clients={clients} services={services} barbers={barbers} products={products} busy={busy} onSubmit={onSubmit} /></DashboardModal></article>;
 }
 
-function ClientFields({ clients }: { clients: Row[] }) { return <><label>Cliente registrado<select name="client_id" defaultValue=""><option value="">Cliente invitado</option>{clients.map(client => <option key={client.id} value={client.id}>{String(client.full_name ?? client.email)}</option>)}</select></label><label>Nombre invitado<input name="guest_name" /></label><label>Teléfono invitado<input name="guest_phone" inputMode="tel" /></label><label>Código referido<input name="referral_code" placeholder="LC-..." /></label></>; }
+function ClientFields({ clients }: { clients: Row[] }) {
+  const [mode, setMode] = useState<"new" | "existing">("new");
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<Row | null>(null);
+  const [results, setResults] = useState<Row[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [referred, setReferred] = useState(false);
+
+  useEffect(() => {
+    if (mode !== "existing" || query.trim().length < 2 || selected) return;
+    const search = query.trim().replace(/[,%()]/g, " ");
+    const localMatches = clients.filter(client => String(client.full_name ?? "").toLocaleLowerCase("es").includes(search.toLocaleLowerCase("es"))).slice(0, 8);
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      const { data } = await createClient().from("profiles").select("id,full_name,email,phone").eq("status", "active").ilike("full_name", `%${search}%`).order("full_name").limit(8);
+      if (active) {
+        setResults((data as Row[] | null) ?? localMatches);
+        setSearching(false);
+      }
+    }, 220);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [clients, mode, query, selected]);
+
+  function chooseMode(next: "new" | "existing") {
+    setMode(next);
+    setQuery("");
+    setSelected(null);
+    setResults([]);
+  }
+
+  return <fieldset className="wide cashier-client-fields">
+    <legend>Datos del cliente</legend>
+    <div className="cashier-client-modes" role="group" aria-label="Tipo de cliente">
+      <button type="button" className={mode === "new" ? "active" : ""} onClick={() => chooseMode("new")}>Cliente nuevo</button>
+      <button type="button" className={mode === "existing" ? "active" : ""} onClick={() => chooseMode("existing")}>Cliente registrado</button>
+    </div>
+    <input type="hidden" name="customer_mode" value={mode} />
+    <input type="hidden" name="client_id" value={selected?.id ?? ""} />
+    {mode === "new" ? <div className="cashier-client-grid">
+      <label>Nombre completo<input name="guest_name" autoComplete="name" minLength={3} required placeholder="Nombre y apellidos" /></label>
+      <label>Teléfono (opcional)<input name="guest_phone" inputMode="tel" autoComplete="tel" placeholder="Ej. 70123456" /></label>
+      <p className="wide cashier-client-help">El comprobante incluirá un QR y código único. Al escanearlo e iniciar sesión, el cliente vinculará esta compra y recibirá sus puntos.</p>
+    </div> : <div className="cashier-client-search">
+      <label>Buscar por nombre
+        <input name="client_search" type="search" autoComplete="off" value={query} onChange={event => {
+          const nextQuery = event.target.value;
+          const normalized = nextQuery.trim().toLocaleLowerCase("es");
+          setQuery(nextQuery);
+          setSelected(null);
+          setResults(normalized.length >= 2 ? clients.filter(client => String(client.full_name ?? "").toLocaleLowerCase("es").includes(normalized)).slice(0, 8) : []);
+          setSearching(normalized.length >= 2);
+        }} placeholder="Escribe al menos 2 letras" required />
+      </label>
+      {selected ? <div className="cashier-client-selected"><span><strong>{String(selected.full_name ?? selected.email)}</strong>{Boolean(selected.phone) && <small>{String(selected.phone)}</small>}</span><button type="button" onClick={() => { setSelected(null); setQuery(""); }}>Cambiar</button></div> : query.trim().length >= 2 && <div className="cashier-client-results" role="listbox" aria-label="Clientes encontrados">
+        {results.map(client => <button type="button" role="option" aria-selected="false" key={client.id} onClick={() => { setSelected(client); setQuery(String(client.full_name ?? client.email ?? "")); setResults([]); setSearching(false); }}><strong>{String(client.full_name ?? "Sin nombre")}</strong><small>{String(client.phone ?? client.email ?? "")}</small></button>)}
+        {!searching && results.length === 0 && <p>No encontramos clientes con ese nombre.</p>}
+        {searching && <p>Buscando…</p>}
+      </div>}
+    </div>}
+    <label className="wide cashier-product-toggle cashier-referral-toggle"><input type="checkbox" checked={referred} onChange={event => setReferred(event.target.checked)} /> Viene recomendado por otro cliente</label>
+    {referred && <label className="wide">Código del cliente que lo recomendó<input name="referral_code" placeholder="LC-..." autoCapitalize="characters" required /></label>}
+  </fieldset>;
+}
 function PaymentFields() { return <><label>Descuento manual Bs<input name="discount" type="number" min="0" step="0.5" defaultValue="0" /></label><label>Código de promoción<input name="promotion_code" /></label><label>Código de canje<input name="redemption_code" /></label><label>Forma de pago<select name="payment_method" defaultValue="cash"><option value="cash">Efectivo</option><option value="qr">QR</option><option value="transfer">Transferencia</option><option value="card">Tarjeta</option><option value="other">Otro</option></select></label><label>Referencia<input name="payment_reference" /></label></>; }
 
 function ServiceSaleForm({ appointment, checkout, clients, services, barbers, products, busy, onSubmit }: { appointment?: Row; checkout?: Row | null; clients: Row[]; services: Row[]; barbers: Row[]; products: Row[]; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {

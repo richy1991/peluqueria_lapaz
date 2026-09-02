@@ -4,10 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const requestedNext = requestUrl.searchParams.get("next") ?? "/";
+  const requestedNext = requestUrl.searchParams.get("next") ?? "/panel";
   const next = requestedNext.startsWith("/") && !requestedNext.startsWith("//")
     ? requestedNext
-    : "/";
+    : "/panel";
 
   if (code) {
     const supabase = await createClient();
@@ -18,7 +18,8 @@ export async function GET(request: Request) {
     }
   }
 
-  const errorUrl = new URL("/reservar", requestUrl.origin);
+  const errorUrl = new URL("/login", requestUrl.origin);
+  errorUrl.searchParams.set("next", next);
   errorUrl.searchParams.set("auth_error", "No pudimos completar el acceso con Google.");
   return NextResponse.redirect(errorUrl);
 }
