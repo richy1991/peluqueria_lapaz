@@ -211,6 +211,7 @@ function ClientFields({ clients }: { clients: Row[] }) {
         <input name="client_search" type="search" autoComplete="off" value={query} onChange={event => {
           const nextQuery = event.target.value;
           const normalized = nextQuery.trim().toLocaleLowerCase("es");
+          event.currentTarget.setCustomValidity("");
           setQuery(nextQuery);
           setSelected(null);
           setResults(normalized.length >= 2 ? clients.filter(client => String(client.full_name ?? "").toLocaleLowerCase("es").includes(normalized)).slice(0, 8) : []);
@@ -218,7 +219,7 @@ function ClientFields({ clients }: { clients: Row[] }) {
         }} placeholder="Escribe al menos 2 letras" required />
       </label>
       {selected ? <div className="cashier-client-selected"><span><strong>{String(selected.full_name ?? selected.email)}</strong>{Boolean(selected.phone) && <small>{String(selected.phone)}</small>}</span><button type="button" onClick={() => { setSelected(null); setQuery(""); }}>Cambiar</button></div> : query.trim().length >= 2 && <div className="cashier-client-results" role="listbox" aria-label="Clientes encontrados">
-        {results.map(client => <button type="button" role="option" aria-selected="false" key={client.id} onClick={() => { setSelected(client); setQuery(String(client.full_name ?? client.email ?? "")); setResults([]); setSearching(false); }}><strong>{String(client.full_name ?? "Sin nombre")}</strong><small>{String(client.phone ?? client.email ?? "")}</small></button>)}
+        {results.map(client => <button type="button" role="option" aria-selected="false" key={client.id} onClick={event => { (event.currentTarget.form?.elements.namedItem("client_search") as HTMLInputElement | null)?.setCustomValidity(""); setSelected(client); setQuery(String(client.full_name ?? client.email ?? "")); setResults([]); setSearching(false); }}><strong>{String(client.full_name ?? "Sin nombre")}</strong><small>{String(client.phone ?? client.email ?? "")}</small></button>)}
         {!searching && results.length === 0 && <p>No encontramos clientes con ese nombre.</p>}
         {searching && <p>Buscando…</p>}
       </div>}
