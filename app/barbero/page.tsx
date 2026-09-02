@@ -34,7 +34,8 @@ export async function BarberView({ section }: { section: BarberSection }) {
 
   const start = new Date(); start.setHours(0, 0, 0, 0);
   const end = new Date(start); end.setDate(end.getDate() + 1);
-  const [appointmentsResult, earnings, expenses, payouts, profileResult, galleryResult, servicesResult, productsResult] = await Promise.all([
+  const monthStart = new Date(start); monthStart.setDate(1);
+  const [appointmentsResult, earnings, expenses, payouts, profileResult, galleryResult, servicesResult, productsResult, monthlyEarnings, commissionSettings] = await Promise.all([
     supabase.from("appointments").select("id,service_id,starts_at,ends_at,status,service_name_snapshot,notes,reference_image_path,profiles!appointments_client_id_fkey(full_name,phone,is_blacklisted)").eq("barber_id", capabilities.barber.id).gte("starts_at", start.toISOString()).lt("starts_at", end.toISOString()).order("starts_at"),
     supabase.from("barber_earnings").select("id,kind,amount,status,created_at,sale_items(name_snapshot)").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(50),
     supabase.from("barber_expenses").select("id,concept,amount,status,created_at").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(20),
@@ -43,11 +44,17 @@ export async function BarberView({ section }: { section: BarberSection }) {
     supabase.from("gallery_posts").select("id,title,status,source_type,created_at").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(12),
     supabase.from("services").select("id,name,price").eq("status", "active").order("name"),
     supabase.from("products").select("id,name,price,stock").eq("status", "active").gt("stock", 0).order("name"),
+    supabase.from("barber_earnings").select("id,kind,base_amount,rate_percent,amount,status,created_at,sale_items(name_snapshot)").eq("barber_id", capabilities.barber.id).gte("created_at", monthStart.toISOString()).order("created_at", { ascending: false }),
+    supabase.from("loyalty_settings").select("product_sales_commission_percent").eq("id",true).maybeSingle(),
   ]);
 
   const appointments = appointmentsResult.data ?? [];
   const active = appointments.filter((item) => !["canceled", "completed", "no_show"].includes(item.status));
   const pendingTotal = (earnings.data ?? []).filter((item) => ["pending", "approved"].includes(item.status)).reduce((sum, item) => sum + Number(item.amount), 0);
+  const monthProductEarnings=(monthlyEarnings.data??[]).filter(item=>item.kind==="product_incentive");
+  const monthProductSales=monthProductEarnings.reduce((sum,item)=>sum+Number(item.base_amount),0);
+  const monthProductCommission=monthProductEarnings.reduce((sum,item)=>sum+Number(item.amount),0);
+  const productCommissionRate=Number(commissionSettings.data?.product_sales_commission_percent??10);
   const info = sectionInfo[section];
 
   return <PanelExperience><main className="admin-shell dash-workspace barber-portal">
@@ -84,8 +91,10 @@ export async function BarberView({ section }: { section: BarberSection }) {
 
           {section === "balance" && <>
             <section className="portal-card"><div className="portal-title"><Banknote /><h2>Ganancia pendiente</h2></div><strong className="streak-number">Bs {pendingTotal.toFixed(2)}</strong><p>Comisiones e incentivos aún no pagados.</p></section>
+            <section className="portal-card"><div className="portal-title"><Banknote /><h2>Ventas de productos este mes</h2></div><strong className="streak-number">Bs {monthProductSales.toFixed(2)}</strong><p>Tu comisión vigente es {productCommissionRate}% por cada 100 Bs vendidos.</p></section>
+            <section className="portal-card"><div className="portal-title"><Sparkles /><h2>Comisión de productos</h2></div><strong className="streak-number">Bs {monthProductCommission.toFixed(2)}</strong><p>Acumulada este mes exclusivamente por ventas cerradas.</p></section>
             <section className="portal-card"><div className="portal-title"><ReceiptText /><h2>Registrar insumo</h2></div><p>Solicita la revisión de gastos vinculados a tu trabajo.</p><ExpenseForm /></section>
-            <section className="portal-card portal-wide"><div className="portal-title"><Banknote /><h2>Comisiones e incentivos</h2></div><div className="portal-list">{earnings.data?.length ? earnings.data.map((item) => <article key={item.id}><div><strong>{(item.sale_items as unknown as { name_snapshot?: string } | null)?.name_snapshot ?? item.kind}</strong><span>{item.kind} · {item.status} · {new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeZone: "America/La_Paz" }).format(new Date(item.created_at))}</span></div><b>Bs {Number(item.amount).toFixed(2)}</b></article>) : <p className="portal-empty">Aún no existen comisiones registradas.</p>}</div></section>
+            <section className="portal-card portal-wide"><div className="portal-title"><Banknote /><h2>Comisiones económicas</h2></div><p>Este registro monetario es independiente de los puntos de fidelidad de clientes.</p><div className="portal-list">{earnings.data?.length ? earnings.data.map((item) => <article key={item.id}><div><strong>{(item.sale_items as unknown as { name_snapshot?: string } | null)?.name_snapshot ?? item.kind}</strong><span>{item.kind === "product_incentive" ? "Venta de producto" : "Servicio"} · {item.status} · {new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeZone: "America/La_Paz" }).format(new Date(item.created_at))}</span></div><b>Bs {Number(item.amount).toFixed(2)}</b></article>) : <p className="portal-empty">Aún no existen comisiones registradas.</p>}</div></section>
             <section className="portal-card"><div className="portal-title"><ReceiptText /><h2>Mis gastos</h2></div><div className="portal-list">{expenses.data?.length ? expenses.data.map((item) => <article key={item.id}><div><strong>{item.concept}</strong><span>{item.status}</span></div><b>Bs {Number(item.amount).toFixed(2)}</b></article>) : <p className="portal-empty">No registraste gastos.</p>}</div></section>
             <section className="portal-card"><div className="portal-title"><History /><h2>Liquidaciones</h2></div><div className="portal-list">{payouts.data?.length ? payouts.data.map((item) => <article key={item.id}><div><strong>{item.period_start}</strong><span>{item.status}</span></div><b>Bs {Number(item.total_amount).toFixed(2)}</b></article>) : <p className="portal-empty">Aún no existen liquidaciones.</p>}</div></section>
           </>}

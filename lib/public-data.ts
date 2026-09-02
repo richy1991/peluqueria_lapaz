@@ -25,7 +25,12 @@ export type PublicBarber = {
 export type PublicGalleryItem = {
   id: string;
   title: string;
+  description?: string;
   image: string;
+  images: string[];
+  sourceType?: string;
+  sourceUrl?: string | null;
+  barberName?: string | null;
 };
 
 export type PublicProduct = {
@@ -36,6 +41,9 @@ export type PublicProduct = {
   price: number;
   stock: number;
   image: string | null;
+  images: string[];
+  brand: string;
+  presentation: string;
 };
 
 export type BusinessInfo = {
@@ -81,6 +89,15 @@ function publicImageUrl(
   return supabase.storage.from("public-media").getPublicUrl(path).data.publicUrl;
 }
 
+function publicImageUrls(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  paths: string[] | null | undefined,
+  fallbackPath?: string | null,
+) {
+  const source = paths?.length ? paths : fallbackPath ? [fallbackPath] : [];
+  return source.map((path) => publicImageUrl(supabase, path)).filter((path): path is string => Boolean(path)).slice(0, 3);
+}
+
 export async function getPublicData() {
   try {
     const supabase = await createClient();
@@ -98,7 +115,7 @@ export async function getPublicData() {
           .order("display_name"),
         supabase
           .from("gallery_posts")
-          .select("id,title,image_path,sort_order")
+          .select("id,title,description,image_path,image_paths,sort_order")
           .eq("status", "published")
           .eq("client_consent", true)
           .order("featured", { ascending: false })
@@ -106,7 +123,7 @@ export async function getPublicData() {
           .limit(8),
         supabase
           .from("products")
-          .select("id,name,description,category,price,stock,image_path")
+          .select("id,name,description,category,brand,presentation,price,stock,image_path,image_paths")
           .eq("status", "active")
           .order("created_at", { ascending: false })
           .limit(12),
@@ -142,12 +159,18 @@ export async function getPublicData() {
           id: `fallback-${index}`,
           title: `Trabajo destacado ${index + 1}`,
           image,
+          images: [image],
         }))
-      : galleryResult.data.map((item) => ({
-          id: item.id,
-          title: item.title,
-          image: publicImageUrl(supabase, item.image_path) ?? fallbackGallery[0],
-        }));
+      : galleryResult.data.map((item) => {
+          const images = publicImageUrls(supabase, item.image_paths, item.image_path);
+          return {
+            id: item.id,
+            title: item.title,
+            description: item.description ?? "",
+            image: images[0] ?? fallbackGallery[0],
+            images: images.length ? images : [fallbackGallery[0]],
+          };
+        });
 
     const products: PublicProduct[] = productsResult.error
       ? []
@@ -158,7 +181,10 @@ export async function getPublicData() {
           category: item.category ?? "Cuidado",
           price: Number(item.price),
           stock: item.stock,
-          image: publicImageUrl(supabase, item.image_path),
+          brand: item.brand ?? "",
+          presentation: item.presentation ?? "",
+          image: publicImageUrls(supabase, item.image_paths, item.image_path)[0] ?? null,
+          images: publicImageUrls(supabase, item.image_paths, item.image_path),
         }));
 
     const row = businessResult.data;
@@ -190,6 +216,7 @@ export async function getPublicData() {
         id: `fallback-${index}`,
         title: `Trabajo destacado ${index + 1}`,
         image,
+        images: [image],
       })),
       products: [] as PublicProduct[],
       business: fallbackBusiness,
@@ -201,39 +228,50 @@ export async function getPublicProducts() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("products")
-    .select("id,name,description,category,price,stock,image_path")
+    .select("id,name,description,category,brand,presentation,price,stock,image_path,image_paths")
     .eq("status", "active")
     .gt("stock", 0)
     .order("created_at", { ascending: false });
   if (error) return [] as PublicProduct[];
-  return (data ?? []).map((item) => ({
-    id: item.id,
-    name: item.name,
-    description: item.description ?? "Producto seleccionado por nuestro equipo.",
-    category: item.category ?? "Cuidado",
-    price: Number(item.price),
-    stock: item.stock,
-    image: publicImageUrl(supabase, item.image_path),
-  })) as PublicProduct[];
+  return (data ?? []).map((item) => {
+    const images = publicImageUrls(supabase, item.image_paths, item.image_path);
+    return {
+      id: item.id,
+      name: item.name,
+      description: item.description ?? "Producto seleccionado por nuestro equipo.",
+      category: item.category ?? "Cuidado",
+      brand: item.brand ?? "",
+      presentation: item.presentation ?? "",
+      price: Number(item.price),
+      stock: item.stock,
+      image: images[0] ?? null,
+      images,
+    };
+  }) as PublicProduct[];
 }
 
 export async function getPublicGallery() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("gallery_posts")
-    .select("id,title,image_path,source_type,source_url,barber_profiles(display_name)")
+    .select("id,title,description,image_path,image_paths,source_type,source_url,barber_profiles(display_name)")
     .eq("status", "published")
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false });
   if (error || !data?.length) {
-    return fallbackGallery.map((image, index) => ({ id: `fallback-${index}`, title: `Trabajo destacado ${index + 1}`, image }));
+    return fallbackGallery.map((image, index) => ({ id: `fallback-${index}`, title: `Trabajo destacado ${index + 1}`, image, images: [image] }));
   }
-  return data.map((item) => ({
-    id: item.id,
-    title: item.title,
-    image: publicImageUrl(supabase, item.image_path) ?? fallbackGallery[0],
-    sourceType: item.source_type ?? "own_work",
-    sourceUrl: item.source_url ?? null,
-    barberName: (item.barber_profiles as unknown as { display_name?: string } | null)?.display_name ?? null,
-  }));
+  return data.map((item) => {
+    const images = publicImageUrls(supabase, item.image_paths, item.image_path);
+    return {
+      id: item.id,
+      title: item.title,
+      description: item.description ?? "",
+      image: images[0] ?? fallbackGallery[0],
+      images: images.length ? images : [fallbackGallery[0]],
+      sourceType: item.source_type ?? "own_work",
+      sourceUrl: item.source_url ?? null,
+      barberName: (item.barber_profiles as unknown as { display_name?: string } | null)?.display_name ?? null,
+    };
+  });
 }

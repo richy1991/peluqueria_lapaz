@@ -95,16 +95,17 @@ export function PublicProfileManager({ userId, profile, gallery, view }: { userI
     const form = event.currentTarget;
     clearFormErrors(form);
     setBusy(true);
-    let uploadedPath: string | null = null;
+    let uploadedPaths: string[] = [];
     try {
       const data = new FormData(form);
-      const image = data.get("image");
-      if (!(image instanceof File) || !image.size) throw new Error("Selecciona una imagen para publicar.");
-      uploadedPath = await uploadBarberImage(image, userId, "gallery");
-      const { error } = await createClient().rpc("barber_publish_gallery", {
+      const images = data.getAll("images").filter((image): image is File => image instanceof File && image.size > 0);
+      if (!images.length) throw new Error("Selecciona al menos una imagen para publicar.");
+      if (images.length > 3) throw new Error("Puedes publicar un máximo de 3 imágenes por modelo.");
+      uploadedPaths = await Promise.all(images.map((image) => uploadBarberImage(image, userId, "gallery")));
+      const { error } = await createClient().rpc("barber_publish_gallery_v2", {
         post_title: String(data.get("title") ?? ""),
         post_description: String(data.get("description") ?? ""),
-        post_image_path: uploadedPath,
+        post_image_paths: uploadedPaths,
         post_source_type: String(data.get("source_type") ?? "own_work"),
         post_source_url: String(data.get("source_url") ?? ""),
         has_client_consent: data.get("client_consent") === "on",
@@ -114,8 +115,8 @@ export function PublicProfileManager({ userId, profile, gallery, view }: { userI
       setBusy(false);
       dispatchDashboardSuccess("La imagen se publicó en la galería.");
     } catch (reason) {
-      if (uploadedPath) await createClient().storage.from("public-media").remove([uploadedPath]);
-      fail(form, reason, reason instanceof Error && reason.message.includes("imagen") ? "image" : undefined);
+      if (uploadedPaths.length) await createClient().storage.from("public-media").remove(uploadedPaths);
+      fail(form, reason, reason instanceof Error && reason.message.includes("imagen") ? "images" : undefined);
     }
   }
 
@@ -139,7 +140,7 @@ export function PublicProfileManager({ userId, profile, gallery, view }: { userI
       <DashboardModal title="Publicar en la galería" description="La imagen quedará visible en el sitio público." triggerLabel="Nueva publicación" triggerIcon={<ImagePlus />}>
         <form className="admin-form" onSubmit={publishGallery} acceptCharset="UTF-8">
           <label>Título<input name="title" minLength={2} maxLength={120} required /></label>
-          <label>Imagen<input name="image" type="file" accept="image/jpeg,image/png,image/webp" required /></label>
+          <label>Imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required /></label>
           <label>Tipo<select name="source_type" defaultValue="own_work"><option value="own_work">Trabajo propio</option><option value="reference">Modelo o referencia</option></select></label>
           <label>Enlace de la fuente <span aria-hidden="true"><Link2 size={12} /></span><input name="source_url" type="url" placeholder="https://…" /></label>
           <label className="wide">Descripción<textarea name="description" maxLength={500} /></label>

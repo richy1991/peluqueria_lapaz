@@ -70,6 +70,12 @@ async function uploadImage(file: File, folder: string) {
   return path;
 }
 
+async function uploadImages(files: File[], folder: string) {
+  if (!files.length) return [];
+  if (files.length > 3) throw new Error("Puedes publicar un máximo de 3 imágenes.");
+  return Promise.all(files.map((file) => uploadImage(file, folder)));
+}
+
 export function AdminDashboard({
   userEmail,
   initialServices,
@@ -186,15 +192,16 @@ export function AdminDashboard({
     startAction();
     try {
       const data = new FormData(form);
-      const file = data.get("image");
-      if (!(file instanceof File) || !file.size) throw new Error("Selecciona una imagen.");
+      const files = data.getAll("images").filter((file): file is File => file instanceof File && file.size > 0);
+      if (!files.length) throw new Error("Selecciona al menos una imagen.");
       if (data.get("client_consent") !== "on") throw new Error("Debes confirmar la autorización de publicación.");
-      const imagePath = await uploadImage(file, "gallery");
+      const imagePaths = await uploadImages(files, "gallery");
       const supabase = createClient();
       const { error: insertError } = await supabase.from("gallery_posts").insert({
         title: String(data.get("title") ?? "Trabajo destacado"),
         description: String(data.get("description") ?? ""),
-        image_path: imagePath,
+        image_path: imagePaths[0],
+        image_paths: imagePaths,
         status: "published",
         client_consent: true,
         consent_date: new Date().toISOString(),
@@ -210,7 +217,7 @@ export function AdminDashboard({
 
   async function updateService(event:FormEvent<HTMLFormElement>,item:Row){event.preventDefault();const form=event.currentTarget;clearFormErrors(form);startAction();const data=new FormData(form);const{error:updateError}=await createClient().from("services").update({name:String(data.get("name")??""),description:String(data.get("description")??""),category:String(data.get("category")??"Servicio"),price:Number(data.get("price")),duration_minutes:Number(data.get("duration_minutes")),grace_minutes:Number(data.get("grace_minutes")??10)}).eq("id",item.id);if(updateError)return failAction(updateError,form);finishAction("Servicio actualizado.");}
 
-  async function updateGalleryPost(event:FormEvent<HTMLFormElement>,item:Row){event.preventDefault();const form=event.currentTarget;clearFormErrors(form);startAction();try{const data=new FormData(form);const file=data.get("image");const imagePath=file instanceof File&&file.size?await uploadImage(file,"gallery"):String(item.image_path??"");const{error:updateError}=await createClient().from("gallery_posts").update({title:String(data.get("title")??""),description:String(data.get("description")??""),featured:data.get("featured")==="on",image_path:imagePath}).eq("id",item.id);if(updateError)throw updateError;finishAction("Publicación actualizada.");}catch(reason){failAction(reason,form,reason instanceof Error && reason.message.includes("imagen") ? "image" : undefined);}}
+  async function updateGalleryPost(event:FormEvent<HTMLFormElement>,item:Row){event.preventDefault();const form=event.currentTarget;clearFormErrors(form);startAction();try{const data=new FormData(form);const files=data.getAll("images").filter((file):file is File=>file instanceof File&&file.size>0);const current=Array.isArray(item.image_paths)?item.image_paths.map(String):[String(item.image_path??"")].filter(Boolean);const imagePaths=files.length?await uploadImages(files,"gallery"):current;const{error:updateError}=await createClient().from("gallery_posts").update({title:String(data.get("title")??""),description:String(data.get("description")??""),featured:data.get("featured")==="on",image_path:imagePaths[0],image_paths:imagePaths}).eq("id",item.id);if(updateError)throw updateError;finishAction("Publicación actualizada.");}catch(reason){failAction(reason,form,reason instanceof Error&&reason.message.includes("imagen")?"images":undefined);}}
 
   async function addProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -219,8 +226,8 @@ export function AdminDashboard({
     startAction();
     try {
       const data = new FormData(form);
-      const file = data.get("image");
-      const imagePath = file instanceof File && file.size ? await uploadImage(file, "products") : null;
+      const files = data.getAll("images").filter((file): file is File => file instanceof File && file.size > 0);
+      const imagePaths = await uploadImages(files, "products");
       const name = String(data.get("name") ?? "").trim();
       const slug = String(data.get("slug") || name).trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-");
       const supabase = createClient();
@@ -229,9 +236,12 @@ export function AdminDashboard({
         slug,
         description: String(data.get("description") ?? ""),
         category: String(data.get("category") ?? "Cuidado"),
+        brand: String(data.get("brand") ?? ""),
+        presentation: String(data.get("presentation") ?? ""),
         price: Number(data.get("price")),
         stock: Number(data.get("stock")),
-        image_path: imagePath,
+        image_path: imagePaths[0] ?? null,
+        image_paths: imagePaths,
         status: "active",
       });
       if (insertError) throw insertError;
@@ -255,8 +265,9 @@ export function AdminDashboard({
     const supabase = createClient();
     const { error: deleteError } = await supabase.from("gallery_posts").delete().eq("id", item.id);
     if (deleteError) return failAction(deleteError);
-    const imagePath = String(item.image_path ?? "");
-    if (imagePath && !/^https?:\/\//i.test(imagePath)) await supabase.storage.from("public-media").remove([imagePath]);
+    const imagePaths = Array.isArray(item.image_paths) ? item.image_paths.map(String) : [String(item.image_path ?? "")];
+    const storedPaths = imagePaths.filter((path) => path && !/^https?:\/\//i.test(path));
+    if (storedPaths.length) await supabase.storage.from("public-media").remove(storedPaths);
     finishAction("La publicación se eliminó de la galería.");
   }
 
@@ -347,8 +358,8 @@ export function AdminDashboard({
 
   async function updateProduct(event: FormEvent<HTMLFormElement>, item: Row) {
     event.preventDefault(); const form=event.currentTarget; clearFormErrors(form); startAction();
-    try { const data=new FormData(form); const file=data.get("image"); const imagePath=file instanceof File&&file.size?await uploadImage(file,"products"):String(item.image_path??"")||null;
-      const { error: updateError }=await createClient().rpc("admin_update_product",{target_product_id:item.id,product_name:String(data.get("name")??""),product_description:String(data.get("description")??""),product_category:String(data.get("category")??""),product_price:Number(data.get("price")),product_stock:Number(data.get("stock")),product_image_path:imagePath});
+    try { const data=new FormData(form); const files=data.getAll("images").filter((file):file is File=>file instanceof File&&file.size>0);const current=Array.isArray(item.image_paths)?item.image_paths.map(String):[String(item.image_path??"")].filter(Boolean);const imagePaths=files.length?await uploadImages(files,"products"):current;
+      const { error: updateError }=await createClient().from("products").update({name:String(data.get("name")??""),description:String(data.get("description")??""),category:String(data.get("category")??""),brand:String(data.get("brand")??""),presentation:String(data.get("presentation")??""),price:Number(data.get("price")),stock:Number(data.get("stock")),image_path:imagePaths[0]??null,image_paths:imagePaths,updated_at:new Date().toISOString()}).eq("id",item.id);
       if(updateError)throw updateError; finishAction("Producto actualizado y publicado.");
     } catch(reason){failAction(reason,form);}
   }
@@ -441,17 +452,17 @@ export function AdminDashboard({
           {section === "galeria" && <div className="admin-panel">
             <div className="admin-title"><ImagePlus /><div><p>CONTENIDO</p><h1>Galería de trabajos</h1></div></div>
             <div className="dash-section-intro"><p>Publica imágenes optimizadas únicamente con autorización del cliente.</p><DashboardModal title="Publicar trabajo" description="La imagen será optimizada automáticamente." triggerLabel="Nueva publicación" triggerIcon={<ImagePlus/>}>
-            <form className="admin-form" onSubmit={addGalleryPost} acceptCharset="UTF-8"><label>Título<input name="title" required /></label><label>Imagen<input name="image" type="file" accept="image/jpeg,image/png,image/webp" required /></label><label className="wide">Descripción<input name="description" /></label><label className="check-label wide"><input type="checkbox" name="client_consent" /> Confirmo que existe autorización del cliente.</label><label className="check-label wide"><input type="checkbox" name="featured" /> Marcar como destacada.</label><button className="button button-dark wide" disabled={busy}>Optimizar y publicar</button></form>
+            <form className="admin-form" onSubmit={addGalleryPost} acceptCharset="UTF-8"><label>Título<input name="title" required /></label><label>Imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required /></label><label className="wide">Descripción<input name="description" /></label><label className="check-label wide"><input type="checkbox" name="client_consent" /> Confirmo que existe autorización del cliente.</label><label className="check-label wide"><input type="checkbox" name="featured" /> Marcar como destacada.</label><button className="button button-dark wide" disabled={busy}>Optimizar y publicar</button></form>
             </DashboardModal></div>
-            <div className="admin-list">{initialGallery.map((item)=><article key={item.id}><div><strong>{String(item.title)}</strong><span>{String(item.status)} · consentimiento: {item.client_consent?"sí":"no"}</span></div><div className="dash-row-actions"><button onClick={()=>toggleStatus("gallery_posts",item.id,item.status==="published"?"hidden":"published")}>{item.status==="published"?"Ocultar":"Publicar"}</button><DashboardModal title={`Editar ${String(item.title)}`} triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateGalleryPost(event,item)}><label>Título<input name="title" defaultValue={String(item.title)} required/></label><label>Nueva imagen opcional<input name="image" type="file" accept="image/jpeg,image/png,image/webp"/></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description??"")}/></label><label className="check-label wide"><input type="checkbox" name="featured" defaultChecked={Boolean(item.featured)}/> Destacada</label><button className="button button-dark wide" disabled={busy}>Guardar publicación</button></form></DashboardModal><button type="button" className="dash-danger-action" onClick={()=>deleteGalleryPost(item)} disabled={busy}><Trash2/> Eliminar</button></div></article>)}</div>
+            <div className="admin-list">{initialGallery.map((item)=><article key={item.id}><div><strong>{String(item.title)}</strong><span>{String(item.status)} · consentimiento: {item.client_consent?"sí":"no"} · {Array.isArray(item.image_paths)?item.image_paths.length:1} foto(s)</span></div><div className="dash-row-actions"><button onClick={()=>toggleStatus("gallery_posts",item.id,item.status==="published"?"hidden":"published")}>{item.status==="published"?"Ocultar":"Publicar"}</button><DashboardModal title={`Editar ${String(item.title)}`} triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateGalleryPost(event,item)}><label>Título<input name="title" defaultValue={String(item.title)} required/></label><label>Reemplazar imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple/></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description??"")}/></label><label className="check-label wide"><input type="checkbox" name="featured" defaultChecked={Boolean(item.featured)}/> Destacada</label><button className="button button-dark wide" disabled={busy}>Guardar publicación</button></form></DashboardModal><button type="button" className="dash-danger-action" onClick={()=>deleteGalleryPost(item)} disabled={busy}><Trash2/> Eliminar</button></div></article>)}</div>
           </div>}
 
           {section === "productos" && <div className="admin-panel">
             <div className="admin-title"><PackagePlus /><div><p>CATÁLOGO</p><h1>Productos</h1></div></div>
             <div className="dash-section-intro"><p>Publica inventario nuevo o abre una ficha existente para editarla.</p><DashboardModal title="Crear producto" description="Configura inventario, precio e imagen comercial." triggerLabel="Nuevo producto" triggerIcon={<PackagePlus/>}>
-            <form className="admin-form" onSubmit={addProduct} acceptCharset="UTF-8"><label>Nombre<input name="name" required /></label><label>Identificador<input name="slug" placeholder="se genera del nombre" /></label><label className="wide">Descripción<input name="description" /></label><label>Categoría<input name="category" /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" required /></label><label>Stock<input name="stock" type="number" min="0" required /></label><label className="wide">Imagen<input name="image" type="file" accept="image/jpeg,image/png,image/webp" /></label><button className="button button-dark wide" disabled={busy}>Publicar producto</button></form>
+            <form className="admin-form" onSubmit={addProduct} acceptCharset="UTF-8"><label>Nombre<input name="name" required /></label><label>Identificador<input name="slug" placeholder="se genera del nombre" /></label><label>Marca<input name="brand" /></label><label>Presentación<input name="presentation" placeholder="Ej. 250 ml" /></label><label className="wide">Descripción<input name="description" /></label><label>Categoría<input name="category" /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" required /></label><label>Stock<input name="stock" type="number" min="0" required /></label><label className="wide">Imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple /></label><button className="button button-dark wide" disabled={busy}>Publicar producto</button></form>
             </DashboardModal></div>
-            <div className="admin-list editable-list">{initialProducts.map((item)=><article key={item.id}><div><strong>{String(item.name)}</strong><span>Bs {String(item.price)} · stock {String(item.stock)} · {String(item.status)}</span></div><div className="dash-row-actions"><button onClick={()=>toggleStatus("products",item.id,item.status==="active"?"inactive":"active")}>{item.status==="active"?"Desactivar":"Activar"}</button><DashboardModal title={`Editar ${String(item.name)}`} description="Actualiza la ficha comercial y el inventario." triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateProduct(event,item)} acceptCharset="UTF-8"><label>Nombre<input name="name" defaultValue={String(item.name)} required/></label><label>Categoría<input name="category" defaultValue={String(item.category??"")}/></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description??"")}/></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" defaultValue={Number(item.price)} required/></label><label>Stock<input name="stock" type="number" min="0" defaultValue={Number(item.stock)} required/></label><label className="wide">Nueva imagen opcional<input name="image" type="file" accept="image/jpeg,image/png,image/webp"/></label><button className="button button-dark wide" disabled={busy}>Guardar producto</button></form></DashboardModal></div></article>)}</div>
+            <div className="admin-list editable-list">{initialProducts.map((item)=><article key={item.id}><div><strong>{String(item.name)}</strong><span>Bs {String(item.price)} · stock {String(item.stock)} · {String(item.status)} · {Array.isArray(item.image_paths)?item.image_paths.length:Number(Boolean(item.image_path))} foto(s)</span></div><div className="dash-row-actions"><button onClick={()=>toggleStatus("products",item.id,item.status==="active"?"inactive":"active")}>{item.status==="active"?"Desactivar":"Activar"}</button><DashboardModal title={`Editar ${String(item.name)}`} description="Actualiza la ficha comercial y el inventario." triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateProduct(event,item)} acceptCharset="UTF-8"><label>Nombre<input name="name" defaultValue={String(item.name)} required/></label><label>Categoría<input name="category" defaultValue={String(item.category??"")}/></label><label>Marca<input name="brand" defaultValue={String(item.brand??"")}/></label><label>Presentación<input name="presentation" defaultValue={String(item.presentation??"")}/></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description??"")}/></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" defaultValue={Number(item.price)} required/></label><label>Stock<input name="stock" type="number" min="0" defaultValue={Number(item.stock)} required/></label><label className="wide">Reemplazar imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple/></label><button className="button button-dark wide" disabled={busy}>Guardar producto</button></form></DashboardModal></div></article>)}</div>
           </div>}
 
           {section === "equipo" && <div className="admin-panel team-panel">

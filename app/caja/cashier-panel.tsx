@@ -53,7 +53,7 @@ export function CashierPanel(props: Props) {
 
   async function sell(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const form = event.currentTarget; const data = new FormData(form);
-    const response = await call("register_counter_sale_v2", {
+    const response = await call("register_counter_sale_v3", {
       target_appointment_id: String(data.get("appointment_id") ?? "") || null,
       target_client_id: String(data.get("client_id") ?? "") || null,
       guest_name: String(data.get("guest_name") ?? "") || null,
