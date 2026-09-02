@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Calculator, CheckCircle2, ClipboardCheck, History, LockKeyhole, PackageOpen, Printer, ReceiptText, Scissors, Sparkles, WalletCards } from "lucide-react";
+import { Calculator, CheckCircle2, CirclePlus, ClipboardCheck, History, LockKeyhole, PackageOpen, Printer, ReceiptText, Scissors, Sparkles, Trash2, WalletCards } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { DashboardModal } from "@/components/dashboard-modal";
 import { ModeSwitcher } from "@/components/mode-switcher";
@@ -53,6 +53,24 @@ export function CashierPanel(props: Props) {
 
   async function sell(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const form = event.currentTarget; const data = new FormData(form);
+    const saleKind = String(data.get("sale_kind") ?? "service");
+    if (saleKind === "product") {
+      const response = await call("register_counter_product_sale_v2", {
+        target_product_id: String(data.get("product_id") ?? "") || null,
+        product_quantity: Number(data.get("quantity") ?? 1),
+        recommended_by_barber_id: String(data.get("recommended_by") ?? "") || null,
+        manual_discount: Number(data.get("discount") ?? 0),
+        payment_method: String(data.get("payment_method") ?? "cash"),
+        payment_reference: String(data.get("payment_reference") ?? "") || null,
+        promotion_code: String(data.get("promotion_code") ?? "") || null,
+      }, form);
+      if (response) {
+        setResult(response as Record<string, unknown>);
+        dispatchDashboardSuccess("Venta de producto registrada sin generar beneficios de cliente.");
+        router.refresh();
+      }
+      return;
+    }
     const searchInput = form.elements.namedItem("client_search") as HTMLInputElement | null;
     if (!data.get("appointment_id") && data.get("customer_mode") === "existing" && !data.get("client_id")) {
       searchInput?.setCustomValidity("Selecciona un cliente de los resultados de búsqueda.");
@@ -60,14 +78,19 @@ export function CashierPanel(props: Props) {
       return;
     }
     searchInput?.setCustomValidity("");
-    const response = await call("register_counter_sale_v3", {
+    const serviceIds = data.getAll("line_service_id").map(String);
+    const serviceBarbers = data.getAll("line_barber_id").map(String);
+    const attendeeLabels = data.getAll("line_attendee_label").map(String);
+    const chargeDescriptions = data.getAll("charge_description").map(String);
+    const chargeAmounts = data.getAll("charge_amount").map(Number);
+    const chargeBarbers = data.getAll("charge_barber_id").map(String);
+    const response = await call("register_counter_service_sale_v4", {
       target_appointment_id: String(data.get("appointment_id") ?? "") || null,
       target_client_id: String(data.get("client_id") ?? "") || null,
       guest_name: String(data.get("guest_name") ?? "") || null,
       guest_phone: String(data.get("guest_phone") ?? "") || null,
-      target_barber_id: String(data.get("barber_id") ?? "") || null,
-      target_service_id: String(data.get("service_id") ?? "") || null,
-      target_extra_service_id: String(data.get("extra_service_id") ?? "") || null,
+      service_lines: serviceIds.map((serviceId, index) => ({ service_id: serviceId, barber_id: serviceBarbers[index], attendee_label: attendeeLabels[index] })),
+      custom_charges: chargeDescriptions.map((description, index) => ({ description, amount: chargeAmounts[index], barber_id: chargeBarbers[index] })),
       target_product_id: String(data.get("product_id") ?? "") || null,
       product_quantity: Number(data.get("quantity") ?? 1),
       recommended_by_barber_id: String(data.get("recommended_by") ?? "") || null,
@@ -135,7 +158,7 @@ export function CashierPanel(props: Props) {
         {error && <p className="admin-error">{error}</p>}{result && <div className="admin-message"><strong>Operación completada.</strong>{"receipt_id" in result && <Link href={`/comprobante/${String(result.receipt_id)}`}> Ver comprobante #{String(result.receipt_number)}</Link>}{Boolean(result.claim_code) && <span> Código: <b>{String(result.claim_code)}</b></span>}</div>}
         {!shift ? <OpenShift onSubmit={open} busy={busy} /> : <>
           {section === "servicios" && <ServiceDashboard appointments={appointments} clients={clients} services={services} barbers={barbers} products={products} sales={sales} busy={busy} onSubmit={sell} />}
-          {section === "productos" && <ProductDashboard clients={clients} products={products} barbers={barbers} busy={busy} onSubmit={sell} />}
+          {section === "productos" && <ProductDashboard products={products} barbers={barbers} busy={busy} onSubmit={sell} />}
           {section === "movimientos" && <DailyLedger movements={movements} shift={shift} busy={busy} onMovement={movement} onClose={close} workDate={workDate} />}
           {section === "liquidaciones" && <Settlements barbers={barbers} payouts={payouts} pendingByBarber={pendingByBarber} workDate={workDate} busy={busy} onPrepare={preparePayout} onPay={payPayout} />}
           {section === "gastos" && <Expenses expenses={expenses} busy={busy} onReview={reviewExpense} />}
@@ -164,8 +187,7 @@ function QueueItem({ appointment, clients, services, barbers, products, busy, on
   return <article><div><strong>{client?.full_name ?? "Cliente"} · {String(appointment.service_name_snapshot)}</strong><span>{barber?.display_name ?? "Peluquero"}{details?.notes ? ` · ${String(details.notes)}` : ""}</span></div><DashboardModal title={`Cobrar a ${client?.full_name ?? "cliente"}`} description="Puedes corregir el servicio y añadir extras antes de confirmar." triggerLabel="Revisar y cobrar" triggerIcon={<ReceiptText />} size="large"><ServiceSaleForm appointment={appointment} checkout={details ?? null} clients={clients} services={services} barbers={barbers} products={products} busy={busy} onSubmit={onSubmit} /></DashboardModal></article>;
 }
 
-function ClientFields({ clients }: { clients: Row[] }) {
-  const [mode, setMode] = useState<"new" | "existing">("new");
+function ClientFields({ clients, mode, onModeChange }: { clients: Row[]; mode: "new" | "existing"; onModeChange: (mode: "new" | "existing") => void }) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Row | null>(null);
   const [results, setResults] = useState<Row[]>([]);
@@ -188,10 +210,11 @@ function ClientFields({ clients }: { clients: Row[] }) {
   }, [clients, mode, query, selected]);
 
   function chooseMode(next: "new" | "existing") {
-    setMode(next);
+    onModeChange(next);
     setQuery("");
     setSelected(null);
     setResults([]);
+    setReferred(false);
   }
 
   return <fieldset className="wide cashier-client-fields">
@@ -224,25 +247,47 @@ function ClientFields({ clients }: { clients: Row[] }) {
         {searching && <p>Buscando…</p>}
       </div>}
     </div>}
-    <label className="wide cashier-product-toggle cashier-referral-toggle"><input type="checkbox" checked={referred} onChange={event => setReferred(event.target.checked)} /> Viene recomendado por otro cliente</label>
-    {referred && <label className="wide">Código del cliente que lo recomendó<input name="referral_code" placeholder="LC-..." autoCapitalize="characters" required /></label>}
+    {mode === "new" && <label className="wide cashier-product-toggle cashier-referral-toggle"><input type="checkbox" checked={referred} onChange={event => setReferred(event.target.checked)} /> Viene recomendado por otro cliente</label>}
+    {mode === "new" && referred && <label className="wide">Código del cliente que lo recomendó<input name="referral_code" placeholder="LC-..." autoCapitalize="characters" required /></label>}
   </fieldset>;
 }
-function PaymentFields() { return <><label>Descuento manual Bs<input name="discount" type="number" min="0" step="0.5" defaultValue="0" /></label><label>Código de promoción<input name="promotion_code" /></label><label>Código de canje<input name="redemption_code" /></label><label>Forma de pago<select name="payment_method" defaultValue="cash"><option value="cash">Efectivo</option><option value="qr">QR</option><option value="transfer">Transferencia</option><option value="card">Tarjeta</option><option value="other">Otro</option></select></label><label>Referencia<input name="payment_reference" /></label></>; }
-
-function ServiceSaleForm({ appointment, checkout, clients, services, barbers, products, busy, onSubmit }: { appointment?: Row; checkout?: Row | null; clients: Row[]; services: Row[]; barbers: Row[]; products: Row[]; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
-  const [addProduct, setAddProduct] = useState(Boolean(checkout?.suggested_product_id));
-  return <form className="admin-form" onSubmit={onSubmit}><input type="hidden" name="appointment_id" value={appointment?.id ?? ""} />{!appointment && <ClientFields clients={clients} />}
-    <label>Servicio realizado<select name="service_id" defaultValue={String(checkout?.actual_service_id ?? appointment?.service_id ?? "")} required><option value="">Seleccionar servicio</option>{services.map(service => <option key={service.id} value={service.id}>{String(service.name)} · Bs {String(service.price)}</option>)}</select></label>
-    <label>Servicio extra<select name="extra_service_id" defaultValue={String(checkout?.extra_service_id ?? "")}><option value="">Sin servicio extra</option>{services.map(service => <option key={service.id} value={service.id}>{String(service.name)} · Bs {String(service.price)}</option>)}</select></label>
-    <label>Peluquero<select name="barber_id" defaultValue={String(appointment?.barber_id ?? "")} required><option value="">Seleccionar</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label>
-    <label className="wide cashier-product-toggle"><input type="checkbox" checked={addProduct} onChange={event => setAddProduct(event.target.checked)} /> Añadir producto a este cobro</label>
-    {addProduct && <><label>Producto<select name="product_id" defaultValue={String(checkout?.suggested_product_id ?? "")} required><option value="">Seleccionar producto</option>{products.map(product => <option key={product.id} value={product.id}>{String(product.name)} · Bs {String(product.price)} · stock {String(product.stock)}</option>)}</select></label><label>Cantidad<input name="quantity" type="number" min="1" max="20" defaultValue={Number(checkout?.product_quantity ?? 1)} /></label><label>Recomendado por<select name="recommended_by" defaultValue={String(appointment?.barber_id ?? "")}><option value="">Sin recomendador</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label></>}
-    <PaymentFields /><button className="button button-dark wide" disabled={busy}><ReceiptText /> Confirmar pago y emitir comprobante</button></form>;
+function PaymentFields({ allowRedemption = true }: { allowRedemption?: boolean }) {
+  const [method, setMethod] = useState("cash");
+  return <><label>Descuento manual Bs<input name="discount" type="number" min="0" step="0.5" defaultValue="0" /></label><label>Código de promoción<input name="promotion_code" /></label>{allowRedemption && <label>Código de canje<input name="redemption_code" /></label>}<label>Forma de pago<select name="payment_method" value={method} onChange={event => setMethod(event.target.value)}><option value="cash">Efectivo</option><option value="qr">QR</option><option value="transfer">Transferencia</option><option value="card">Tarjeta</option><option value="other">Otro</option></select></label>{method !== "cash" && <label>Referencia del pago<input name="payment_reference" required /></label>}</>;
 }
 
-function ProductDashboard({ clients, products, barbers, busy, onSubmit }: { clients: Row[]; products: Row[]; barbers: Row[]; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
-  return <section className="admin-panel cashier-product-sale"><div className="dash-list-head"><div><small>OPERACIÓN INDEPENDIENTE</small><h2>Venta directa de productos</h2></div><PackageOpen /></div><p className="admin-help">Utiliza esta página cuando el cliente compra productos sin recibir un servicio.</p><DashboardModal title="Registrar venta de producto" description="El stock se descontará al confirmar el pago." triggerLabel="Nueva venta" triggerIcon={<PackageOpen />} size="large"><form className="admin-form" onSubmit={onSubmit}><ClientFields clients={clients} /><label>Producto<select name="product_id" required><option value="">Seleccionar producto</option>{products.map(product => <option key={product.id} value={product.id}>{String(product.name)} · Bs {String(product.price)} · stock {String(product.stock)}</option>)}</select></label><label>Cantidad<input name="quantity" type="number" min="1" max="20" defaultValue="1" required /></label><label>Recomendado por<select name="recommended_by"><option value="">Sin recomendador</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label><PaymentFields /><button className="button button-dark wide" disabled={busy}><ReceiptText /> Cobrar producto y emitir comprobante</button></form></DashboardModal></section>;
+type ServiceLine = { key: string; serviceId: string; barberId: string; attendeeLabel: string };
+type CustomCharge = { key: string; description: string; amount: string; barberId: string };
+
+function ServiceSaleForm({ appointment, checkout, clients, services, barbers, products, busy, onSubmit }: { appointment?: Row; checkout?: Row | null; clients: Row[]; services: Row[]; barbers: Row[]; products: Row[]; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
+  const [customerMode, setCustomerMode] = useState<"new" | "existing">("new");
+  const [addProduct, setAddProduct] = useState(Boolean(checkout?.suggested_product_id));
+  const [serviceLines, setServiceLines] = useState<ServiceLine[]>(() => {
+    const initial = [{ key: "primary", serviceId: String(checkout?.actual_service_id ?? appointment?.service_id ?? ""), barberId: String(appointment?.barber_id ?? ""), attendeeLabel: "Titular" }];
+    if (checkout?.extra_service_id) initial.push({ key: "checkout-extra", serviceId: String(checkout.extra_service_id), barberId: String(appointment?.barber_id ?? ""), attendeeLabel: "Titular" });
+    return initial;
+  });
+  const [charges, setCharges] = useState<CustomCharge[]>([]);
+  function updateServiceLine(key: string, field: keyof Omit<ServiceLine, "key">, value: string) { setServiceLines(lines => lines.map(line => line.key === key ? { ...line, [field]: value } : line)); }
+  function updateCharge(key: string, field: keyof Omit<CustomCharge, "key">, value: string) { setCharges(items => items.map(item => item.key === key ? { ...item, [field]: value } : item)); }
+  return <form className="admin-form" onSubmit={onSubmit}><input type="hidden" name="sale_kind" value="service" /><input type="hidden" name="appointment_id" value={appointment?.id ?? ""} />{!appointment && <ClientFields clients={clients} mode={customerMode} onModeChange={setCustomerMode} />}
+    <fieldset className="wide cashier-line-group"><legend>Atenciones incluidas</legend>{serviceLines.map((line, index) => <div className="cashier-service-line" key={line.key}>
+      <span className="cashier-line-number">Atención {index + 1}</span>
+      <label>Persona atendida<select name="line_attendee_label" value={line.attendeeLabel} onChange={event => updateServiceLine(line.key, "attendeeLabel", event.target.value)}><option>Titular</option><option>Hijo/a</option><option>Acompañante</option></select></label>
+      <label>Servicio<select name="line_service_id" value={line.serviceId} onChange={event => updateServiceLine(line.key, "serviceId", event.target.value)} required><option value="">Seleccionar servicio</option>{services.map(service => <option key={service.id} value={service.id}>{String(service.name)} · Bs {String(service.price)}</option>)}</select></label>
+      <label>Peluquero<select name="line_barber_id" value={line.barberId} onChange={event => updateServiceLine(line.key, "barberId", event.target.value)} required><option value="">Seleccionar</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label>
+      {serviceLines.length > 1 && <button type="button" className="cashier-remove-line" aria-label={`Quitar atención ${index + 1}`} onClick={() => setServiceLines(lines => lines.filter(item => item.key !== line.key))}><Trash2 /> Quitar</button>}
+    </div>)}<button type="button" className="cashier-add-line" onClick={() => setServiceLines(lines => [...lines, { key: `service-${Date.now()}`, serviceId: "", barberId: lines.at(-1)?.barberId ?? "", attendeeLabel: "Hijo/a" }])}><CirclePlus /> Agregar otra atención</button></fieldset>
+    <fieldset className="wide cashier-line-group"><legend>Cargos imprevistos</legend>{charges.length === 0 ? <p className="cashier-client-help">Añádelo solo cuando se realizó un detalle que no existe en el catálogo.</p> : charges.map((charge, index) => <div className="cashier-service-line cashier-charge-line" key={charge.key}>
+      <span className="cashier-line-number">Cargo {index + 1}</span><label>Justificación<input name="charge_description" value={charge.description} onChange={event => updateCharge(charge.key, "description", event.target.value)} required placeholder="Detalle realizado" /></label><label>Monto Bs<input name="charge_amount" type="number" min="0.5" step="0.5" value={charge.amount} onChange={event => updateCharge(charge.key, "amount", event.target.value)} required /></label><label>Peluquero<select name="charge_barber_id" value={charge.barberId} onChange={event => updateCharge(charge.key, "barberId", event.target.value)} required><option value="">Seleccionar</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label><button type="button" className="cashier-remove-line" onClick={() => setCharges(items => items.filter(item => item.key !== charge.key))}><Trash2 /> Quitar</button>
+    </div>)}<button type="button" className="cashier-add-line" onClick={() => setCharges(items => [...items, { key: `charge-${Date.now()}`, description: "", amount: "", barberId: serviceLines[0]?.barberId ?? "" }])}><CirclePlus /> Agregar cargo imprevisto</button></fieldset>
+    <label className="wide cashier-product-toggle"><input type="checkbox" checked={addProduct} onChange={event => setAddProduct(event.target.checked)} /> Añadir producto a este cobro</label>
+    {addProduct && <><label>Producto<select name="product_id" defaultValue={String(checkout?.suggested_product_id ?? "")} required><option value="">Seleccionar producto</option>{products.map(product => <option key={product.id} value={product.id}>{String(product.name)} · Bs {String(product.price)} · stock {String(product.stock)}</option>)}</select></label><label>Cantidad<input name="quantity" type="number" min="1" max="20" defaultValue={Number(checkout?.product_quantity ?? 1)} /></label><label>Recomendado por<select name="recommended_by" defaultValue={String(appointment?.barber_id ?? "")}><option value="">Sin recomendador</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label></>}
+    <PaymentFields allowRedemption={Boolean(appointment) || customerMode === "existing"} /><button className="button button-dark wide" disabled={busy}><ReceiptText /> Confirmar pago y emitir comprobante</button></form>;
+}
+
+function ProductDashboard({ products, barbers, busy, onSubmit }: { products: Row[]; barbers: Row[]; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
+  return <section className="admin-panel cashier-product-sale"><div className="dash-list-head"><div><small>OPERACIÓN INDEPENDIENTE</small><h2>Venta directa de productos</h2></div><PackageOpen /></div><p className="admin-help">Genera únicamente un comprobante de pago. No registra cliente, referido ni puntos de fidelidad.</p><DashboardModal title="Registrar venta de producto" description="Venta sin beneficios de cliente. El stock se descontará al confirmar." triggerLabel="Nueva venta" triggerIcon={<PackageOpen />} size="large"><form className="admin-form" onSubmit={onSubmit}><input type="hidden" name="sale_kind" value="product" /><label>Producto<select name="product_id" required><option value="">Seleccionar producto</option>{products.map(product => <option key={product.id} value={product.id}>{String(product.name)} · Bs {String(product.price)} · stock {String(product.stock)}</option>)}</select></label><label>Cantidad<input name="quantity" type="number" min="1" max="20" defaultValue="1" required /></label><label>Vendido o recomendado por<select name="recommended_by"><option value="">Sin peluquero asociado</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label><PaymentFields allowRedemption={false} /><button className="button button-dark wide" disabled={busy}><ReceiptText /> Cobrar producto y emitir comprobante</button></form></DashboardModal></section>;
 }
 
 function DailyLedger({ movements, shift, busy, onMovement, onClose, workDate }: { movements: Row[]; shift: Row; busy: boolean; onMovement: (event: FormEvent<HTMLFormElement>) => void; onClose: (event: FormEvent<HTMLFormElement>) => void; workDate: string }) {
