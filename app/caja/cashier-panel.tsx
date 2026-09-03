@@ -242,6 +242,7 @@ function ClientFields({ clients, mode, onModeChange, onClientChange }: { clients
           event.currentTarget.setCustomValidity("");
           setQuery(nextQuery);
           setSelected(null);
+          onClientChange("");
           setResults(normalized.length >= 2 ? clients.filter(client => String(client.full_name ?? "").toLocaleLowerCase("es").includes(normalized)).slice(0, 8) : []);
           setSearching(normalized.length >= 2);
         }} placeholder="Escribe al menos 2 letras" required />
@@ -271,6 +272,7 @@ function ServiceSaleForm({ appointment, checkout, clients, services, barbers, pr
   const [addProduct, setAddProduct] = useState(Boolean(checkout?.suggested_product_id));
   const [benefitMode, setBenefitMode] = useState<"none" | "points" | "promotion" | "code">("none");
   const [rewardQuotes, setRewardQuotes] = useState<RewardQuote[]>([]);
+  const [quotedFingerprint, setQuotedFingerprint] = useState("");
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [selectedReward, setSelectedReward] = useState("");
   const [checkoutKey] = useState(() => typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `checkout-${Date.now()}-${Math.random()}`);
@@ -280,6 +282,7 @@ function ServiceSaleForm({ appointment, checkout, clients, services, barbers, pr
     return initial;
   });
   const [charges, setCharges] = useState<CustomCharge[]>([]);
+  const quoteFingerprint=`${clientId}:${serviceLines.map(line=>`${line.serviceId}:${line.barberId}`).join("|")}`;
   useEffect(() => {
     if (benefitMode !== "points" || !clientId || serviceLines.some(line => !line.serviceId || !line.barberId)) return;
     let active = true;
@@ -288,14 +291,14 @@ function ServiceSaleForm({ appointment, checkout, clients, services, barbers, pr
       const { data } = await createClient().rpc("cashier_quote_loyalty", { target_client_id: clientId, service_lines: serviceLines.map(line => ({ service_id: line.serviceId, barber_id: line.barberId })) });
       if (!active) return;
       const quotes = (data as RewardQuote[] | null) ?? [];
-      setRewardQuotes(quotes); setSelectedReward(current => quotes.some(item => `${item.reward_id}:${item.barber_id}` === current) ? current : (quotes[0] ? `${quotes[0].reward_id}:${quotes[0].barber_id}` : "")); setQuoteLoading(false);
+      setRewardQuotes(quotes); setQuotedFingerprint(quoteFingerprint); setSelectedReward(current => quotes.some(item => `${item.reward_id}:${item.barber_id}` === current) ? current : (quotes[0] ? `${quotes[0].reward_id}:${quotes[0].barber_id}` : "")); setQuoteLoading(false);
     }, 250);
     return () => { active = false; window.clearTimeout(timer); };
-  }, [benefitMode, clientId, serviceLines]);
+  }, [benefitMode, clientId, serviceLines, quoteFingerprint]);
   function updateServiceLine(key: string, field: keyof Omit<ServiceLine, "key">, value: string) { setServiceLines(lines => lines.map(line => line.key === key ? { ...line, [field]: value } : line)); }
   function updateCharge(key: string, field: keyof Omit<CustomCharge, "key">, value: string) { setCharges(items => items.map(item => item.key === key ? { ...item, [field]: value } : item)); }
   const quoteInputValid=benefitMode === "points" && Boolean(clientId) && serviceLines.every(line=>line.serviceId&&line.barberId);
-  const chosenQuote = quoteInputValid?rewardQuotes.find(item => `${item.reward_id}:${item.barber_id}` === selectedReward):undefined;
+  const chosenQuote = quoteInputValid&&quotedFingerprint===quoteFingerprint?rewardQuotes.find(item => `${item.reward_id}:${item.barber_id}` === selectedReward):undefined;
   return <form className="admin-form" onSubmit={onSubmit}><input type="hidden" name="sale_kind" value="service" /><input type="hidden" name="appointment_id" value={appointment?.id ?? ""} /><input type="hidden" name="checkout_idempotency_key" value={checkoutKey} /><input type="hidden" name="selected_reward_id" value={benefitMode === "points" ? chosenQuote?.reward_id ?? "" : ""} /><input type="hidden" name="selected_reward_barber_id" value={benefitMode === "points" ? chosenQuote?.barber_id ?? "" : ""} />{!appointment && <ClientFields clients={clients} mode={customerMode} onModeChange={mode => { setCustomerMode(mode); setBenefitMode("none"); }} onClientChange={setClientId} />}
     <fieldset className="wide cashier-line-group"><legend>Atenciones incluidas</legend>{serviceLines.map((line, index) => <div className="cashier-service-line" key={line.key}>
       {serviceLines.length > 1 && <span className="cashier-line-number">Atención {index + 1}</span>}
@@ -310,7 +313,7 @@ function ServiceSaleForm({ appointment, checkout, clients, services, barbers, pr
     {charges.length === 0 && <button type="button" className="wide cashier-add-line cashier-optional-action" onClick={() => setCharges([{ key: `charge-${Date.now()}`, description: "", amount: "", barberId: serviceLines[0]?.barberId ?? "" }])}><CirclePlus /> Agregar cargo imprevisto</button>}
     <label className="wide cashier-product-toggle"><input type="checkbox" checked={addProduct} onChange={event => setAddProduct(event.target.checked)} /> Añadir producto a este cobro</label>
     {addProduct && <><label>Producto<select name="product_id" defaultValue={String(checkout?.suggested_product_id ?? "")} required><option value="">Seleccionar producto</option>{products.map(product => <option key={product.id} value={product.id}>{String(product.name)} · Bs {String(product.price)} · stock {String(product.stock)}</option>)}</select></label><label>Cantidad<input name="quantity" type="number" min="1" max="20" defaultValue={Number(checkout?.product_quantity ?? 1)} /></label><label>Recomendado por<select name="recommended_by" defaultValue={String(appointment?.barber_id ?? "")}><option value="">Sin recomendador</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label></>}
-    {(Boolean(appointment) || customerMode === "existing") && <fieldset className="wide cashier-benefits"><legend>Beneficio (opcional)</legend><div className="cashier-benefit-modes"><button type="button" className={benefitMode === "none" ? "active" : ""} onClick={() => setBenefitMode("none")}>Sin beneficio</button><button type="button" className={benefitMode === "points" ? "active" : ""} onClick={() => setBenefitMode("points")}><Gift /> Puntos</button><button type="button" className={benefitMode === "promotion" ? "active" : ""} onClick={() => setBenefitMode("promotion")}>Promoción</button><button type="button" className={benefitMode === "code" ? "active" : ""} onClick={() => setBenefitMode("code")}>Código</button></div>{benefitMode === "points" && <div className="cashier-reward-options">{quoteLoading ? <p>Consultando beneficios…</p> : rewardQuotes.length ? rewardQuotes.map(item => { const value=`${item.reward_id}:${item.barber_id}`; return <label className={selectedReward === value ? "selected" : ""} key={value}><input type="radio" checked={selectedReward === value} onChange={() => setSelectedReward(value)} /><span><strong>{item.reward_name}</strong><small>{item.barber_name} · saldo {item.balance} pts</small></span><b>- Bs {Number(item.discount_amount).toFixed(2)}</b></label>; }) : <p>No hay recompensas disponibles para estos servicios y peluqueros.</p>}</div>}{benefitMode === "promotion" && <label>Código de promoción<input name="promotion_code" autoCapitalize="characters" required /></label>}{benefitMode === "code" && <label>Código mostrado por el cliente<input name="redemption_code" autoCapitalize="characters" required /></label>}</fieldset>}
+    {(Boolean(appointment) || customerMode === "existing") && <fieldset className="wide cashier-benefits"><legend>Beneficio (opcional)</legend><div className="cashier-benefit-modes"><button type="button" className={benefitMode === "none" ? "active" : ""} onClick={() => setBenefitMode("none")}>Sin beneficio</button><button type="button" className={benefitMode === "points" ? "active" : ""} onClick={() => setBenefitMode("points")}><Gift /> Puntos</button><button type="button" className={benefitMode === "promotion" ? "active" : ""} onClick={() => setBenefitMode("promotion")}>Promoción</button><button type="button" className={benefitMode === "code" ? "active" : ""} onClick={() => setBenefitMode("code")}>Código</button></div>{benefitMode === "points" && <div className="cashier-reward-options">{quoteLoading||quotedFingerprint!==quoteFingerprint ? <p>Consultando beneficios…</p> : rewardQuotes.length ? rewardQuotes.map(item => { const value=`${item.reward_id}:${item.barber_id}`; return <label className={selectedReward === value ? "selected" : ""} key={value}><input type="radio" checked={selectedReward === value} onChange={() => setSelectedReward(value)} /><span><strong>{item.reward_name}</strong><small>{item.barber_name} · usa {item.points_cost} de {item.balance} pts · base Bs {Number(item.eligible_base).toFixed(2)}</small></span><b>- Bs {Number(item.discount_amount).toFixed(2)}</b></label>; }) : <p>No hay recompensas disponibles para estos servicios y peluqueros.</p>}</div>}{benefitMode === "promotion" && <label>Código de promoción<input name="promotion_code" autoCapitalize="characters" required /></label>}{benefitMode === "code" && <label>Código mostrado por el cliente<input name="redemption_code" autoCapitalize="characters" required /></label>}</fieldset>}
     <PaymentFields /><button className="button button-dark wide" disabled={busy || (benefitMode === "points" && !chosenQuote)}><ReceiptText /> {chosenQuote ? `Confirmar pago · ahorro Bs ${Number(chosenQuote.discount_amount).toFixed(2)}` : "Confirmar pago y emitir comprobante"}</button></form>;
 }
 
