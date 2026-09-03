@@ -4,8 +4,9 @@ import { ReceiptView } from "./receipt-view";
 
 export const dynamic="force-dynamic";
 
-export default async function ReceiptPage({params}:{params:Promise<{id:string}>}){
+export default async function ReceiptPage({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{print?:string}>}){
   const {id}=await params;
+  const query=await searchParams;
   const supabase=await createClient();
   const {data:{user}}=await supabase.auth.getUser();
   if(!user)redirect(`/login?next=/comprobante/${id}`);
@@ -14,5 +15,5 @@ export default async function ReceiptPage({params}:{params:Promise<{id:string}>}
     supabase.from("business_settings").select("business_name,address,phone").eq("id",true).single(),
   ]);
   if(!receipt.data)notFound();
-  return <ReceiptView receipt={receipt.data as unknown as Record<string,unknown>} business={business.data as Record<string,unknown>|null}/>;
+  return <ReceiptView receipt={receipt.data as unknown as Record<string,unknown>} business={business.data as Record<string,unknown>|null} autoPrint={query.print==="1"}/>;
 }

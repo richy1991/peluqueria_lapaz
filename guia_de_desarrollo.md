@@ -2331,6 +2331,45 @@ Migraciones aplicadas en Supabase de producción para las fases siguientes:
 [ ] Simular gastos mayores al pago; no debe crearse una liquidacion cero o negativa y tanto el gasto como las comisiones deben aparecer en el siguiente cierre.
 [ ] Reintentar preparacion y pago; no deben duplicarse liquidacion, movimiento de caja ni conceptos.
 
+62. REPORTES DE CAJA Y ESTADISTICAS CORREGIDAS (3 DE SEPTIEMBRE DE 2026)
+
+62.1 Libro diario
+
+[x] Calcular ingresos, egresos, saldo efectivo, saldo QR y total registrado desde los movimientos firmados del turno.
+[x] Incluir el monto inicial de caja en el saldo efectivo y en el total registrado.
+[x] Mostrar el resumen en tarjetas compactas de dos columnas en telefono.
+[x] Incorporar el resumen completo al reporte imprimible.
+[x] Mover la marca al encabezado propio del reporte y ocultar herramientas flotantes durante la impresion.
+[x] Ajustar el reporte a A4, reducir espacios y usar tipografia de contenido compacta para favorecer una sola hoja diaria.
+
+62.2 Historial y reimpresion
+
+[x] Cargar ventas pagadas y revertidas de los ultimos 30 dias.
+[x] Mostrar por defecto solo hoy y permitir filtros de 7 y 30 dias.
+[x] Abrir la reversión en un cuadro de dialogo con justificacion obligatoria de 5 a 500 caracteres.
+[x] Guardar motivo, fecha y responsable en la venta, manteniendo tambien el movimiento de devolucion y la auditoria.
+[x] Mostrar las ventas revertidas sin permitir una segunda reversion.
+[x] Permitir revertir ventas con descuento del 100% sin intentar registrar un movimiento monetario de valor cero.
+[x] Agregar reimpresion directa del comprobante en una pestaña nueva con apertura automatica del dialogo de impresion.
+
+62.3 Estadisticas administrativas
+
+[x] Calcular servicios, productos, importes y rankings desde ventas pagadas, incluyendo cobros directos sin reserva.
+[x] Excluir ventas revertidas de los resultados vigentes y mostrar cantidad e importe revertido por separado.
+[x] Agregar descuentos del mes al resumen economico.
+[x] Incorporar la grafica de demanda por hora que estaba consultada pero no renderizada.
+[x] Reactivar analitica web consentida mediante RPC restringida, validada y limitada; la tabla continua sin escritura directa anonima.
+[x] Mostrar un error explicito si el bloque economico/marketing no puede cargarse, en lugar de representar ceros ambiguos.
+[x] Aplicar las migraciones `202609030009` a `202609030011` en Supabase de produccion.
+
+62.4 Validacion operativa pendiente
+
+[ ] Conciliar manualmente un turno real comparando efectivo, QR, otros medios, ingresos, egresos y total registrado.
+[ ] Revertir una venta de prueba y confirmar reposicion de stock, puntos, comision, movimiento y motivo visible.
+[ ] Reimprimir un comprobante real desde cada filtro del historial.
+[ ] Comparar las estadisticas mensuales con una muestra de ventas pagadas directamente en Caja.
+[ ] Confirmar nuevos eventos de marketing despues de aceptar analitica en un navegador limpio.
+
 FUERA DE ALCANCE DE LA AMPLIACION ACTUAL
 Procesamiento de pagos online.
 Pasarela de pagos.

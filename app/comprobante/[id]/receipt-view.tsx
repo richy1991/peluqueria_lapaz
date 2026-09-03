@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import {useEffect} from "react";
 import QRCode from "react-qr-code";
 import { Brand } from "@/components/brand";
 
 type Row=Record<string,unknown>;
 
-export function ReceiptView({receipt,business}:{receipt:Row;business:Row|null}){
+export function ReceiptView({receipt,business,autoPrint=false}:{receipt:Row;business:Row|null;autoPrint?:boolean}){
   const sale=receipt.sales as Row;
   const client=sale.profiles as Row|null;
   const items=(sale.sale_items??[]) as Row[];
@@ -14,6 +15,7 @@ export function ReceiptView({receipt,business}:{receipt:Row;business:Row|null}){
   const productOnly=items.length>0&&items.every(item=>item.item_type==="product");
   const origin=process.env.NEXT_PUBLIC_SITE_URL??"https://peluqueria-lapaz.vercel.app";
   const url=Boolean(sale.claim_code)?`${origin}/vincular/${String(sale.claim_code)}`:`${origin}/comprobante/${String(receipt.id)}`;
+  useEffect(()=>{if(!autoPrint)return;const timer=window.setTimeout(()=>window.print(),350);return()=>window.clearTimeout(timer)},[autoPrint]);
   return <main className="receipt-shell"><section className="receipt-paper">
     <header><Brand/><p>COMPROBANTE INTERNO</p><h1>N.º {String(receipt.number).padStart(6,"0")}</h1></header>
     <div className="receipt-meta"><span>{new Intl.DateTimeFormat("es-BO",{dateStyle:"long",timeStyle:"short",timeZone:"America/La_Paz"}).format(new Date(String(receipt.issued_at)))}</span><span>{String(business?.address??"")}</span><span>{String(business?.phone??"")}</span></div>
