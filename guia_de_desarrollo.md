@@ -1754,12 +1754,12 @@ El peluquero podra registrar o confirmar el trabajo realizado, pero no confirmar
 45.1 Precio y reparto aprobado
 El corte de cabello de varon tiene como precio de referencia actual Bs 25, pero el precio continuara siendo configurable por servicio.
 El peluquero recibe 50% del precio normal completo del servicio.
-La promocion o descuento se descuenta exclusivamente de la participacion del negocio.
-La comision del peluquero no disminuye por una promocion creada por administracion.
+La promocion o descuento se distribuye de forma proporcional entre la participacion del negocio y la del peluquero.
+Un descuento del 100% deja en cero tanto la participacion del negocio como la comision del peluquero.
 
 45.2 Formula
-commission_base = precio normal registrado del servicio.
-barber_commission = commission_base * 0.50.
+discounted_base = precio normal registrado del servicio - descuento aplicable a la linea.
+barber_commission = discounted_base * 0.50.
 customer_total = precio normal - descuento.
 business_share = customer_total - barber_commission.
 
@@ -1772,38 +1772,44 @@ Negocio recibe Bs 12,50 antes de otros gastos.
 Ejemplo con 20% de descuento:
 Precio normal Bs 25.
 Cliente paga Bs 20.
-Peluquero mantiene Bs 12,50.
-Negocio recibe Bs 7,50 antes de otros gastos.
+Peluquero recibe Bs 10.
+Negocio recibe Bs 10 antes de otros gastos.
 
 Ejemplo con 50% de descuento:
 Precio normal Bs 25.
 Cliente paga Bs 12,50.
-Peluquero mantiene Bs 12,50.
+Peluquero recibe Bs 6,25.
+Negocio recibe Bs 6,25 antes de otros gastos.
+
+Ejemplo con 100% de descuento:
+Precio normal Bs 25.
+Cliente paga Bs 0.
+Peluquero recibe Bs 0.
 Negocio recibe Bs 0.
 
-Los descuentos superiores a la participacion normal del negocio deberan bloquearse o requerir autorizacion extraordinaria porque generan una perdida directa.
+Los descuentos manuales quedan bloqueados para Caja; solo se aceptan promociones y canjes vigentes validados transaccionalmente.
 En interfaz y reportes se usara el termino participacion del negocio, no ganancia del administrador.
 
 45.3 Historial y liquidaciones
 Cada servicio pagado creara un movimiento de comision inmutable.
 Estados sugeridos: pending, approved, paid y reversed.
 El peluquero vera servicios completados, comision pendiente y liquidaciones anteriores.
-El administrador podra cerrar periodos, aprobar liquidaciones y registrar el pago al peluquero.
+Caja prepara y paga la liquidacion de servicios al finalizar cada turno. Cada concepto se vincula una sola vez a una liquidacion para impedir pagos duplicados.
 
 46. INCENTIVOS POR PRODUCTOS
 El peluquero podra quedar asociado como recomendador o vendedor de un producto.
 El incentivo de producto sera independiente de la comision de servicios.
-El porcentaje o monto podra configurarse por producto, categoria o campaña.
+El porcentaje se configura desde administracion y se muestra al peluquero como comision economica por cada Bs 100 vendidos.
 El incentivo solo se generara cuando el producto sea entregado y el pago sea confirmado.
 Una reserva o apartado no genera incentivo.
-El porcentaje inicial de incentivo por productos queda PENDIENTE DE DEFINICION por el negocio.
+El incentivo permanece acumulado y separado de la liquidacion diaria hasta que Caja active expresamente la opcion de incluirlo, normalmente una vez al mes.
 
-47. INSUMOS Y REEMBOLSOS DE PELUQUEROS
-Los insumos comprados por peluqueros no se mezclaran silenciosamente con sus comisiones.
+47. INSUMOS Y GASTOS DESCONTABLES DE PELUQUEROS
+Los insumos adquiridos por peluqueros se registran por separado y, si Caja los aprueba, se descuentan de la siguiente liquidacion.
 Se registraran como movimientos independientes con peluquero, concepto, importe, fecha, comprobante opcional y motivo.
-Estados sugeridos: pending, approved, rejected y reimbursed.
-El administrador aprobara o rechazara cada solicitud.
-El resumen del peluquero mostrara por separado comisiones, incentivos, reembolsos y total pendiente.
+Estados: pending, approved, rejected y deducted. El estado reimbursed se conserva solo para registros historicos creados con la regla anterior.
+Caja aprobara o rechazara cada solicitud antes de preparar la liquidacion.
+El resumen mostrara por separado comisiones, incentivos, gastos descontados y total neto.
 
 48. PROGRAMA DE PUNTOS PARA CLIENTES
 48.1 Principios
@@ -2028,7 +2034,7 @@ Peluqueros, comisiones e incentivos:
 [x] Cierre por periodos y liquidaciones sin duplicar conceptos.
 [x] Peluquero recomendador asociado a venta de producto.
 [x] Incentivos configurables por productos entregados y pagados.
-[x] Registro, aprobacion y reembolso de insumos.
+[x] Registro, aprobacion y descuento de insumos en la liquidacion.
 
 Fidelizacion:
 [x] Libro auditable de movimientos de puntos con claves de idempotencia.
@@ -2053,8 +2059,8 @@ Configuracion inicial adoptada, editable por administracion:
 [x] Recompensas iniciales de 20% y 50% con limites de descuento.
 [x] Racha inicial de 3 visitas dentro de 35 dias y bonificacion de 5 puntos.
 [x] Incentivo inicial de 10% por venta recomendada de producto.
-[x] Periodicidad flexible mediante seleccion de fecha inicial y final de liquidacion.
-[x] Insumos sujetos a revision administrativa antes del reembolso completo.
+[x] Liquidacion diaria de servicios al finalizar el turno e incentivo de ventas acumulable con inclusion opcional.
+[x] Insumos sujetos a revision de Caja antes de descontarse de la liquidacion.
 [~] La administracion debe designar las cuentas concretas que tendran capacidad de cajero.
 [x] Formas registrables: efectivo, QR, transferencia, tarjeta y otro.
 [ ] Factura fiscal e integracion SIAT: fuera del alcance actual; requiere proyecto y autorizacion separados.
@@ -2090,7 +2096,7 @@ Validacion tecnica y operativa:
 [x] `/caja` prioriza la cola de cobros de servicios y las atenciones sin reserva.
 [x] `/caja/productos` registra ventas independientes de productos.
 [x] `/caja/movimientos` contiene apertura, movimientos con glosa, cierre e impresión del libro diario.
-[x] `/caja/liquidaciones` prepara y paga liquidaciones diarias.
+[x] `/caja/liquidaciones` organiza el cierre diario por peluquero y abre un desglose individual antes de preparar o pagar.
 [x] `/caja/gastos` revisa gastos e insumos del equipo.
 [x] `/caja/historial` muestra ventas, comprobantes y reversiones.
 [x] Los sidebars del peluquero y cajero usan rutas reales y conservan el indicador de opcion activa.
@@ -2288,6 +2294,42 @@ Migraciones aplicadas en Supabase de producción para las fases siguientes:
 [ ] Descuento del 100% deja en cero al local y al peluquero de la línea afectada, sin tocar otras líneas.
 [ ] RLS impide que cliente, peluquero o cajero manipulen directamente saldos, snapshots o aplicaciones de descuento.
 [ ] Comprobante, historial, balance del peluquero y reporte administrativo muestran el mismo reparto.
+
+61. LIQUIDACIONES DIARIAS DETALLADAS (3 DE SEPTIEMBRE DE 2026)
+
+61.1 Regla contable aplicada
+
+[x] Liquidar por separado las comisiones de servicios de la jornada.
+[x] Mantener los incentivos de productos pendientes y acumulados hasta que Caja decida incluirlos, normalmente en el cierre mensual.
+[x] Tratar los gastos aprobados del peluquero como descuentos de su pago, nunca como ingresos o reembolsos nuevos.
+[x] Arrastrar un gasto aprobado a la siguiente jornada cuando no exista importe suficiente para descontarlo.
+[x] Arrastrar tambien las comisiones de servicios no liquidadas para que ninguna quede aislada por el cambio de fecha.
+[x] Bloquear la preparacion mientras existan gastos pendientes de revision.
+[x] Rechazar liquidaciones con total cero o negativo sin consumir sus conceptos.
+[x] Vincular cada comision, incentivo y gasto a una sola liquidacion y registrar pago, egreso y auditoria en la misma transaccion.
+
+61.2 Experiencia de Caja y peluquero
+
+[x] Mostrar una lista de peluqueros con resumen compacto y acceso a detalle individual.
+[x] Mostrar en el detalle servicios, base, porcentaje, comision, incentivos acumulados, gastos y neto pagable.
+[x] Permitir aprobar o rechazar gastos dentro del mismo flujo antes de preparar.
+[x] Incluir un control explicito para agregar el incentivo acumulado; desactivado por defecto.
+[x] Confirmar el metodo de pago en un paso final y registrar el egreso en el libro diario.
+[x] Mantener historial reciente y compatibilidad visible para liquidaciones creadas con la regla anterior.
+[x] Optimizar el resumen movil en dos columnas y reducir alturas, margenes y acciones redundantes.
+[x] Explicar en el panel del peluquero que un gasto aprobado sera descontado de su siguiente liquidacion.
+[x] Aplicar `202609030007_detailed_daily_settlements.sql` y `202609030008_carry_forward_unsettled_commissions.sql` en Supabase de produccion y validar el esquema publico.
+[ ] Desplegar la interfaz en Vercel y ejecutar la conciliacion con cuentas reales de Caja y peluquero.
+
+61.3 Validacion pendiente con datos reales
+
+[ ] Cerrar una jornada con servicios y sin gastos; el neto debe igualar las comisiones del dia.
+[ ] Cerrar una jornada con gasto aprobado; el neto debe restar exactamente ese gasto.
+[ ] Intentar preparar con un gasto pendiente; backend e interfaz deben rechazar la operacion.
+[ ] Preparar sin incentivo; este debe continuar pendiente para el mes.
+[ ] Preparar con incentivo acumulado; todos los incentivos incluidos deben quedar pagados una sola vez.
+[ ] Simular gastos mayores al pago; no debe crearse una liquidacion cero o negativa y tanto el gasto como las comisiones deben aparecer en el siguiente cierre.
+[ ] Reintentar preparacion y pago; no deben duplicarse liquidacion, movimiento de caja ni conceptos.
 
 FUERA DE ALCANCE DE LA AMPLIACION ACTUAL
 Procesamiento de pagos online.
