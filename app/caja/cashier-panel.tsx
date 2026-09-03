@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Calculator, CheckCircle2, CirclePlus, ClipboardCheck, History, LockKeyhole, PackageOpen, Printer, ReceiptText, Scissors, Sparkles, Trash2, WalletCards } from "lucide-react";
+import { Calculator, CheckCircle2, CirclePlus, ClipboardCheck, Gift, History, LockKeyhole, PackageOpen, Printer, ReceiptText, Scissors, Sparkles, Trash2, WalletCards } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { DashboardModal } from "@/components/dashboard-modal";
 import { ModeSwitcher } from "@/components/mode-switcher";
@@ -12,6 +12,7 @@ import { clearFormErrors, dispatchDashboardError, dispatchDashboardSuccess, repo
 import { createClient } from "@/lib/supabase/client";
 
 type Row = Record<string, unknown> & { id: string };
+type RewardQuote = { reward_id: string; barber_id: string; barber_name: string; balance: number; reward_name: string; points_cost: number; eligible_base: number; discount_amount: number };
 type Capabilities = { isAdmin: boolean; isSuperadmin: boolean; isCashier: boolean; barber: { id: string; display_name: string } | null };
 type CashierSection = "servicios" | "productos" | "movimientos" | "liquidaciones" | "gastos" | "historial";
 type Props = { userEmail: string; capabilities: Capabilities; shift: Row | null; services: Row[]; barbers: Row[]; products: Row[]; clients: Row[]; appointments: Row[]; sales: Row[]; earnings: Row[]; expenses: Row[]; payouts: Row[]; movements: Row[]; workDate: string; section: CashierSection };
@@ -84,7 +85,7 @@ export function CashierPanel(props: Props) {
     const chargeDescriptions = data.getAll("charge_description").map(String);
     const chargeAmounts = data.getAll("charge_amount").map(Number);
     const chargeBarbers = data.getAll("charge_barber_id").map(String);
-    const response = await call("register_counter_service_sale_v4", {
+    const response = await call("register_counter_service_sale_v5", {
       target_appointment_id: String(data.get("appointment_id") ?? "") || null,
       target_client_id: String(data.get("client_id") ?? "") || null,
       guest_name: String(data.get("guest_name") ?? "") || null,
@@ -94,12 +95,14 @@ export function CashierPanel(props: Props) {
       target_product_id: String(data.get("product_id") ?? "") || null,
       product_quantity: Number(data.get("quantity") ?? 1),
       recommended_by_barber_id: String(data.get("recommended_by") ?? "") || null,
-      manual_discount: Number(data.get("discount") ?? 0),
       payment_method: String(data.get("payment_method") ?? "cash"),
       payment_reference: String(data.get("payment_reference") ?? "") || null,
       provided_referral_code: String(data.get("referral_code") ?? "") || null,
+      selected_reward_id: String(data.get("selected_reward_id") ?? "") || null,
+      selected_reward_barber_id: String(data.get("selected_reward_barber_id") ?? "") || null,
       redemption_code: String(data.get("redemption_code") ?? "") || null,
       promotion_code: String(data.get("promotion_code") ?? "") || null,
+      checkout_idempotency_key: String(data.get("checkout_idempotency_key") ?? ""),
     }, form);
     if (response) {
       setResult(response as Record<string, unknown>);
@@ -174,7 +177,7 @@ function OpenShift({ onSubmit, busy }: { onSubmit: (event: FormEvent<HTMLFormEle
 }
 
 function ServiceDashboard({ appointments, clients, services, barbers, products, sales, busy, onSubmit }: { appointments: Row[]; clients: Row[]; services: Row[]; barbers: Row[]; products: Row[]; sales: Row[]; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
-  return <><div className="cashier-kpis cashier-safe-kpis"><article><small>COBROS EN COLA</small><strong>{appointments.length}</strong><span>atenciones listas para cobrar</span></article><article><small>ATENCIONES PROCESADAS</small><strong>{sales.filter(sale => Boolean(sale.paid_at)).length}</strong><span>operaciones recientes</span></article><article><small>ESTADO</small><strong>LISTA</strong><span>terminal disponible</span></article></div>
+  return <><div className="cashier-compact-status"><span><b>{appointments.length}</b> en cola</span><span><b>{sales.filter(sale => Boolean(sale.paid_at)).length}</b> procesadas</span></div>
     <section className="admin-panel cashier-queue"><div className="dash-list-head"><div><small>ACTUALIZACIÓN AUTOMÁTICA</small><h2>Cobros pendientes</h2></div><ReceiptText /></div><p className="admin-help">Cuando el peluquero termina una atención, aparece aquí con los cambios y extras informados.</p><div className="admin-list">{appointments.length ? appointments.map(appointment => <QueueItem key={appointment.id} appointment={appointment} clients={clients} services={services} barbers={barbers} products={products} busy={busy} onSubmit={onSubmit} />) : <p className="admin-help">No hay cobros pendientes. Puedes registrar una atención sin reserva.</p>}</div></section>
     <div className="cashier-quick-actions"><section className="admin-panel cashier-quick-action"><div><small>CLIENTE SIN RESERVA</small><h2>Cobro directo de servicio</h2><p>Busca una cuenta existente o registra un cliente nuevo. Para nuevos clientes, el comprobante generará su código y QR de vinculación.</p></div><DashboardModal title="Cobrar servicio" description="Atención sin reserva previa." triggerLabel="Nuevo cobro" triggerIcon={<Scissors />} size="large"><ServiceSaleForm clients={clients} services={services} barbers={barbers} products={products} busy={busy} onSubmit={onSubmit} /></DashboardModal></section>
     <section className="admin-panel cashier-quick-action"><div><small>COMPROBANTE RÁPIDO</small><h2>Venta directa de producto</h2><p>Cobra una compra sin registrar cliente ni generar puntos. La comisión de venta sigue asociándose al peluquero.</p></div><DashboardModal title="Registrar venta de producto" description="Venta sin beneficios de cliente. El stock se descontará al confirmar." triggerLabel="Venta directa" triggerIcon={<PackageOpen />} size="large"><ProductSaleForm products={products} barbers={barbers} busy={busy} onSubmit={onSubmit} /></DashboardModal></section></div></>;
@@ -188,7 +191,7 @@ function QueueItem({ appointment, clients, services, barbers, products, busy, on
   return <article><div><strong>{client?.full_name ?? "Cliente"} · {String(appointment.service_name_snapshot)}</strong><span>{barber?.display_name ?? "Peluquero"}{details?.notes ? ` · ${String(details.notes)}` : ""}</span></div><DashboardModal title={`Cobrar a ${client?.full_name ?? "cliente"}`} description="Puedes corregir el servicio y añadir extras antes de confirmar." triggerLabel="Revisar y cobrar" triggerIcon={<ReceiptText />} size="large"><ServiceSaleForm appointment={appointment} checkout={details ?? null} clients={clients} services={services} barbers={barbers} products={products} busy={busy} onSubmit={onSubmit} /></DashboardModal></article>;
 }
 
-function ClientFields({ clients, mode, onModeChange }: { clients: Row[]; mode: "new" | "existing"; onModeChange: (mode: "new" | "existing") => void }) {
+function ClientFields({ clients, mode, onModeChange, onClientChange }: { clients: Row[]; mode: "new" | "existing"; onModeChange: (mode: "new" | "existing") => void; onClientChange: (id: string) => void }) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Row | null>(null);
   const [results, setResults] = useState<Row[]>([]);
@@ -212,6 +215,7 @@ function ClientFields({ clients, mode, onModeChange }: { clients: Row[]; mode: "
 
   function chooseMode(next: "new" | "existing") {
     onModeChange(next);
+    onClientChange("");
     setQuery("");
     setSelected(null);
     setResults([]);
@@ -242,8 +246,8 @@ function ClientFields({ clients, mode, onModeChange }: { clients: Row[]; mode: "
           setSearching(normalized.length >= 2);
         }} placeholder="Escribe al menos 2 letras" required />
       </label>
-      {selected ? <div className="cashier-client-selected"><span><strong>{String(selected.full_name ?? selected.email)}</strong>{Boolean(selected.phone) && <small>{String(selected.phone)}</small>}</span><button type="button" onClick={() => { setSelected(null); setQuery(""); }}>Cambiar</button></div> : query.trim().length >= 2 && <div className="cashier-client-results" role="listbox" aria-label="Clientes encontrados">
-        {results.map(client => <button type="button" role="option" aria-selected="false" key={client.id} onClick={event => { (event.currentTarget.form?.elements.namedItem("client_search") as HTMLInputElement | null)?.setCustomValidity(""); setSelected(client); setQuery(String(client.full_name ?? client.email ?? "")); setResults([]); setSearching(false); }}><strong>{String(client.full_name ?? "Sin nombre")}</strong><small>{String(client.phone ?? client.email ?? "")}</small></button>)}
+      {selected ? <div className="cashier-client-selected"><span><strong>{String(selected.full_name ?? selected.email)}</strong>{Boolean(selected.phone) && <small>{String(selected.phone)}</small>}</span><button type="button" onClick={() => { setSelected(null); setQuery(""); onClientChange(""); }}>Cambiar</button></div> : query.trim().length >= 2 && <div className="cashier-client-results" role="listbox" aria-label="Clientes encontrados">
+        {results.map(client => <button type="button" role="option" aria-selected="false" key={client.id} onClick={event => { (event.currentTarget.form?.elements.namedItem("client_search") as HTMLInputElement | null)?.setCustomValidity(""); setSelected(client); onClientChange(client.id); setQuery(String(client.full_name ?? client.email ?? "")); setResults([]); setSearching(false); }}><strong>{String(client.full_name ?? "Sin nombre")}</strong><small>{String(client.phone ?? client.email ?? "")}</small></button>)}
         {!searching && results.length === 0 && <p>No encontramos clientes con ese nombre.</p>}
         {searching && <p>Buscando…</p>}
       </div>}
@@ -252,9 +256,10 @@ function ClientFields({ clients, mode, onModeChange }: { clients: Row[]; mode: "
     {mode === "new" && referred && <label className="wide">Código del cliente que lo recomendó<input name="referral_code" placeholder="LC-..." autoCapitalize="characters" required /></label>}
   </fieldset>;
 }
-function PaymentFields({ allowRedemption = true }: { allowRedemption?: boolean }) {
+function PaymentFields({ allowPromotion = false }: { allowPromotion?: boolean }) {
   const [method, setMethod] = useState("cash");
-  return <><label>Descuento manual Bs<input name="discount" type="number" min="0" step="0.5" defaultValue="0" /></label><label>Código de promoción<input name="promotion_code" /></label>{allowRedemption && <label>Código de canje<input name="redemption_code" /></label>}<label>Forma de pago<select name="payment_method" value={method} onChange={event => setMethod(event.target.value)}><option value="cash">Efectivo</option><option value="qr">QR</option><option value="transfer">Transferencia</option><option value="card">Tarjeta</option><option value="other">Otro</option></select></label>{method !== "cash" && <label>Referencia del pago<input name="payment_reference" required /></label>}</>;
+  const [promotion, setPromotion] = useState(false);
+  return <>{allowPromotion && <label className="wide cashier-product-toggle"><input type="checkbox" checked={promotion} onChange={event => setPromotion(event.target.checked)} /> Aplicar promoción</label>}{promotion && <label className="wide">Código de promoción<input name="promotion_code" autoCapitalize="characters" required /></label>}<label>Forma de pago<select name="payment_method" value={method} onChange={event => setMethod(event.target.value)}><option value="cash">Efectivo</option><option value="qr">QR</option><option value="transfer">Transferencia</option><option value="card">Tarjeta</option><option value="other">Otro</option></select></label>{method !== "cash" && <label>Referencia del pago<input name="payment_reference" required /></label>}</>;
 }
 
 type ServiceLine = { key: string; serviceId: string; barberId: string; attendeeLabel: string };
@@ -262,29 +267,51 @@ type CustomCharge = { key: string; description: string; amount: string; barberId
 
 function ServiceSaleForm({ appointment, checkout, clients, services, barbers, products, busy, onSubmit }: { appointment?: Row; checkout?: Row | null; clients: Row[]; services: Row[]; barbers: Row[]; products: Row[]; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
   const [customerMode, setCustomerMode] = useState<"new" | "existing">("new");
+  const [clientId, setClientId] = useState(String(appointment?.client_id ?? ""));
   const [addProduct, setAddProduct] = useState(Boolean(checkout?.suggested_product_id));
+  const [benefitMode, setBenefitMode] = useState<"none" | "points" | "promotion" | "code">("none");
+  const [rewardQuotes, setRewardQuotes] = useState<RewardQuote[]>([]);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [selectedReward, setSelectedReward] = useState("");
+  const [checkoutKey] = useState(() => typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `checkout-${Date.now()}-${Math.random()}`);
   const [serviceLines, setServiceLines] = useState<ServiceLine[]>(() => {
     const initial = [{ key: "primary", serviceId: String(checkout?.actual_service_id ?? appointment?.service_id ?? ""), barberId: String(appointment?.barber_id ?? ""), attendeeLabel: "Titular" }];
     if (checkout?.extra_service_id) initial.push({ key: "checkout-extra", serviceId: String(checkout.extra_service_id), barberId: String(appointment?.barber_id ?? ""), attendeeLabel: "Titular" });
     return initial;
   });
   const [charges, setCharges] = useState<CustomCharge[]>([]);
+  useEffect(() => {
+    if (benefitMode !== "points" || !clientId || serviceLines.some(line => !line.serviceId || !line.barberId)) return;
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      setQuoteLoading(true);
+      const { data } = await createClient().rpc("cashier_quote_loyalty", { target_client_id: clientId, service_lines: serviceLines.map(line => ({ service_id: line.serviceId, barber_id: line.barberId })) });
+      if (!active) return;
+      const quotes = (data as RewardQuote[] | null) ?? [];
+      setRewardQuotes(quotes); setSelectedReward(current => quotes.some(item => `${item.reward_id}:${item.barber_id}` === current) ? current : (quotes[0] ? `${quotes[0].reward_id}:${quotes[0].barber_id}` : "")); setQuoteLoading(false);
+    }, 250);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [benefitMode, clientId, serviceLines]);
   function updateServiceLine(key: string, field: keyof Omit<ServiceLine, "key">, value: string) { setServiceLines(lines => lines.map(line => line.key === key ? { ...line, [field]: value } : line)); }
   function updateCharge(key: string, field: keyof Omit<CustomCharge, "key">, value: string) { setCharges(items => items.map(item => item.key === key ? { ...item, [field]: value } : item)); }
-  return <form className="admin-form" onSubmit={onSubmit}><input type="hidden" name="sale_kind" value="service" /><input type="hidden" name="appointment_id" value={appointment?.id ?? ""} />{!appointment && <ClientFields clients={clients} mode={customerMode} onModeChange={setCustomerMode} />}
+  const quoteInputValid=benefitMode === "points" && Boolean(clientId) && serviceLines.every(line=>line.serviceId&&line.barberId);
+  const chosenQuote = quoteInputValid?rewardQuotes.find(item => `${item.reward_id}:${item.barber_id}` === selectedReward):undefined;
+  return <form className="admin-form" onSubmit={onSubmit}><input type="hidden" name="sale_kind" value="service" /><input type="hidden" name="appointment_id" value={appointment?.id ?? ""} /><input type="hidden" name="checkout_idempotency_key" value={checkoutKey} /><input type="hidden" name="selected_reward_id" value={benefitMode === "points" ? chosenQuote?.reward_id ?? "" : ""} /><input type="hidden" name="selected_reward_barber_id" value={benefitMode === "points" ? chosenQuote?.barber_id ?? "" : ""} />{!appointment && <ClientFields clients={clients} mode={customerMode} onModeChange={mode => { setCustomerMode(mode); setBenefitMode("none"); }} onClientChange={setClientId} />}
     <fieldset className="wide cashier-line-group"><legend>Atenciones incluidas</legend>{serviceLines.map((line, index) => <div className="cashier-service-line" key={line.key}>
-      <span className="cashier-line-number">Atención {index + 1}</span>
-      <label>Persona atendida<select name="line_attendee_label" value={line.attendeeLabel} onChange={event => updateServiceLine(line.key, "attendeeLabel", event.target.value)}><option>Titular</option><option>Hijo/a</option><option>Acompañante</option></select></label>
+      {serviceLines.length > 1 && <span className="cashier-line-number">Atención {index + 1}</span>}
+      {index === 0 ? <input type="hidden" name="line_attendee_label" value="Titular" /> : <label>Persona atendida<select name="line_attendee_label" value={line.attendeeLabel} onChange={event => updateServiceLine(line.key, "attendeeLabel", event.target.value)}><option>Hijo/a</option><option>Acompañante</option><option>Titular</option></select></label>}
       <label>Servicio<select name="line_service_id" value={line.serviceId} onChange={event => updateServiceLine(line.key, "serviceId", event.target.value)} required><option value="">Seleccionar servicio</option>{services.map(service => <option key={service.id} value={service.id}>{String(service.name)} · Bs {String(service.price)}</option>)}</select></label>
       <label>Peluquero<select name="line_barber_id" value={line.barberId} onChange={event => updateServiceLine(line.key, "barberId", event.target.value)} required><option value="">Seleccionar</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label>
       {serviceLines.length > 1 && <button type="button" className="cashier-remove-line" aria-label={`Quitar atención ${index + 1}`} onClick={() => setServiceLines(lines => lines.filter(item => item.key !== line.key))}><Trash2 /> Quitar</button>}
     </div>)}<button type="button" className="cashier-add-line" onClick={() => setServiceLines(lines => [...lines, { key: `service-${Date.now()}`, serviceId: "", barberId: lines.at(-1)?.barberId ?? "", attendeeLabel: "Hijo/a" }])}><CirclePlus /> Agregar otra atención</button></fieldset>
-    <fieldset className="wide cashier-line-group"><legend>Cargos imprevistos</legend>{charges.length === 0 ? <p className="cashier-client-help">Añádelo solo cuando se realizó un detalle que no existe en el catálogo.</p> : charges.map((charge, index) => <div className="cashier-service-line cashier-charge-line" key={charge.key}>
+    {charges.length > 0 && <fieldset className="wide cashier-line-group"><legend>Cargos imprevistos</legend>{charges.map((charge, index) => <div className="cashier-service-line cashier-charge-line" key={charge.key}>
       <span className="cashier-line-number">Cargo {index + 1}</span><label>Justificación<input name="charge_description" value={charge.description} onChange={event => updateCharge(charge.key, "description", event.target.value)} required placeholder="Detalle realizado" /></label><label>Monto Bs<input name="charge_amount" type="number" min="0.5" step="0.5" value={charge.amount} onChange={event => updateCharge(charge.key, "amount", event.target.value)} required /></label><label>Peluquero<select name="charge_barber_id" value={charge.barberId} onChange={event => updateCharge(charge.key, "barberId", event.target.value)} required><option value="">Seleccionar</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label><button type="button" className="cashier-remove-line" onClick={() => setCharges(items => items.filter(item => item.key !== charge.key))}><Trash2 /> Quitar</button>
-    </div>)}<button type="button" className="cashier-add-line" onClick={() => setCharges(items => [...items, { key: `charge-${Date.now()}`, description: "", amount: "", barberId: serviceLines[0]?.barberId ?? "" }])}><CirclePlus /> Agregar cargo imprevisto</button></fieldset>
+    </div>)}</fieldset>}
+    {charges.length === 0 && <button type="button" className="wide cashier-add-line cashier-optional-action" onClick={() => setCharges([{ key: `charge-${Date.now()}`, description: "", amount: "", barberId: serviceLines[0]?.barberId ?? "" }])}><CirclePlus /> Agregar cargo imprevisto</button>}
     <label className="wide cashier-product-toggle"><input type="checkbox" checked={addProduct} onChange={event => setAddProduct(event.target.checked)} /> Añadir producto a este cobro</label>
     {addProduct && <><label>Producto<select name="product_id" defaultValue={String(checkout?.suggested_product_id ?? "")} required><option value="">Seleccionar producto</option>{products.map(product => <option key={product.id} value={product.id}>{String(product.name)} · Bs {String(product.price)} · stock {String(product.stock)}</option>)}</select></label><label>Cantidad<input name="quantity" type="number" min="1" max="20" defaultValue={Number(checkout?.product_quantity ?? 1)} /></label><label>Recomendado por<select name="recommended_by" defaultValue={String(appointment?.barber_id ?? "")}><option value="">Sin recomendador</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label></>}
-    <PaymentFields allowRedemption={Boolean(appointment) || customerMode === "existing"} /><button className="button button-dark wide" disabled={busy}><ReceiptText /> Confirmar pago y emitir comprobante</button></form>;
+    {(Boolean(appointment) || customerMode === "existing") && <fieldset className="wide cashier-benefits"><legend>Beneficio (opcional)</legend><div className="cashier-benefit-modes"><button type="button" className={benefitMode === "none" ? "active" : ""} onClick={() => setBenefitMode("none")}>Sin beneficio</button><button type="button" className={benefitMode === "points" ? "active" : ""} onClick={() => setBenefitMode("points")}><Gift /> Puntos</button><button type="button" className={benefitMode === "promotion" ? "active" : ""} onClick={() => setBenefitMode("promotion")}>Promoción</button><button type="button" className={benefitMode === "code" ? "active" : ""} onClick={() => setBenefitMode("code")}>Código</button></div>{benefitMode === "points" && <div className="cashier-reward-options">{quoteLoading ? <p>Consultando beneficios…</p> : rewardQuotes.length ? rewardQuotes.map(item => { const value=`${item.reward_id}:${item.barber_id}`; return <label className={selectedReward === value ? "selected" : ""} key={value}><input type="radio" checked={selectedReward === value} onChange={() => setSelectedReward(value)} /><span><strong>{item.reward_name}</strong><small>{item.barber_name} · saldo {item.balance} pts</small></span><b>- Bs {Number(item.discount_amount).toFixed(2)}</b></label>; }) : <p>No hay recompensas disponibles para estos servicios y peluqueros.</p>}</div>}{benefitMode === "promotion" && <label>Código de promoción<input name="promotion_code" autoCapitalize="characters" required /></label>}{benefitMode === "code" && <label>Código mostrado por el cliente<input name="redemption_code" autoCapitalize="characters" required /></label>}</fieldset>}
+    <PaymentFields /><button className="button button-dark wide" disabled={busy || (benefitMode === "points" && !chosenQuote)}><ReceiptText /> {chosenQuote ? `Confirmar pago · ahorro Bs ${Number(chosenQuote.discount_amount).toFixed(2)}` : "Confirmar pago y emitir comprobante"}</button></form>;
 }
 
 function ProductDashboard({ products, barbers, busy, onSubmit }: { products: Row[]; barbers: Row[]; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
@@ -292,7 +319,7 @@ function ProductDashboard({ products, barbers, busy, onSubmit }: { products: Row
 }
 
 function ProductSaleForm({ products, barbers, busy, onSubmit }: { products: Row[]; barbers: Row[]; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
-  return <form className="admin-form" onSubmit={onSubmit}><input type="hidden" name="sale_kind" value="product" /><label>Producto<select name="product_id" required><option value="">Seleccionar producto</option>{products.map(product => <option key={product.id} value={product.id}>{String(product.name)} · Bs {String(product.price)} · stock {String(product.stock)}</option>)}</select></label><label>Cantidad<input name="quantity" type="number" min="1" max="20" defaultValue="1" required /></label><label>Vendido o recomendado por<select name="recommended_by"><option value="">Sin peluquero asociado</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label><PaymentFields allowRedemption={false} /><button className="button button-dark wide" disabled={busy}><ReceiptText /> Cobrar producto y emitir comprobante</button></form>;
+  return <form className="admin-form" onSubmit={onSubmit}><input type="hidden" name="sale_kind" value="product" /><label>Producto<select name="product_id" required><option value="">Seleccionar producto</option>{products.map(product => <option key={product.id} value={product.id}>{String(product.name)} · Bs {String(product.price)} · stock {String(product.stock)}</option>)}</select></label><label>Cantidad<input name="quantity" type="number" min="1" max="20" defaultValue="1" required /></label><label>Vendido o recomendado por<select name="recommended_by"><option value="">Sin peluquero asociado</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label><PaymentFields allowPromotion /><button className="button button-dark wide" disabled={busy}><ReceiptText /> Cobrar producto y emitir comprobante</button></form>;
 }
 
 function DailyLedger({ movements, shift, busy, onMovement, onClose, workDate }: { movements: Row[]; shift: Row; busy: boolean; onMovement: (event: FormEvent<HTMLFormElement>) => void; onClose: (event: FormEvent<HTMLFormElement>) => void; workDate: string }) {

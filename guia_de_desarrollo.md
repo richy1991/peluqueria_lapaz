@@ -2215,42 +2215,52 @@ Funciones previstas:
 [x] Corregir en esta guía reglas históricas que afirmaban puntos por producto o descuentos absorbidos solo por el negocio.
 [ ] Ejecutar prueba móvil con cajero real de los dos accesos de venta directa.
 
+Migraciones aplicadas en Supabase de producción para las fases siguientes:
+- `202609030003_secure_reward_checkout.sql`: núcleo transaccional, cotización, snapshots, idempotencia y reparto por línea.
+- `202609030004_fix_reward_checkout_ambiguity.sql`: recompilación preventiva de referencias SQL ambiguas.
+- `202609030005_fix_reward_checkout_earnings.sql`: calificación explícita de columnas económicas; esquema `public` validado sin errores propios.
+- `202609030006_remove_obsolete_counter_rpcs.sql`: eliminación de RPC de caja anteriores al modelo familiar.
+
 60.5 Fase 2 - núcleo financiero seguro
 
-[ ] Crear tabla de aplicaciones de descuento con origen y reparto económico por línea y peluquero.
-[ ] Agregar snapshots inmutables y claves de idempotencia a canjes.
-[ ] Implementar cotización de fidelidad exclusivamente en backend.
-[ ] Limitar recompensa al subtotal de servicios elegibles del peluquero asociado.
-[ ] Excluir productos y cargos imprevistos de la base del canje.
-[ ] Aplicar un canje máximo por venta y bloquear combinación con promoción/manual.
-[ ] Bloquear descuento manual para caja hasta disponer de autorización, límite y motivo auditables.
-[ ] Implementar reserva corta y devolución automática de puntos vencidos.
-[ ] Aplicar límites de uso de recompensas de forma transaccional.
-[ ] Conservar compatibilidad temporal con códigos pendientes legítimos ya emitidos.
+[x] Crear tabla de aplicaciones de descuento con origen y reparto económico por línea y peluquero.
+[x] Agregar snapshots inmutables y claves de idempotencia a canjes.
+[x] Implementar cotización de fidelidad exclusivamente en backend.
+[x] Limitar recompensa al subtotal de servicios elegibles del peluquero asociado.
+[x] Excluir productos y cargos imprevistos de la base del canje.
+[x] Aplicar un canje máximo por venta y bloquear combinación con promoción/manual.
+[x] Bloquear descuento manual para caja hasta disponer de autorización, límite y motivo auditables.
+[x] Implementar reserva corta y devolución automática de puntos vencidos.
+[x] Aplicar límites de uso de recompensas de forma transaccional.
+[x] Conservar compatibilidad temporal con códigos pendientes legítimos ya emitidos.
 
 60.6 Fase 3 - interfaz de caja
 
-[ ] Cargar beneficios al seleccionar cliente y después de conocer los peluqueros de la venta.
-[ ] Mostrar únicamente recompensas elegibles y ocultar por completo la sección cuando no corresponda.
-[ ] Presentar cotización con subtotal, puntos, ahorro, total, peluquero y reparto antes de pagar.
-[ ] Invalidar cotización al cambiar cualquier línea, cliente, descuento o promoción.
-[ ] Añadir confirmación única y estados claros: disponible, reservando, aplicado, error y vencido.
-[ ] Evitar dobles clics mediante bloqueo visual y clave idempotente por intento de cobro.
-[ ] Permitir escanear o escribir autorización de cliente sin obligar pasos redundantes.
+[x] Cargar beneficios al seleccionar cliente y después de conocer los peluqueros de la venta.
+[x] Mostrar únicamente recompensas elegibles y ocultar por completo la sección cuando no corresponda.
+[~] Presentar cotización con puntos, ahorro, base elegible y peluquero antes de pagar; el reparto queda registrado en base de datos y visible para el peluquero después del cobro.
+[x] Invalidar cotización al cambiar cualquier línea, cliente, descuento o promoción.
+[x] Añadir estados claros de consulta, disponible, aplicado y error.
+[x] Evitar dobles clics mediante bloqueo visual y clave idempotente por intento de cobro.
+[x] Permitir escribir la autorización del cliente o elegir puntos directamente sin pasos redundantes.
+[x] Sustituir las tres tarjetas numéricas grandes de caja por una franja compacta de estado.
+[x] Ocultar cargos imprevistos, producto, promociones y referencias de pago hasta que el cajero active cada opción.
+[x] Ocultar el selector de persona atendida para la primera línea, que siempre corresponde al titular.
 
 60.7 Fase 4 - panel cliente y panel peluquero
 
-[ ] Simplificar recompensas del cliente mostrando solo las alcanzables o el progreso hacia la siguiente.
-[ ] Generar autorización QR/código de corta duración y permitir cancelación antes del uso.
-[ ] Diferenciar puntos disponibles y temporalmente reservados.
-[ ] Mostrar al peluquero descuento atribuido y comisión final por cada atención.
-[ ] Agregar resumen mensual de descuentos por promociones, puntos y ajustes, sin mezclarlo con incentivos de productos.
+[x] Simplificar recompensas del cliente mostrando solo las alcanzables o el progreso hacia la siguiente.
+[~] Generar autorización por código de corta duración y permitir cancelación antes del uso; queda pendiente representar el código como QR.
+[x] Diferenciar puntos disponibles y reservas temporales mediante el bloque de canjes activos.
+[x] Mostrar al peluquero descuento atribuido y comisión final por cada atención.
+[x] Agregar resumen mensual de descuentos por promociones y puntos, sin mezclarlo con incentivos de productos.
+[x] Compactar en móvil los saldos por peluquero y los tres indicadores económicos del profesional.
 
 60.8 Fase 5 - administración y reportes
 
-[ ] Validar coherencia entre tipo de recompensa, valor, tope y servicio elegible antes de guardar.
-[ ] Exigir tope para recompensas porcentuales.
-[ ] Configurar vigencia, cantidad máxima global y una utilización por cliente cuando corresponda.
+[x] Validar coherencia entre tipo de recompensa, valor, tope y servicio elegible antes de guardar.
+[x] Exigir tope para recompensas porcentuales desde la administración.
+[~] Configurar vigencia y cantidad máxima global; queda pendiente la política opcional de una utilización por cliente.
 [ ] Añadir vista previa del costo máximo de una recompensa antes de activarla.
 [ ] Mostrar canjes reservados, utilizados, cancelados, vencidos y revertidos.
 [ ] Exportar conciliación entre descuentos, puntos, comisiones, ventas y devoluciones.
@@ -2258,9 +2268,9 @@ Funciones previstas:
 60.9 Fase 6 - eliminación de legado y despliegue
 
 [ ] Inventariar consumidores de cada RPC de caja y fidelidad antes de eliminarla.
-[ ] Migrar clientes y PWA activa a las funciones nuevas con una ventana de compatibilidad controlada.
-[ ] Eliminar funciones `register_counter_sale` antiguas, componentes de código manual y tipos de recompensa no soportados cuando ya no tengan consumidores.
-[ ] Eliminar columnas, políticas, imports y estilos sin uso; ejecutar `rg`, ESLint y análisis de dependencias.
+[x] Migrar clientes y PWA activa a las funciones nuevas con una ventana de compatibilidad controlada mediante `register_counter_service_sale_v4`.
+[x] Eliminar las funciones antiguas `register_counter_sale_v2/v3` y retirar el descuento manual de la interfaz; la función v4 se conserva temporalmente para la PWA anterior.
+[~] Eliminar componentes de código manual e imports sin uso y ejecutar `rg` y ESLint; las columnas históricas se conservarán hasta validar producción.
 [ ] Regenerar tipos de Supabase si se incorporan al repositorio.
 [ ] Aplicar migraciones primero, desplegar interfaz después y retirar compatibilidad únicamente en un despliegue posterior.
 

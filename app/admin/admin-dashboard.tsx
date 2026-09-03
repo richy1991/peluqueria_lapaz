@@ -410,7 +410,7 @@ export function AdminDashboard({
 
           {section === "estadisticas" && <AdminAnalytics data={analyticsData} />}
 
-          {section === "programa" && <AdminProgram settings={program.settings} rewards={program.rewards} promotions={program.promotions} expenses={program.expenses} payouts={program.payouts} barbers={barbers} products={initialProducts} />}
+          {section === "programa" && <AdminProgram settings={program.settings} rewards={program.rewards} promotions={program.promotions} expenses={program.expenses} payouts={program.payouts} barbers={barbers} products={initialProducts} services={initialServices} />}
 
           {section === "clientes" && <div className="admin-panel"><div className="admin-title"><Users /><div><p>USUARIOS</p><h1>Clientes</h1></div></div><p className="admin-help">Puedes dar de baja cuentas antiguas o bloquear manualmente a clientes reincidentes. Ninguna cuenta se elimina físicamente.</p><div className="admin-list client-admin-list">{clients.length?clients.map((item)=><article key={item.id}><div><strong>{String(item.full_name??item.email)}</strong><span>{String(item.email)} · {String(item.phone??"Sin teléfono")} · {String(item.status)} · {String(item.no_show_count)} inasistencia(s)</span>{Boolean(item.is_blacklisted)&&<small className="admin-alert">Lista negra informativa</small>}</div><ClientAdminActions id={item.id} status={String(item.status)} blocked={Boolean(item.is_blocked)}/></article>):<p className="admin-help">Todavía no existen clientes registrados.</p>}</div></div>}
 
