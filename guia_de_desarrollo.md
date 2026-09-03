@@ -2046,7 +2046,7 @@ Fidelizacion:
 
 Configuracion inicial adoptada, editable por administracion:
 [x] 10 puntos por servicio pagado.
-[x] 1 punto por cada Bs 10 en productos pagados.
+[x] Las ventas directas de productos no generan puntos de cliente; mantienen únicamente el incentivo económico del peluquero vendedor.
 [x] 5 puntos de bienvenida.
 [x] 20 puntos para quien refiere y 10 para el nuevo cliente.
 [x] Vencimiento inicial a 12 meses.
@@ -2120,13 +2120,13 @@ Validacion tecnica y operativa:
 [x] La venta exclusiva de productos está separada del cobro de servicios.
 [x] El formulario de servicio inicia sin producto y ofrece un check para añadirlo cuando corresponda.
 [x] Caja puede corregir el servicio reservado antes del pago.
-[x] Caja puede añadir un servicio extra y un producto imprevisto antes de emitir el comprobante.
-[x] El peluquero puede informar servicio realizado, servicio extra, producto, cantidad y observación.
+[x] Caja puede añadir varias atenciones para titular, hijo/a o acompañante, cargos imprevistos justificados y un producto opcional antes de emitir el comprobante.
+[x] El peluquero puede informar servicio realizado, servicio extra, producto, cantidad y observación para revisión final de caja.
 [x] Al finalizar la atención, el peluquero la envía a estado `pending_payment` en vez de marcarla pagada o completada.
 [x] La cita pendiente aparece en la cola de caja y se actualiza mediante Realtime.
 [x] La atención solo cambia a `completed` después de registrar el pago.
 [x] Los servicios adicionales mantienen la comisión configurada del peluquero sobre su precio normal.
-[x] Los descuentos y promociones siguen reduciendo la participación del negocio, no la comisión del peluquero.
+[x] Los descuentos se reparten entre local y peluquero según la regla equitativa vigente; un descuento del 100% deja en cero ambas participaciones de la línea afectada.
 [x] El dashboard principal de caja muestra cantidades operativas, sin saldos ni totales monetarios visibles.
 [x] El libro diario registra ventas, ingresos, egresos, devoluciones y ajustes con fecha, método y glosa.
 [x] El libro diario puede imprimirse para la rendición al final del turno.
@@ -2136,6 +2136,148 @@ Validacion tecnica y operativa:
 [x] Ajuste `202608120003_cashier_claim_code_search_path.sql` aplicado y RPC nuevo validado sin errores.
 [ ] Probar en producción el circuito completo: reserva, inicio, envío a caja, cambio de servicio, extra, producto, cobro y comprobante.
 [ ] Verificar impresión física o PDF del libro diario con una jornada real.
+
+60. REDISEÑO DE RECOMPENSAS Y CANJES POR FASES (3 DE SEPTIEMBRE DE 2026)
+
+60.1 Objetivo y principios
+
+El canje debe ser rápido para caja, entendible para el cliente, transparente para el peluquero y configurable por administración. El frontend nunca calculará ni decidirá descuentos: mostrará una cotización producida por PostgreSQL y enviará una confirmación. Toda afectación de puntos, venta, pago, comisión y auditoría deberá ejecutarse dentro de una sola transacción.
+
+Principios obligatorios:
+- Los puntos son del cliente y permanecen separados por peluquero.
+- Las comisiones e incentivos monetarios del peluquero no son puntos y se liquidan en su módulo económico.
+- Caja solo verá recompensas elegibles; no podrá inventar una equivalencia entre puntos y dinero.
+- Un canje ligado al peluquero A solo podrá descontar servicios elegibles realizados por A.
+- Productos y cargos imprevistos quedan fuera del canje de puntos de cliente.
+- Un servicio cubierto totalmente por puntos no genera nuevos puntos; las demás líneas pagadas sí podrán generarlos.
+- El descuento nunca superará la base elegible ni los límites configurados.
+- La primera versión estable permitirá un solo canje por venta y no lo combinará con promoción ni descuento manual.
+- Campos y acciones no aplicables permanecerán ocultos para reducir errores y espacio en móvil.
+
+Referencias de diseño consultadas:
+- Square Loyalty reserva puntos al emitir un beneficio, usa claves de idempotencia y consume el beneficio al completarse el pago: https://developer.squareup.com/docs/loyalty-api/loyalty-rewards
+- Lightspeed vincula primero cliente y venta, presenta solo recompensas elegibles, confirma y aplica antes del pago: https://retail-support.lightspeedhq.com/hc/en-us/articles/360011039313-Redeeming-Loyalty-points-for-rewards
+- Toast separa búsqueda, consulta, validación y consumo, y permite retirar ofertas inválidas en la validación final: https://doc.toasttab.com/doc/devguide/apiLoyaltyTransactionDescriptions.html
+- Toast recomienda límites de canje y artículos elegibles; la combinación de múltiples recompensas requiere controles adicionales: https://central.toasttab.com/articles/Knowledge/Getting-Started-Toast-Loyalty
+
+60.2 Experiencia objetivo por rol
+
+ADMINISTRADOR
+- Define recompensas con nombre, costo en puntos, tipo, valor, tope obligatorio, servicios elegibles, vigencia y límite de usos.
+- Configura duración de la reserva, máximo de descuento total y política de combinación.
+- No interviene en cobros normales.
+- Los descuentos manuales de caja quedan bloqueados o sujetos a autorización administrativa, límite y motivo.
+- Consulta reportes de puntos reservados, usados, devueltos, vencidos y costo económico real.
+
+CAJERO
+- En la portada de Cobros dispone de dos acciones: Cobro directo de servicio y Venta directa de producto.
+- Primero identifica al cliente y registra las atenciones.
+- Solo entonces aparece Aplicar puntos si existen saldos y recompensas elegibles.
+- Ve peluquero, saldo, costo, descuento exacto, subtotal elegible y total final.
+- Selecciona una recompensa y confirma el pago; no escribe porcentajes ni descuenta puntos manualmente.
+- Si cambia cliente, peluquero, servicios o importes, la cotización anterior se invalida y se recalcula.
+
+CLIENTE
+- Ve puntos y recompensas agrupados por peluquero.
+- Puede mostrar un QR/código de autorización de corta duración o autorizar el canje preparado en caja con una sola acción.
+- Ve claramente cuántos puntos se usarán, cuánto ahorrará y con qué peluquero aplica.
+- Puede cancelar una reserva de puntos mientras la venta no haya sido pagada.
+- Los puntos reservados que expiren se devuelven automáticamente.
+
+PELUQUERO
+- No modifica puntos ni aprueba canjes de clientes.
+- Ve en su balance el precio normal, descuento atribuido, parte asumida por él, comisión final y origen del descuento.
+- Ve un indicador no sensible de que una atención utilizó recompensa, sin acceso a datos privados innecesarios del cliente.
+- Sus comisiones por productos continúan separadas del programa de puntos.
+
+60.3 Máquina de estados y trazabilidad
+
+Estados del canje:
+`reserved -> used`
+`reserved -> canceled -> puntos devueltos`
+`reserved -> expired -> puntos devueltos`
+
+Cada canje conservará snapshot inmutable de nombre, costo en puntos, tipo, valor, tope y peluquero. Cada descuento aplicado conservará origen, base elegible, importe, peluquero afectado, parte del local y parte del peluquero. No se recalculará una venta histórica con reglas actuales.
+
+Funciones previstas:
+- `cashier_quote_loyalty`: operación de solo lectura que devuelve saldos y recompensas elegibles para el cliente y las líneas actuales.
+- `reserve_cashier_reward`: reserva atómica, corta y auditable de puntos.
+- `finalize_counter_service_sale`: vuelve a validar precios, stock, saldo, recompensa y promoción; después registra todo o revierte todo.
+- `release_expired_reward_reservations`: cancela reservas vencidas y devuelve puntos una sola vez.
+- `reverse_counter_sale`: revierte pago, comisión, puntos ganados y canje utilizando claves de idempotencia.
+
+60.4 Fase 1 - acceso operativo y documentación
+
+[x] Auditar implementación actual y documentar riesgos de alcance, vencimiento, snapshots, combinaciones y descuentos manuales.
+[x] Investigar patrones de Square, Lightspeed y Toast mediante documentación oficial.
+[x] Mostrar Venta directa de producto también en la portada de Cobros reutilizando el mismo formulario y la misma RPC.
+[x] Mantener la página dedicada `/caja/productos` para operación y navegación modular.
+[x] Corregir en esta guía reglas históricas que afirmaban puntos por producto o descuentos absorbidos solo por el negocio.
+[ ] Ejecutar prueba móvil con cajero real de los dos accesos de venta directa.
+
+60.5 Fase 2 - núcleo financiero seguro
+
+[ ] Crear tabla de aplicaciones de descuento con origen y reparto económico por línea y peluquero.
+[ ] Agregar snapshots inmutables y claves de idempotencia a canjes.
+[ ] Implementar cotización de fidelidad exclusivamente en backend.
+[ ] Limitar recompensa al subtotal de servicios elegibles del peluquero asociado.
+[ ] Excluir productos y cargos imprevistos de la base del canje.
+[ ] Aplicar un canje máximo por venta y bloquear combinación con promoción/manual.
+[ ] Bloquear descuento manual para caja hasta disponer de autorización, límite y motivo auditables.
+[ ] Implementar reserva corta y devolución automática de puntos vencidos.
+[ ] Aplicar límites de uso de recompensas de forma transaccional.
+[ ] Conservar compatibilidad temporal con códigos pendientes legítimos ya emitidos.
+
+60.6 Fase 3 - interfaz de caja
+
+[ ] Cargar beneficios al seleccionar cliente y después de conocer los peluqueros de la venta.
+[ ] Mostrar únicamente recompensas elegibles y ocultar por completo la sección cuando no corresponda.
+[ ] Presentar cotización con subtotal, puntos, ahorro, total, peluquero y reparto antes de pagar.
+[ ] Invalidar cotización al cambiar cualquier línea, cliente, descuento o promoción.
+[ ] Añadir confirmación única y estados claros: disponible, reservando, aplicado, error y vencido.
+[ ] Evitar dobles clics mediante bloqueo visual y clave idempotente por intento de cobro.
+[ ] Permitir escanear o escribir autorización de cliente sin obligar pasos redundantes.
+
+60.7 Fase 4 - panel cliente y panel peluquero
+
+[ ] Simplificar recompensas del cliente mostrando solo las alcanzables o el progreso hacia la siguiente.
+[ ] Generar autorización QR/código de corta duración y permitir cancelación antes del uso.
+[ ] Diferenciar puntos disponibles y temporalmente reservados.
+[ ] Mostrar al peluquero descuento atribuido y comisión final por cada atención.
+[ ] Agregar resumen mensual de descuentos por promociones, puntos y ajustes, sin mezclarlo con incentivos de productos.
+
+60.8 Fase 5 - administración y reportes
+
+[ ] Validar coherencia entre tipo de recompensa, valor, tope y servicio elegible antes de guardar.
+[ ] Exigir tope para recompensas porcentuales.
+[ ] Configurar vigencia, cantidad máxima global y una utilización por cliente cuando corresponda.
+[ ] Añadir vista previa del costo máximo de una recompensa antes de activarla.
+[ ] Mostrar canjes reservados, utilizados, cancelados, vencidos y revertidos.
+[ ] Exportar conciliación entre descuentos, puntos, comisiones, ventas y devoluciones.
+
+60.9 Fase 6 - eliminación de legado y despliegue
+
+[ ] Inventariar consumidores de cada RPC de caja y fidelidad antes de eliminarla.
+[ ] Migrar clientes y PWA activa a las funciones nuevas con una ventana de compatibilidad controlada.
+[ ] Eliminar funciones `register_counter_sale` antiguas, componentes de código manual y tipos de recompensa no soportados cuando ya no tengan consumidores.
+[ ] Eliminar columnas, políticas, imports y estilos sin uso; ejecutar `rg`, ESLint y análisis de dependencias.
+[ ] Regenerar tipos de Supabase si se incorporan al repositorio.
+[ ] Aplicar migraciones primero, desplegar interfaz después y retirar compatibilidad únicamente en un despliegue posterior.
+
+60.10 Matriz mínima de pruebas antes de producción financiera
+
+[ ] Dos cajeros intentan consumir simultáneamente el mismo saldo o autorización: solo uno debe completar.
+[ ] Doble clic o reintento de red usa la misma idempotencia y genera una sola venta.
+[ ] Recompensa vencida, inactiva, agotada o de otro peluquero es rechazada sin descontar puntos.
+[ ] Cambio de precio, servicio, peluquero o cliente invalida la cotización anterior.
+[ ] Venta con peluqueros A y B: el canje de A no modifica comisión ni subtotal elegible de B.
+[ ] Venta familiar: solo las líneas pagadas y no cubiertas completamente generan puntos.
+[ ] Producto y cargo imprevisto nunca reciben descuento por puntos.
+[ ] Cancelación y vencimiento devuelven exactamente los puntos reservados una sola vez.
+[ ] Reversión de venta devuelve el canje y revierte puntos ganados sin saldo negativo.
+[ ] Descuento del 100% deja en cero al local y al peluquero de la línea afectada, sin tocar otras líneas.
+[ ] RLS impide que cliente, peluquero o cajero manipulen directamente saldos, snapshots o aplicaciones de descuento.
+[ ] Comprobante, historial, balance del peluquero y reporte administrativo muestran el mismo reparto.
 
 FUERA DE ALCANCE DE LA AMPLIACION ACTUAL
 Procesamiento de pagos online.
@@ -2172,7 +2314,7 @@ El sistema es una web app movil desarrollada con Next.js, desplegada en Vercel y
 Los usuarios se autentican con Google. Los clientes se registran solos, los peluqueros y administradores se habilitan mediante invitaciones protegidas y el desarrollador conserva exclusivamente el rol superadmin tecnico.
 La version actualmente desplegada incluye sitio publico, reservas, catalogos, apartados de productos, paneles por rol, gestion administrativa, notificaciones internas y estadisticas operativas protegidas.
 La ampliacion implementada agrega caja presencial, atenciones sin reserva, comprobante interno, comisiones del peluquero sobre el precio normal, incentivos de productos, puntos, referidos, rachas, insumos y liquidaciones.
-El peluquero mantendra 50% del precio normal completo del servicio aunque administracion aplique una promocion. El descuento reducira exclusivamente la participacion del negocio.
+Los descuentos de promociones y puntos deben distribuirse entre local y peluquero según la regla equitativa vigente, con trazabilidad por línea y sin afectar a profesionales ajenos al beneficio.
 La ampliacion no procesa pagos online ni sustituye un sistema contable o fiscal. Una futura factura fiscal requerira un proyecto de integracion autorizado con el SIN.
 El checklist consolidado de este documento debe actualizarse despues de cada migracion, despliegue y validacion funcional.
 Fin del documento.

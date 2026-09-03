@@ -1391,7 +1391,7 @@
 
 /* Caja operativa: cola de cobro, venta separada y libro diario. */
 .cashier-safe-kpis strong{font-family:var(--sans,Arial,sans-serif);letter-spacing:.04em}
-.cashier-queue,.cashier-quick-action,.cashier-product-sale,.cashier-ledger{margin-top:18px}
+.cashier-queue,.cashier-quick-actions,.cashier-product-sale,.cashier-ledger{margin-top:18px}.cashier-quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .cashier-quick-action{display:flex;align-items:center;justify-content:space-between;gap:24px}
 .cashier-quick-action h2,.cashier-product-sale h2{margin:6px 0;color:var(--dash-text)}
 .cashier-quick-action p{margin:0;color:var(--dash-muted)}
@@ -1407,7 +1407,7 @@
 .ledger-head{color:var(--dash-text);background:rgba(52,120,246,.15);font-weight:800;text-transform:uppercase;letter-spacing:.08em}
 .cashier-ledger-signatures{margin:70px 20px 22px;display:grid;grid-template-columns:repeat(2,1fr);gap:70px}.cashier-ledger-signatures span{padding-top:8px;text-align:center;color:var(--dash-muted);border-top:1px solid var(--dash-line);font-size:9px}
 .cashier-close-action{display:flex;justify-content:flex-end}
-@media(max-width:760px){.cashier-quick-action{align-items:stretch;flex-direction:column}.cashier-quick-action .dash-action{width:100%;justify-content:center}.cashier-client-fields,.cashier-client-grid{grid-template-columns:1fr}.cashier-client-fields,.cashier-line-group{padding:13px}.cashier-service-line,.cashier-charge-line{grid-template-columns:1fr}.cashier-remove-line{width:100%}.cashier-add-line{width:100%}.cashier-ledger-meta{flex-direction:column}.cashier-ledger-signatures{gap:24px;margin-inline:0}.cashier-queue .admin-list article{align-items:stretch}.cashier-queue .dash-action{width:100%;justify-content:center}}
+@media(max-width:760px){.cashier-quick-actions{grid-template-columns:1fr}.cashier-quick-action{align-items:stretch;flex-direction:column}.cashier-quick-action .dash-action{width:100%;justify-content:center}.cashier-client-fields,.cashier-client-grid{grid-template-columns:1fr}.cashier-client-fields,.cashier-line-group{padding:13px}.cashier-service-line,.cashier-charge-line{grid-template-columns:1fr}.cashier-remove-line{width:100%}.cashier-add-line{width:100%}.cashier-ledger-meta{flex-direction:column}.cashier-ledger-signatures{gap:24px;margin-inline:0}.cashier-queue .admin-list article{align-items:stretch}.cashier-queue .dash-action{width:100%;justify-content:center}}
 @media print{
   .cashier-shell .dash-header,.cashier-shell .dash-sidebar,.cashier-shell .dash-page-heading,.cashier-shell .admin-message,.cashier-shell .admin-error,.cashier-shell .no-print,.support-fab{display:none!important}
   .cashier-shell,.cashier-shell .admin-layout,.cashier-shell .cashier-content{min-height:0!important;color:#111!important;background:#fff!important}
