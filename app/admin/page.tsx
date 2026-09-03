@@ -26,7 +26,8 @@ export default async function AdminPage() {
 
   const capabilities = await getUserCapabilities(user.id);
   const isSuperadmin = capabilities.isSuperadmin;
-  const [services, gallery, products, barbers, cashiers, pendingCashiers, settings, adminUsers, appointments, profiles, analytics,marketing,loyaltySettings,rewards,promotions,expenses,payouts] = await Promise.all([
+  const [ownProfile, services, gallery, products, barbers, cashiers, pendingCashiers, settings, adminUsers, appointments, profiles, analytics,marketing,loyaltySettings,rewards,promotions,expenses,payouts] = await Promise.all([
+    supabase.from("profiles").select("id,full_name,email,phone,avatar_url,status").eq("id", user.id).maybeSingle(),
     supabase.from("services").select("*").order("created_at"),
     supabase.from("gallery_posts").select("*").order("created_at", { ascending: false }),
     supabase.from("products").select("*").order("created_at", { ascending: false }),
@@ -49,6 +50,14 @@ export default async function AdminPage() {
   return (
     <PanelExperience><AdminDashboard
       userEmail={user.email ?? "Administrador"}
+      adminProfile={{
+        id: user.id,
+        full_name: ownProfile.data?.full_name ?? user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "Administrador",
+        email: ownProfile.data?.email ?? user.email ?? "",
+        phone: ownProfile.data?.phone ?? null,
+        avatar_url: ownProfile.data?.avatar_url ?? user.user_metadata?.avatar_url ?? null,
+        status: ownProfile.data?.status ?? "active",
+      }}
       initialServices={services.data ?? []}
       initialGallery={gallery.data ?? []}
       initialProducts={products.data ?? []}

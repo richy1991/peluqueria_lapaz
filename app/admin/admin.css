@@ -1425,6 +1425,20 @@
 .panel-theme .analytics-card header h2{font-size:20px;line-height:1.15}
 .panel-theme .cashier-welcome h2{font-size:28px;line-height:1.1}
 .panel-theme .command-card h2{font-size:24px;line-height:1.1}
+
+/* Identidad y acceso al perfil en el sidebar administrativo. */
+.admin-control-shell .dash-sidebar{display:flex;flex-direction:column}
+.admin-control-shell .dash-sidebar nav{min-height:0;flex:1;align-content:start;overflow-x:hidden;overflow-y:auto;scrollbar-width:thin}
+.admin-control-shell .dash-sidebar-foot{position:static;margin-top:12px}
+.admin-sidebar-profile{width:100%;min-height:62px;margin:0 0 13px;padding:9px;display:grid;grid-template-columns:38px minmax(0,1fr) 14px;align-items:center;gap:9px;text-align:left;color:var(--dash-text);border:1px solid var(--dash-line);border-radius:12px;background:linear-gradient(135deg,rgba(114,231,255,.08),rgba(229,138,80,.035));cursor:pointer;transition:border-color .2s,background .2s,transform .2s}
+.admin-sidebar-profile:hover,.admin-sidebar-profile.active{border-color:rgba(114,231,255,.34);background:linear-gradient(135deg,rgba(114,231,255,.15),rgba(229,138,80,.06));transform:translateY(-1px)}
+.admin-sidebar-avatar,.admin-profile-avatar{display:grid;place-items:center;overflow:hidden;color:#061016;border:1px solid rgba(114,231,255,.48);border-radius:11px;background:center/cover no-repeat linear-gradient(135deg,var(--dash-cyan),#d1faff);font-size:11px;font-weight:900;letter-spacing:.04em;box-shadow:0 0 18px rgba(114,231,255,.12)}
+.admin-sidebar-avatar{width:38px;height:38px}.admin-sidebar-avatar.has-photo,.admin-profile-avatar.has-photo{color:transparent}
+.admin-sidebar-profile>span{min-width:0;display:grid;gap:3px}.admin-sidebar-profile strong{overflow:hidden;color:var(--dash-text);font-size:10px;text-overflow:ellipsis;white-space:nowrap}.admin-sidebar-profile small{color:var(--dash-cyan);font-size:7px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.admin-sidebar-profile>svg{width:14px;height:14px;color:var(--dash-muted)}
+.nav-collapsed .admin-sidebar-profile{padding:8px;grid-template-columns:38px;justify-content:center}.nav-collapsed .admin-sidebar-profile>span,.nav-collapsed .admin-sidebar-profile>svg{display:none}
+.admin-profile-panel{max-width:900px}.admin-profile-identity{padding:20px;display:flex;align-items:center;gap:20px;border:1px solid var(--dash-line);border-radius:15px;background:rgba(114,231,255,.035)}.admin-profile-avatar{width:92px;height:92px;flex:0 0 92px;border-radius:22px;font-size:24px}.admin-profile-identity>div:last-child{min-width:0}.admin-profile-identity small{color:var(--dash-cyan);font-size:8px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}.admin-profile-identity h2{margin:6px 0;color:var(--dash-text);font-size:28px;line-height:1.05}.admin-profile-identity p{margin:0;color:var(--dash-muted);font-size:10px;line-height:1.55}
+.admin-profile-details{margin:14px 0 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.admin-profile-details>div{min-width:0;padding:13px 15px;display:grid;gap:5px;border:1px solid var(--dash-line);border-radius:11px;background:rgba(5,10,16,.28)}.admin-profile-details dt{color:var(--dash-muted);font-size:8px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}.admin-profile-details dd{margin:0;overflow-wrap:anywhere;color:var(--dash-text);font-size:11px}
+.panel-theme[data-panel-theme="light"] .admin-sidebar-profile{background:linear-gradient(135deg,rgba(8,127,157,.1),rgba(229,138,80,.05))}.panel-theme[data-panel-theme="light"] .admin-profile-identity,.panel-theme[data-panel-theme="light"] .admin-profile-details>div{background:#f7fbfc}
 @media print{
   @page{size:A4 portrait;margin:9mm}
   .cashier-shell .dash-header,.cashier-shell .dash-sidebar,.cashier-shell .dash-page-heading,.cashier-shell .admin-message,.cashier-shell .admin-error,.cashier-shell .no-print,.panel-floating-tools,.dashboard-toast-host{display:none!important}
@@ -1455,4 +1469,7 @@
   .panel-client-shell .portal-grid,.barber-portal .portal-grid{padding-top:14px;gap:9px}.panel-client-shell .portal-card,.barber-portal .portal-card{padding:14px}
   .panel-theme .dash-list-head h2,.panel-theme .portal-title h2{font-size:17px;line-height:1.15}
   .program-grid{gap:9px}.program-grid>.program-card{padding:14px}.program-card>header{align-items:center;flex-direction:row;margin-bottom:11px}.program-card .portal-title h2{font-size:17px}
+  .panel-theme .admin-control-shell .admin-sidebar-profile{min-height:58px;margin-bottom:9px;grid-template-columns:38px minmax(0,1fr) 14px}
+  .panel-theme .admin-control-shell .admin-sidebar-profile>span{display:grid;opacity:1}.panel-theme .admin-control-shell .admin-sidebar-profile>svg{display:block}
+  .admin-profile-identity{padding:14px;align-items:flex-start}.admin-profile-avatar{width:68px;height:68px;flex-basis:68px;border-radius:16px;font-size:18px}.admin-profile-identity h2{font-size:21px}.admin-profile-details{grid-template-columns:1fr;gap:7px}.admin-profile-details>div{padding:11px 12px}
 }

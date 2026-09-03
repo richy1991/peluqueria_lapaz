@@ -124,7 +124,7 @@ export function PanelExperience({ children }: { children: ReactNode }) {
     };
     const closeAfterNavigation = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (target.closest(".dash-sidebar nav button,.dash-sidebar nav a")) setMobileNavOpen(false);
+      if (target.closest(".dash-sidebar nav button,.dash-sidebar nav a,.admin-sidebar-profile")) setMobileNavOpen(false);
     };
     window.addEventListener("keydown", close);
     document.addEventListener("click", closeAfterNavigation);

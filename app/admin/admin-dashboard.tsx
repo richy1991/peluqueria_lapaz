@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BarChart3, CalendarClock, CircleDollarSign, ImagePlus, LogOut, Menu, PackagePlus, Save, Scissors, ShieldCheck, Sparkles, Store, Trash2, UserPlus, UserRoundCog, Users, X } from "lucide-react";
+import { BarChart3, CalendarClock, ChevronRight, CircleDollarSign, ImagePlus, LogOut, Menu, PackagePlus, Save, Scissors, ShieldCheck, Sparkles, Store, Trash2, UserPlus, UserRound, UserRoundCog, Users, X } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { createClient } from "@/lib/supabase/client";
@@ -18,9 +18,11 @@ import type {LucideIcon} from "lucide-react";
 
 type Row = Record<string, unknown> & { id: string };
 type AdminUser = { user_id: string | null; email: string; role: "admin" | "superadmin" | "pending"; created_at: string };
+type AdminProfile = { id: string; full_name: string; email: string; phone: string | null; avatar_url: string | null; status: string };
 
 type AdminDashboardProps = {
   userEmail: string;
+  adminProfile: AdminProfile;
   initialServices: Row[];
   initialGallery: Row[];
   initialProducts: Row[];
@@ -78,6 +80,7 @@ async function uploadImages(files: File[], folder: string) {
 
 export function AdminDashboard({
   userEmail,
+  adminProfile,
   initialServices,
   initialGallery,
   initialProducts,
@@ -376,6 +379,9 @@ export function AdminDashboard({
   const activeCashiers = cashiers.filter((item) => Boolean(item.active));
   const inactiveCashiers = cashiers.filter((item) => !item.active);
   const inactiveTeamCount = inactiveBarbers.length + inactiveCashiers.length;
+  const adminRole = isSuperadmin ? "Superadministrador" : "Administrador";
+  const adminInitials = adminProfile.full_name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() || "AD";
+  const avatarStyle = adminProfile.avatar_url ? { backgroundImage: `url(${JSON.stringify(adminProfile.avatar_url)})` } : undefined;
   const navigation:Array<[string,string,LucideIcon]>=[
     ["agenda","Agenda",CalendarClock],
     ["programa","Caja y fidelización",CircleDollarSign],
@@ -401,11 +407,29 @@ export function AdminDashboard({
       <div className={`admin-layout ${navCollapsed?"nav-collapsed":""}`}>
         <aside className="admin-nav dash-sidebar">
           <div className="dash-sidebar-head"><p>CONTROL CENTRAL</p><button className="dash-collapse" type="button" onClick={()=>setNavCollapsed(value=>!value)} aria-label={navCollapsed?"Abrir menú lateral":"Cerrar menú lateral"} aria-expanded={!navCollapsed} title={navCollapsed?"Abrir menú":"Cerrar menú"}>{navCollapsed?<Menu/>:<X/>}</button><PanelMobileSidebarClose/></div>
+          <button className={`admin-sidebar-profile ${section === "perfil" ? "active" : ""}`} type="button" onClick={() => setSection("perfil")} aria-label={`Ver perfil de ${adminProfile.full_name}`} title="Ver mi perfil">
+            <div className={`admin-sidebar-avatar ${adminProfile.avatar_url ? "has-photo" : ""}`} style={avatarStyle}>{!adminProfile.avatar_url && adminInitials}</div>
+            <span><strong>{adminProfile.full_name}</strong><small>{adminRole}</small></span>
+            <ChevronRight />
+          </button>
           <nav>{navigation.map(([id,label,Icon])=><button title={label} className={`${section===id?"active":""} ${id==="negocio"?"nav-secondary-start":""}`} key={id} onClick={()=>setSection(id)}><Icon/><span>{label}</span>{section===id&&<i/>}</button>)}</nav>
           <div className="dash-sidebar-foot"><PanelThemeSelector/><Link href="/"><Sparkles/><span>Ver sitio público</span></Link><PanelMobileLogout/></div>
         </aside>
         <PanelMobileScrim/>
         <section className="admin-content">
+          {section === "perfil" && <div className="admin-panel admin-profile-panel">
+            <div className="admin-title"><UserRound /><div><p>CUENTA ADMINISTRATIVA</p><h1>Mi perfil</h1></div></div>
+            <div className="admin-profile-identity">
+              <div className={`admin-profile-avatar ${adminProfile.avatar_url ? "has-photo" : ""}`} style={avatarStyle}>{!adminProfile.avatar_url && adminInitials}</div>
+              <div><small>{adminRole}</small><h2>{adminProfile.full_name}</h2><p>Esta identidad corresponde a la cuenta con la que administras LEGEND CLUB.</p></div>
+            </div>
+            <dl className="admin-profile-details">
+              <div><dt>Correo</dt><dd>{adminProfile.email}</dd></div>
+              <div><dt>Teléfono</dt><dd>{adminProfile.phone || "Sin teléfono registrado"}</dd></div>
+              <div><dt>Rol</dt><dd>{adminRole}</dd></div>
+              <div><dt>Estado</dt><dd>{adminProfile.status === "active" ? "Activo" : adminProfile.status}</dd></div>
+            </dl>
+          </div>}
           {section === "agenda" && <div className="admin-panel"><div className="admin-title"><CalendarClock /><div><p>OPERACIÓN</p><h1>Reservas y agenda</h1></div></div><div className="admin-metrics"><div><strong>{initialAppointments.filter((item)=>["requested","confirmed","pending_client_confirmation"].includes(String(item.status))).length}</strong><span>Próximas o pendientes</span></div><div><strong>{initialAppointments.filter((item)=>item.status==="needs_reschedule").length}</strong><span>Por reprogramar</span></div><div><strong>{initialAppointments.length}</strong><span>Últimas reservas</span></div></div><div className="admin-list appointment-admin-list">{initialAppointments.length?initialAppointments.map((item)=>{const client=item.profiles as {full_name?:string;phone?:string;email?:string;is_blacklisted?:boolean}|null;const barber=item.barber_profiles as {display_name?:string}|null;return <article key={item.id}><div><strong>{String(item.service_name_snapshot)} · {new Intl.DateTimeFormat("es-BO",{dateStyle:"medium",timeStyle:"short",timeZone:"America/La_Paz"}).format(new Date(String(item.starts_at)))}</strong><span>{client?.full_name??client?.email??"Cliente"} · {client?.phone??"Sin teléfono"} · {barber?.display_name??"Sin asignar"} · {String(item.status)}</span>{client?.is_blacklisted&&<small className="admin-alert">Alerta por inasistencias</small>}</div><AppointmentAdminActions id={item.id} barbers={barbers as Array<{id:string;display_name:string;active?:boolean}>}/></article>}):<p className="admin-help">Todavía no existen reservas.</p>}</div></div>}
 
           {section === "estadisticas" && <AdminAnalytics data={analyticsData} />}
