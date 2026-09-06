@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BarChart3, CalendarClock, ChevronRight, CircleDollarSign, ImagePlus, LogOut, Menu, PackagePlus, Save, Scissors, ShieldCheck, Sparkles, Store, Trash2, UserPlus, UserRound, UserRoundCog, Users, X } from "lucide-react";
+import { BarChart3, CalendarClock, ChevronRight, CircleDollarSign, Clock3, ImagePlus, LogOut, Menu, PackagePlus, Save, Scissors, ShieldCheck, Sparkles, Store, Trash2, UserPlus, UserRound, UserRoundCog, Users, X } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { createClient } from "@/lib/supabase/client";
@@ -14,11 +14,21 @@ import { DashboardModal } from "@/components/dashboard-modal";
 import { DashboardToast, type DashboardToastData } from "@/components/dashboard-toast";
 import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelThemeSelector } from "@/components/panel-experience";
 import { clearFormErrors, dispatchDashboardSuccess, reportFormError } from "@/lib/form-feedback";
+import { formatBusinessHours, isBusinessOpenNow, type BusinessHour } from "@/lib/business-hours";
 import type {LucideIcon} from "lucide-react";
 
 type Row = Record<string, unknown> & { id: string };
 type AdminUser = { user_id: string | null; email: string; role: "admin" | "superadmin" | "pending"; created_at: string };
 type AdminProfile = { id: string; full_name: string; email: string; phone: string | null; avatar_url: string | null; status: string };
+const businessDays = [
+  { weekday: 1, label: "Lunes" },
+  { weekday: 2, label: "Martes" },
+  { weekday: 3, label: "Miércoles" },
+  { weekday: 4, label: "Jueves" },
+  { weekday: 5, label: "Viernes" },
+  { weekday: 6, label: "Sábado" },
+  { weekday: 0, label: "Domingo" },
+];
 
 type AdminDashboardProps = {
   userEmail: string;
@@ -30,6 +40,7 @@ type AdminDashboardProps = {
   cashiers: Row[];
   pendingCashiers: Row[];
   initialSettings: Record<string, unknown> | null;
+  initialBusinessHours: BusinessHour[];
   isSuperadmin: boolean;
   adminUsers: AdminUser[];
   hasBarber: boolean;
@@ -88,6 +99,7 @@ export function AdminDashboard({
   cashiers,
   pendingCashiers,
   initialSettings,
+  initialBusinessHours,
   isSuperadmin,
   adminUsers,
   hasBarber,
@@ -101,6 +113,10 @@ export function AdminDashboard({
   const [toast, setToast] = useState<DashboardToastData | null>(null);
   const [busy, setBusy] = useState(false);
   const [navCollapsed,setNavCollapsed]=useState(false);
+  const [businessHours, setBusinessHours] = useState<BusinessHour[]>(() => Array.from({ length: 7 }, (_, weekday) => {
+    const saved = initialBusinessHours.find((item) => item.weekday === weekday);
+    return saved ?? { weekday, active: weekday !== 1, opens_at: "09:00", closes_at: "20:00" };
+  }));
   const toastIdRef = useRef(0);
 
   function showToast(type: "success" | "error", text: string) {
@@ -142,7 +158,6 @@ export function AdminDashboard({
       address: String(data.get("address") ?? ""),
       phone: String(data.get("phone") ?? ""),
       whatsapp: String(data.get("whatsapp") ?? ""),
-      hours_text: String(data.get("hours_text") ?? ""),
       map_url: String(data.get("map_url") ?? ""),
       instagram_url: String(data.get("instagram_url") ?? ""),
       facebook_url: String(data.get("facebook_url") ?? ""),
@@ -152,6 +167,25 @@ export function AdminDashboard({
     const { error: updateError } = await supabase.from("business_settings").update(payload).eq("id", true);
     if (updateError) return failAction(updateError, form);
     finishAction("Información del negocio actualizada.");
+  }
+
+  async function saveBusinessHours(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    clearFormErrors(form);
+    startAction();
+    const rows = businessHours;
+    const invalid = rows.find((row) => row.active && row.opens_at >= row.closes_at);
+    if (invalid) {
+      setBusy(false);
+      return failAction(new Error("La hora de cierre debe ser posterior a la hora de apertura."), form, `closes_${invalid.weekday}`);
+    }
+    const { error: scheduleError } = await createClient().from("business_hours").upsert(
+      rows.map((row) => ({ ...row, updated_at: new Date().toISOString() })),
+      { onConflict: "weekday" },
+    );
+    if (scheduleError) return failAction(scheduleError, form);
+    finishAction("Días y horarios de atención actualizados.");
   }
 
   async function addService(event: FormEvent<HTMLFormElement>) {
@@ -382,6 +416,9 @@ export function AdminDashboard({
   const adminRole = isSuperadmin ? "Superadministrador" : "Administrador";
   const adminInitials = adminProfile.full_name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() || "AD";
   const avatarStyle = adminProfile.avatar_url ? { backgroundImage: `url(${JSON.stringify(adminProfile.avatar_url)})` } : undefined;
+  const scheduleOpenNow = isBusinessOpenNow(businessHours, String(settings.timezone ?? "America/La_Paz"));
+  const configuredStatus = String(settings.business_status ?? "open");
+  const automaticStatus = configuredStatus === "open" || configuredStatus === "appointment_only";
   const navigation:Array<[string,string,LucideIcon]>=[
     ["agenda","Agenda",CalendarClock],
     ["programa","Caja y fidelización",CircleDollarSign],
@@ -390,6 +427,7 @@ export function AdminDashboard({
     ["servicios","Servicios",Scissors],
     ["productos","Productos",PackagePlus],
     ["galeria","Galería",ImagePlus],
+    ["horarios","Horarios",Clock3],
     ["negocio","Negocio",Store],
     ["estadisticas","Estadísticas",BarChart3],
     ...(isSuperadmin?[["administradores","Administradores",ShieldCheck] as [string,string,LucideIcon]]:[]),
@@ -438,12 +476,31 @@ export function AdminDashboard({
 
           {section === "clientes" && <div className="admin-panel"><div className="admin-title"><Users /><div><p>USUARIOS</p><h1>Clientes</h1></div></div><p className="admin-help">Puedes dar de baja cuentas antiguas o bloquear manualmente a clientes reincidentes. Ninguna cuenta se elimina físicamente.</p><div className="admin-list client-admin-list">{clients.length?clients.map((item)=><article key={item.id}><div><strong>{String(item.full_name??item.email)}</strong><span>{String(item.email)} · {String(item.phone??"Sin teléfono")} · {String(item.status)} · {String(item.no_show_count)} inasistencia(s)</span>{Boolean(item.is_blacklisted)&&<small className="admin-alert">Lista negra informativa</small>}</div><ClientAdminActions id={item.id} status={String(item.status)} blocked={Boolean(item.is_blocked)}/></article>):<p className="admin-help">Todavía no existen clientes registrados.</p>}</div></div>}
 
+          {section === "horarios" && <div className="admin-panel business-hours-panel">
+            <div className="admin-title"><Clock3 /><div><p>OPERACIÓN DEL LOCAL</p><h1>Días y horarios de atención</h1></div></div>
+            <div className="business-hours-summary">
+              <span className={`dash-status-pill ${automaticStatus && scheduleOpenNow ? "online" : "offline"}`}><i />{automaticStatus && scheduleOpenNow ? "Abierto ahora" : "Cerrado ahora"}</span>
+              <div><strong>{formatBusinessHours(businessHours)}</strong><small>{automaticStatus ? "El estado público se actualiza automáticamente con la hora de La Paz." : "El cierre manual configurado en Negocio tiene prioridad sobre este horario."}</small></div>
+            </div>
+            <form className="business-hours-form" onSubmit={saveBusinessHours}>
+              {businessDays.map(({ weekday, label }) => {
+                const day = businessHours.find((item) => item.weekday === weekday) ?? { weekday, active: false, opens_at: "09:00", closes_at: "20:00" };
+                const updateDay = (changes: Partial<BusinessHour>) => setBusinessHours((current) => current.map((item) => item.weekday === weekday ? { ...item, ...changes } : item));
+                return <article className={day.active ? "active" : "closed"} key={weekday}>
+                  <label className="business-day-toggle"><input type="checkbox" checked={day.active} onChange={(event) => updateDay({ active: event.target.checked })} /><span><strong>{label}</strong><small>{day.active ? "Día de atención" : "Cerrado"}</small></span></label>
+                  {day.active && <div className="business-day-times"><label>Apertura<input name={`opens_${weekday}`} type="time" value={day.opens_at.slice(0, 5)} onChange={(event) => updateDay({ opens_at: event.target.value })} required /></label><span>hasta</span><label>Cierre<input name={`closes_${weekday}`} type="time" value={day.closes_at.slice(0, 5)} onChange={(event) => updateDay({ closes_at: event.target.value })} required /></label></div>}
+                </article>;
+              })}
+              <button className="button button-dark" disabled={busy}><Save size={17} /> Guardar horarios</button>
+            </form>
+          </div>}
+
           {section === "negocio" && <div className="admin-panel">
             <div className="admin-title"><Store /><div><p>CONFIGURACIÓN PÚBLICA</p><h1>Información del negocio</h1></div></div>
-            <div className="dash-section-intro"><p>Edita la identidad, ubicación, horarios y estado público desde una ventana dedicada.</p><DashboardModal title="Editar información del negocio" description="Los cambios se reflejarán en la página pública." triggerLabel="Editar negocio" triggerIcon={<Store/>} size="large">
+            <div className="dash-section-intro"><p>Edita la identidad, ubicación y modo de atención desde una ventana dedicada.</p><DashboardModal title="Editar información del negocio" description="Los cambios se reflejarán en la página pública." triggerLabel="Editar negocio" triggerIcon={<Store/>} size="large">
             <form className="admin-form" onSubmit={saveBusiness} acceptCharset="UTF-8">
               <label>Nombre<input name="business_name" required defaultValue={String(settings.business_name ?? "Barbería LEGEND CLUB")} /></label>
-              <label>Estado<select name="business_status" defaultValue={String(settings.business_status ?? "open")}><option value="open">Abierto</option><option value="appointment_only">Solo con reserva</option><option value="closed">Cerrado</option><option value="emergency_closed">Cierre de emergencia</option></select></label>
+              <label>Modo de atención<select name="business_status" defaultValue={String(settings.business_status ?? "open")}><option value="open">Horario automático</option><option value="appointment_only">Solo con reserva</option><option value="closed">Cierre manual</option><option value="emergency_closed">Cierre de emergencia</option></select></label>
               <label className="wide">Descripción<textarea name="description" defaultValue={String(settings.description ?? "")} /></label>
               <label className="wide">Lema<input name="slogan" defaultValue={String(settings.slogan ?? "")} /></label>
               <label className="wide">Beneficios separados por comas<input name="amenities" defaultValue={Array.isArray(settings.amenities) ? settings.amenities.join(", ") : ""} /></label>
@@ -451,7 +508,6 @@ export function AdminDashboard({
               <label className="wide">Dirección<input name="address" defaultValue={String(settings.address ?? "")} /></label>
               <label>Teléfono<input name="phone" defaultValue={String(settings.phone ?? "")} /></label>
               <label>WhatsApp sin +<input name="whatsapp" defaultValue={String(settings.whatsapp ?? "")} /></label>
-              <label className="wide">Horario informativo<input name="hours_text" defaultValue={String(settings.hours_text ?? "")} /></label>
               <label className="wide">Enlace de Google Maps<input name="map_url" type="url" defaultValue={String(settings.map_url ?? "")} /></label>
               <label>Instagram<input name="instagram_url" defaultValue={String(settings.instagram_url ?? "")} /></label>
               <label>Facebook<input name="facebook_url" defaultValue={String(settings.facebook_url ?? "")} /></label>

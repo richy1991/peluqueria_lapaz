@@ -12,16 +12,12 @@ import { SiteFooter } from "@/components/site-footer";
 import { ProductCatalog } from "@/components/product-catalog";
 import { BearPawIcon, LegendCrownIcon, LegendDivider, StraightRazorIcon } from "@/components/legend-icons";
 import { getPublicData } from "@/lib/public-data";
+import { BusinessStatus } from "@/components/business-status";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const { services, barbers, gallery, products, business } = await getPublicData();
-  const isOpen = business.status === "open" || business.status === "appointment_only";
-  const statusText = isOpen
-    ? business.status === "appointment_only" ? "Atención solo con reserva" : "Abierto hoy"
-    : business.status === "emergency_closed" ? "Cerrado por emergencia" : "Cerrado temporalmente";
-
   return (
     <>
       <SiteHeader />
@@ -34,9 +30,7 @@ export default async function HomePage() {
           />
           <div className="hero-shade" />
           <div className="container hero-content">
-            <div className={`open-pill ${isOpen ? "" : "closed-pill"}`}>
-              <span /> {statusText}{business.statusMessage ? ` · ${business.statusMessage}` : ""}
-            </div>
+            <BusinessStatus configuredStatus={business.configuredStatus} initialStatus={business.status} statusMessage={business.statusMessage} timezone={business.timezone} hours={business.schedule} />
             <p className="eyebrow light">TRADICIÓN · CALLE · PRECISIÓN</p>
             <h1>Respeto al estilo.<br /><em>Leyenda en cada corte.</em></h1>
             <p className="hero-copy">{business.slogan}</p>

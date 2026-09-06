@@ -26,7 +26,7 @@ export default async function AdminPage() {
 
   const capabilities = await getUserCapabilities(user.id);
   const isSuperadmin = capabilities.isSuperadmin;
-  const [ownProfile, services, gallery, products, barbers, cashiers, pendingCashiers, settings, adminUsers, appointments, profiles, analytics,marketing,loyaltySettings,rewards,promotions,expenses,payouts] = await Promise.all([
+  const [ownProfile, services, gallery, products, barbers, cashiers, pendingCashiers, settings, businessHours, adminUsers, appointments, profiles, analytics,marketing,loyaltySettings,rewards,promotions,expenses,payouts] = await Promise.all([
     supabase.from("profiles").select("id,full_name,email,phone,avatar_url,status").eq("id", user.id).maybeSingle(),
     supabase.from("services").select("*").order("created_at"),
     supabase.from("gallery_posts").select("*").order("created_at", { ascending: false }),
@@ -35,6 +35,7 @@ export default async function AdminPage() {
     supabase.from("cashier_profiles").select("id,user_id,active,created_at,updated_at,profiles!cashier_profiles_user_id_fkey(id,full_name,email,phone,status)").order("created_at"),
     supabase.from("pending_cashiers").select("id,email,status,expires_at,created_at").eq("status","pending").order("created_at",{ascending:false}),
     supabase.from("business_settings").select("*").eq("id", true).single(),
+    supabase.from("business_hours").select("weekday,opens_at,closes_at,active").order("weekday"),
     isSuperadmin ? supabase.rpc("list_admin_users") : Promise.resolve({ data: [] }),
     supabase.from("appointments").select("id,starts_at,status,service_name_snapshot,price_snapshot,profiles!appointments_client_id_fkey(full_name,email,phone,is_blacklisted),barber_profiles(display_name)").order("starts_at", { ascending: false }).limit(100),
     supabase.from("profiles").select("id,full_name,email,phone,status,no_show_count,is_blacklisted,is_blocked,user_roles(role)").order("created_at", { ascending: false }).limit(100),
@@ -65,6 +66,7 @@ export default async function AdminPage() {
       cashiers={cashiers.data ?? []}
       pendingCashiers={pendingCashiers.data ?? []}
       initialSettings={settings.data}
+      initialBusinessHours={businessHours.data ?? []}
       isSuperadmin={Boolean(isSuperadmin)}
       adminUsers={adminUsers.data ?? []}
       hasBarber={Boolean(capabilities.barber)}

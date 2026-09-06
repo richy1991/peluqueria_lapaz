@@ -4,6 +4,7 @@ import {
   gallery as fallbackGallery,
   services as fallbackServices,
 } from "@/lib/demo-data";
+import { formatBusinessHours, isBusinessOpenNow, type BusinessHour } from "@/lib/business-hours";
 
 export type PublicService = {
   id: string;
@@ -58,8 +59,11 @@ export type BusinessInfo = {
   instagramUrl: string;
   facebookUrl: string;
   status: string;
+  configuredStatus: string;
   statusMessage: string;
   hours: string;
+  schedule: BusinessHour[];
+  timezone: string;
   coverImage: string | null;
 };
 
@@ -75,8 +79,11 @@ const fallbackBusiness: BusinessInfo = {
   instagramUrl: "#",
   facebookUrl: "#",
   status: "open",
+  configuredStatus: "open",
   statusMessage: "",
   hours: "Martes a domingo · 09:00 a 20:00",
+  schedule: [],
+  timezone: "America/La_Paz",
   coverImage: null,
 };
 
@@ -101,7 +108,7 @@ function publicImageUrls(
 export async function getPublicData() {
   try {
     const supabase = await createClient();
-    const [servicesResult, barbersResult, galleryResult, productsResult, businessResult] =
+    const [servicesResult, barbersResult, galleryResult, productsResult, businessResult, businessHoursResult] =
       await Promise.all([
         supabase
           .from("services")
@@ -128,6 +135,7 @@ export async function getPublicData() {
           .order("created_at", { ascending: false })
           .limit(12),
         supabase.from("business_settings").select("*").eq("id", true).maybeSingle(),
+        supabase.from("business_hours").select("weekday,opens_at,closes_at,active").order("weekday"),
       ]);
 
     const services: PublicService[] = servicesResult.error
@@ -188,6 +196,11 @@ export async function getPublicData() {
         }));
 
     const row = businessResult.data;
+    const businessHours = (businessHoursResult.data ?? []) as BusinessHour[];
+    const scheduledOpen = isBusinessOpenNow(businessHours, row?.timezone ?? "America/La_Paz");
+    const configuredStatus = row?.business_status ?? fallbackBusiness.status;
+    const followsSchedule = configuredStatus === "open" || configuredStatus === "appointment_only";
+    const effectiveStatus = followsSchedule && !scheduledOpen ? "schedule_closed" : configuredStatus;
     const business: BusinessInfo = row
       ? {
           name: row.business_name,
@@ -200,9 +213,12 @@ export async function getPublicData() {
           mapUrl: row.map_url ?? fallbackBusiness.mapUrl,
           instagramUrl: row.instagram_url ?? fallbackBusiness.instagramUrl,
           facebookUrl: row.facebook_url ?? fallbackBusiness.facebookUrl,
-          status: row.business_status,
-          statusMessage: row.status_message ?? "",
-          hours: row.hours_text ?? fallbackBusiness.hours,
+          status: effectiveStatus,
+          configuredStatus,
+          statusMessage: effectiveStatus === "schedule_closed" ? "Fuera del horario de atención" : row.status_message ?? "",
+          hours: businessHours.length ? formatBusinessHours(businessHours) : row.hours_text ?? fallbackBusiness.hours,
+          schedule: businessHours,
+          timezone: row.timezone ?? fallbackBusiness.timezone,
           coverImage: publicImageUrl(supabase, row.cover_path),
         }
       : fallbackBusiness;
