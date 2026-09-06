@@ -12,7 +12,7 @@ export default async function GalleryPage() {
   return <>
     <SiteHeader />
     <main className="public-collection-page">
-      <section className="collection-hero"><div className="container"><p className="eyebrow">GALERÍA LEGEND</p><Images/><h1>Estilos y trabajos.</h1><p>Trabajos realizados por el equipo y referencias visuales acreditadas.</p><Link className="text-link" href="/#galeria"><ArrowLeft/> Volver al inicio</Link></div></section>
+      <section className="collection-hero"><div className="container"><p className="eyebrow">GALERÍA LEGEND</p><Images/><h1>Estilos y trabajos.</h1><p>Trabajos realizados por el equipo y referencias visuales acreditadas.</p><Link replace className="text-link" href="/#galeria"><ArrowLeft/> Volver al inicio</Link></div></section>
       <section className="section"><div className="container"><GalleryCatalog items={gallery}/></div></section>
     </main>
     <SiteFooter business={business}/>

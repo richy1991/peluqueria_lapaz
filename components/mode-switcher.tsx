@@ -32,13 +32,13 @@ export function ModeSwitcher({
   return (
     <nav className="mode-switcher" aria-label="Cambiar modo">
       <div className="mode-switcher-links">
-        {modes.map((mode) => <Link key={mode.id} className={current === mode.id ? "active" : ""} href={mode.href}>{mode.label}</Link>)}
+        {modes.map((mode) => <Link replace key={mode.id} className={current === mode.id ? "active" : ""} href={mode.href}>{mode.label}</Link>)}
       </div>
       <details ref={mobileMenuRef} className="mobile-mode-menu">
         <summary aria-label="Cambiar modo de panel"><MoreVertical /></summary>
         <div>
           <small>CAMBIAR MODO</small>
-          {modes.map((mode) => <Link key={mode.id} className={current === mode.id ? "active" : ""} href={mode.href} onClick={()=>mobileMenuRef.current?.removeAttribute("open")}>{current === mode.id && <Check />}{mode.label}</Link>)}
+          {modes.map((mode) => <Link replace key={mode.id} className={current === mode.id ? "active" : ""} href={mode.href} onClick={()=>mobileMenuRef.current?.removeAttribute("open")}>{current === mode.id && <Check />}{mode.label}</Link>)}
         </div>
       </details>
     </nav>

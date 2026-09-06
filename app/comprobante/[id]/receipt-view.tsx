@@ -25,6 +25,6 @@ export function ReceiptView({receipt,business,autoPrint=false}:{receipt:Row;busi
     {Boolean(sale.claim_code)&&<aside className="receipt-claim"><strong>Activa tus puntos en la app</strong><p>Escanea el QR, abre o instala la aplicación, inicia sesión y vincula estas atenciones:</p><b>{String(sale.claim_code)}</b></aside>}
     <div className="receipt-verify">{!productOnly&&<QRCode value={url} size={112}/>}<div><small>VERIFICACIÓN</small><strong>{String(receipt.verification_code)}</strong><span>{productOnly?"Comprobante de pago sin beneficios de fidelidad.":"Este documento registra una operación interna de LEGEND CLUB."}</span></div></div>
     <footer><strong>COMPROBANTE INTERNO — NO VÁLIDO COMO CRÉDITO FISCAL</strong><p>Gracias por confiar en LEGEND CLUB.</p></footer>
-    <div className="receipt-actions"><button onClick={()=>window.print()}>Imprimir / guardar PDF</button><Link href="/panel">Volver al panel</Link></div>
+    <div className="receipt-actions"><button onClick={()=>window.print()}>Imprimir / guardar PDF</button><Link replace href="/panel">Volver al panel</Link></div>
   </section></main>;
 }

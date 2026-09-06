@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight, PackageCheck, X } from "lucide-react";
 import type { PublicProduct } from "@/lib/public-data";
 import { createClient } from "@/lib/supabase/client";
+import { useNativeOverlay } from "@/components/use-native-overlay";
 
 const pendingProductKey = "legend_club_pending_product";
 
@@ -14,6 +15,7 @@ export function ProductCatalog({ products, variant = "catalog" }: { products: Pu
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<PublicProduct | null>(null);
   const [imageIndex, setImageIndex] = useState(0);
+  const closeProduct = useNativeOverlay(Boolean(selected), () => setSelected(null), "product");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -26,12 +28,9 @@ export function ProductCatalog({ products, variant = "catalog" }: { products: Pu
 
   useEffect(() => {
     if (!selected) return;
-    const close = (event: KeyboardEvent) => event.key === "Escape" && setSelected(null);
     document.body.classList.add("catalog-modal-open");
-    window.addEventListener("keydown", close);
     return () => {
       document.body.classList.remove("catalog-modal-open");
-      window.removeEventListener("keydown", close);
     };
   }, [selected]);
 
@@ -45,8 +44,10 @@ export function ProductCatalog({ products, variant = "catalog" }: { products: Pu
       window.sessionStorage.setItem(pendingProductKey, productId);
       const returnPath = `${window.location.pathname}?product_auth=complete#productos`;
       const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(returnPath)}`;
-      const { error: authError } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo } });
-      if (authError) { setError(authError.message); setBusyId(""); }
+      const { data, error: authError } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo, skipBrowserRedirect: true } });
+      if (authError) { setError(authError.message); setBusyId(""); return; }
+      if (data.url) window.location.replace(data.url);
+      else { setError("No pudimos abrir el acceso con Google."); setBusyId(""); }
       return;
     }
     const { error: reservationError } = await supabase.rpc("reserve_product", { p_product_id: productId, p_quantity: 1 });
@@ -73,9 +74,9 @@ export function ProductCatalog({ products, variant = "catalog" }: { products: Pu
       </button>)}
     </div>
 
-    {selected && <div className="catalog-modal" role="dialog" aria-modal="true" aria-label={`Detalles de ${selected.name}`} onMouseDown={(event) => event.target === event.currentTarget && setSelected(null)}>
+    {selected && <div className="catalog-modal" role="dialog" aria-modal="true" aria-label={`Detalles de ${selected.name}`} onMouseDown={(event) => event.target === event.currentTarget && closeProduct()}>
       <article>
-        <button className="catalog-modal-close" type="button" onClick={() => setSelected(null)} aria-label="Cerrar"><X /></button>
+        <button className="catalog-modal-close" type="button" onClick={closeProduct} aria-label="Cerrar"><X /></button>
         <div className="catalog-modal-media">
           {selectedImages[imageIndex] ? <Image src={selectedImages[imageIndex]} alt={`${selected.name}, foto ${imageIndex + 1}`} fill sizes="(max-width: 800px) 100vw, 520px" unoptimized /> : <PackageCheck />}
           {selectedImages.length > 1 && <><button type="button" className="catalog-arrow previous" onClick={() => setImageIndex((imageIndex - 1 + selectedImages.length) % selectedImages.length)} aria-label="Foto anterior"><ChevronLeft /></button><button type="button" className="catalog-arrow next" onClick={() => setImageIndex((imageIndex + 1) % selectedImages.length)} aria-label="Foto siguiente"><ChevronRight /></button><span className="catalog-counter">{imageIndex + 1}/{selectedImages.length}</span></>}

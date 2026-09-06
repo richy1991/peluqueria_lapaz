@@ -50,6 +50,8 @@ export function BookingFlow({ services, barbers }: BookingFlowProps) {
   const params = useSearchParams();
   const initialService = params.get("servicio") ?? "";
   const initialBarber = params.get("peluquero") ?? "any";
+  const requestedReturn = params.get("return") ?? "/";
+  const returnPath = requestedReturn.startsWith("/") && !requestedReturn.startsWith("//") ? requestedReturn : "/";
   const [step, setStep] = useState(initialService ? 2 : 1);
   const [serviceId, setServiceId] = useState(initialService);
   const [barberId, setBarberId] = useState(initialBarber);
@@ -171,16 +173,20 @@ export function BookingFlow({ services, barbers }: BookingFlowProps) {
     );
 
     const supabase = createClient();
-    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent("/reservar?auth=complete")}`;
-    const { error } = await supabase.auth.signInWithOAuth({
+    const bookingReturn = returnPath === "/" ? "/reservar?auth=complete" : `/reservar?auth=complete&return=${encodeURIComponent(returnPath)}`;
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(bookingReturn)}`;
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo },
+      options: { redirectTo, skipBrowserRedirect: true },
     });
 
     if (error) {
       setAuthError(error.message);
       setAuthLoading(false);
+      return;
     }
+    if (data.url) window.location.replace(data.url);
+    else { setAuthError("No pudimos abrir el acceso con Google."); setAuthLoading(false); }
   }
 
   async function confirmAppointment() {
@@ -243,7 +249,7 @@ export function BookingFlow({ services, barbers }: BookingFlowProps) {
             <div><span>Fecha</span><strong>{selectedDay?.day} {selectedDay?.number} · {time}</strong></div>
             <div><span>Total</span><strong>Bs {service?.price}</strong></div>
           </div>
-          <Link className="button button-dark" href="/mi-cuenta">Ver mis citas</Link>
+          <Link replace className="button button-dark" href="/mi-cuenta/citas">Ver mis citas</Link>
         </section>
       </main>
     );
@@ -253,7 +259,7 @@ export function BookingFlow({ services, barbers }: BookingFlowProps) {
     <main className="booking-shell">
       <div className="booking-topbar">
         <Brand />
-        <Link href="/" className="close-booking">Cerrar <span>×</span></Link>
+        <Link replace href={returnPath} className="close-booking">Cerrar <span>×</span></Link>
       </div>
 
       <div className="booking-layout">

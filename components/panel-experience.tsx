@@ -103,7 +103,7 @@ export function PanelMobileLogout() {
   const router = useRouter();
   async function logout() {
     await createClient().auth.signOut();
-    router.push("/");
+    router.replace("/");
     router.refresh();
   }
   return <button className="mobile-sidebar-logout" type="button" onClick={logout}><LogOut /><span>Cerrar sesión</span></button>;

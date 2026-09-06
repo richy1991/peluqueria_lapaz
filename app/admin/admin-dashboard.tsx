@@ -369,7 +369,7 @@ export function AdminDashboard({
 
   async function logout() {
     await createClient().auth.signOut();
-    router.push("/");
+    router.replace("/");
     router.refresh();
   }
 
@@ -413,7 +413,7 @@ export function AdminDashboard({
             <ChevronRight />
           </button>
           <nav>{navigation.map(([id,label,Icon])=><button title={label} className={`${section===id?"active":""} ${id==="negocio"?"nav-secondary-start":""}`} key={id} onClick={()=>setSection(id)}><Icon/><span>{label}</span>{section===id&&<i/>}</button>)}</nav>
-          <div className="dash-sidebar-foot"><PanelThemeSelector/><Link href="/"><Sparkles/><span>Ver sitio público</span></Link><PanelMobileLogout/></div>
+          <div className="dash-sidebar-foot"><PanelThemeSelector/><Link replace href="/"><Sparkles/><span>Ver sitio público</span></Link><PanelMobileLogout/></div>
         </aside>
         <PanelMobileScrim/>
         <section className="admin-content">

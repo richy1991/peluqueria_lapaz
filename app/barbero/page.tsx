@@ -69,12 +69,12 @@ export async function BarberView({ section }: { section: BarberSection }) {
       <aside className="admin-nav dash-sidebar">
         <div className="dash-sidebar-head"><p>MI ESTACIÓN</p><PanelMobileSidebarClose /></div>
         <nav>
-          <Link className={section === "agenda" ? "active" : ""} href="/barbero"><CalendarClock /><span>Agenda</span>{section === "agenda" && <i />}</Link>
-          <Link className={section === "perfil" ? "active" : ""} href="/barbero/perfil"><UserRoundPen /><span>Editar perfil</span>{section === "perfil" && <i />}</Link>
-          <Link className={section === "balance" ? "active" : ""} href="/barbero/balance"><Banknote /><span>Balance económico</span>{section === "balance" && <i />}</Link>
-          <Link className={section === "trabajos" ? "active" : ""} href="/barbero/trabajos"><Images /><span>Publicar trabajos</span>{section === "trabajos" && <i />}</Link>
+          <Link replace className={section === "agenda" ? "active" : ""} href="/barbero"><CalendarClock /><span>Agenda</span>{section === "agenda" && <i />}</Link>
+          <Link replace className={section === "perfil" ? "active" : ""} href="/barbero/perfil"><UserRoundPen /><span>Editar perfil</span>{section === "perfil" && <i />}</Link>
+          <Link replace className={section === "balance" ? "active" : ""} href="/barbero/balance"><Banknote /><span>Balance económico</span>{section === "balance" && <i />}</Link>
+          <Link replace className={section === "trabajos" ? "active" : ""} href="/barbero/trabajos"><Images /><span>Publicar trabajos</span>{section === "trabajos" && <i />}</Link>
         </nav>
-        <div className="dash-sidebar-foot"><PanelThemeSelector /><Link href="/"><Sparkles /><span>Web pública</span></Link><PanelMobileLogout /></div>
+        <div className="dash-sidebar-foot"><PanelThemeSelector /><Link replace href="/"><Sparkles /><span>Web pública</span></Link><PanelMobileLogout /></div>
       </aside>
       <PanelMobileScrim />
       <section className="barber-content">

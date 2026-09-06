@@ -140,13 +140,13 @@ export function CashierPanel(props: Props) {
   return <main className="admin-shell dash-workspace cashier-shell">
     <header className="admin-header dash-header"><PanelMobileMenuButton /><div className="dash-brand"><Brand linked={false} /><span className="dash-live"><i /> CAJA CONECTADA</span></div><ModeSwitcher current="cashier" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier showClient={false} /><div className="dash-user"><span className="dash-avatar">{userEmail.slice(0, 2).toUpperCase()}</span><span>{userEmail}<small>Operador de caja</small></span></div></header>
     <div className="admin-layout cashier-layout"><aside className="admin-nav dash-sidebar"><div className="dash-sidebar-head"><p>TERMINAL POS</p><PanelMobileSidebarClose /></div><nav>
-      <Link className={section === "servicios" ? "active" : ""} href="/caja"><Scissors /><span>Cobrar servicios</span>{section === "servicios" && <i />}</Link>
-      <Link className={section === "productos" ? "active" : ""} href="/caja/productos"><PackageOpen /><span>Venta de productos</span>{section === "productos" && <i />}</Link>
-      <Link className={section === "movimientos" ? "active" : ""} href="/caja/movimientos"><ReceiptText /><span>Libro diario</span>{section === "movimientos" && <i />}</Link>
-      <Link className={section === "liquidaciones" ? "active" : ""} href="/caja/liquidaciones"><Calculator /><span>Liquidaciones</span>{section === "liquidaciones" && <i />}</Link>
-      <Link className={section === "gastos" ? "active" : ""} href="/caja/gastos"><ClipboardCheck /><span>Gastos</span>{section === "gastos" && <i />}</Link>
-      <Link className={section === "historial" ? "active" : ""} href="/caja/historial"><History /><span>Historial</span>{section === "historial" && <i />}</Link>
-    </nav><div className="dash-sidebar-foot"><PanelThemeSelector /><Link href="/"><Sparkles /><span>Web pública</span></Link><PanelMobileLogout /></div></aside><PanelMobileScrim />
+      <Link replace className={section === "servicios" ? "active" : ""} href="/caja"><Scissors /><span>Cobrar servicios</span>{section === "servicios" && <i />}</Link>
+      <Link replace className={section === "productos" ? "active" : ""} href="/caja/productos"><PackageOpen /><span>Venta de productos</span>{section === "productos" && <i />}</Link>
+      <Link replace className={section === "movimientos" ? "active" : ""} href="/caja/movimientos"><ReceiptText /><span>Libro diario</span>{section === "movimientos" && <i />}</Link>
+      <Link replace className={section === "liquidaciones" ? "active" : ""} href="/caja/liquidaciones"><Calculator /><span>Liquidaciones</span>{section === "liquidaciones" && <i />}</Link>
+      <Link replace className={section === "gastos" ? "active" : ""} href="/caja/gastos"><ClipboardCheck /><span>Gastos</span>{section === "gastos" && <i />}</Link>
+      <Link replace className={section === "historial" ? "active" : ""} href="/caja/historial"><History /><span>Historial</span>{section === "historial" && <i />}</Link>
+    </nav><div className="dash-sidebar-foot"><PanelThemeSelector /><Link replace href="/"><Sparkles /><span>Web pública</span></Link><PanelMobileLogout /></div></aside><PanelMobileScrim />
       <section className="cashier-content"><div className="dash-page-heading"><div className="admin-title"><WalletCards /><div><p>TERMINAL POS</p><h1>{titles[section]}</h1></div></div><span className={`dash-status-pill ${shift ? "online" : "offline"}`}><i />{shift ? "Turno abierto" : "Turno cerrado"}</span></div>
         {error && <p className="admin-error">{error}</p>}{result && <div className="admin-message"><strong>Operación completada.</strong>{"receipt_id" in result && <Link href={`/comprobante/${String(result.receipt_id)}`}> Ver comprobante #{String(result.receipt_number)}</Link>}{Boolean(result.claim_code) && <span> Código: <b>{String(result.claim_code)}</b></span>}</div>}
         {!shift ? <OpenShift onSubmit={open} busy={busy} /> : <>
