@@ -240,14 +240,16 @@ export async function getPublicData() {
   }
 }
 
-export async function getPublicProducts() {
+export async function getPublicProducts(limit?: number) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("products")
     .select("id,name,description,category,brand,presentation,price,stock,image_path,image_paths")
     .eq("status", "active")
     .gt("stock", 0)
     .order("created_at", { ascending: false });
+  if (limit && limit > 0) query = query.limit(limit);
+  const { data, error } = await query;
   if (error) return [] as PublicProduct[];
   return (data ?? []).map((item) => {
     const images = publicImageUrls(supabase, item.image_paths, item.image_path);

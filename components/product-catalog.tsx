@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, PackageCheck, X } from "lucide-react";
 import type { PublicProduct } from "@/lib/public-data";
 import { createClient } from "@/lib/supabase/client";
@@ -10,6 +11,7 @@ import { useNativeOverlay } from "@/components/use-native-overlay";
 const pendingProductKey = "legend_club_pending_product";
 
 export function ProductCatalog({ products, variant = "catalog" }: { products: PublicProduct[]; variant?: "home" | "catalog" }) {
+  const router = useRouter();
   const [busyId, setBusyId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -17,24 +19,7 @@ export function ProductCatalog({ products, variant = "catalog" }: { products: Pu
   const [imageIndex, setImageIndex] = useState(0);
   const closeProduct = useNativeOverlay(Boolean(selected), () => setSelected(null), "product");
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("product_auth") !== "complete") return;
-    const productId = window.sessionStorage.getItem(pendingProductKey);
-    if (!productId) return;
-    window.sessionStorage.removeItem(pendingProductKey);
-    void reserveProduct(productId);
-  }, []);
-
-  useEffect(() => {
-    if (!selected) return;
-    document.body.classList.add("catalog-modal-open");
-    return () => {
-      document.body.classList.remove("catalog-modal-open");
-    };
-  }, [selected]);
-
-  async function reserveProduct(productId: string) {
+  const reserveProduct = useCallback(async (productId: string) => {
     setBusyId(productId);
     setMessage("");
     setError("");
@@ -54,7 +39,26 @@ export function ProductCatalog({ products, variant = "catalog" }: { products: Pu
     setBusyId("");
     if (reservationError) return setError(reservationError.message);
     setMessage("Producto apartado durante 24 horas. Preséntate en el local para recogerlo y pagar.");
-  }
+    router.refresh();
+  }, [router]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("product_auth") !== "complete") return;
+    const productId = window.sessionStorage.getItem(pendingProductKey);
+    if (!productId) return;
+    window.sessionStorage.removeItem(pendingProductKey);
+    const task = window.setTimeout(() => void reserveProduct(productId), 0);
+    return () => window.clearTimeout(task);
+  }, [reserveProduct]);
+
+  useEffect(() => {
+    if (!selected) return;
+    document.body.classList.add("catalog-modal-open");
+    return () => {
+      document.body.classList.remove("catalog-modal-open");
+    };
+  }, [selected]);
 
   function openProduct(product: PublicProduct) { setSelected(product); setImageIndex(0); }
   if (!products.length) return <p className="catalog-empty">Pronto publicaremos nuestros productos disponibles.</p>;

@@ -109,7 +109,7 @@ export function PanelMobileLogout() {
   return <button className="mobile-sidebar-logout" type="button" onClick={logout}><LogOut /><span>Cerrar sesión</span></button>;
 }
 
-export function PanelExperience({ children }: { children: ReactNode }) {
+export function PanelExperience({ children, clientChatInHeader = false }: { children: ReactNode; clientChatInHeader?: boolean }) {
   const value = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
   const [, resolved] = value.split(":") as [Preference, "light" | "dark"];
   const [headerHidden, setHeaderHidden] = useState(false);
@@ -174,7 +174,7 @@ export function PanelExperience({ children }: { children: ReactNode }) {
 
   return (
     <MobileNavigationContext.Provider value={navigation}>
-      <div className={`panel-theme ${headerHidden ? "panel-header-hidden" : ""} ${mobileNavOpen ? "mobile-nav-open" : ""}`} data-panel-theme={resolved} suppressHydrationWarning>
+      <div className={`panel-theme ${headerHidden ? "panel-header-hidden" : ""} ${mobileNavOpen ? "mobile-nav-open" : ""} ${clientChatInHeader ? "client-chat-in-header" : ""}`} data-panel-theme={resolved} suppressHydrationWarning>
         {children}
         <DashboardToastHost />
         <aside className="panel-floating-tools" aria-label="Atención al cliente"><FloatingSupportChat /></aside>
