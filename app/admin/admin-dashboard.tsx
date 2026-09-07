@@ -7,7 +7,7 @@ import { BarChart3, CalendarClock, ChevronRight, CircleDollarSign, Clock3, Image
 import { Brand } from "@/components/brand";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { createClient } from "@/lib/supabase/client";
-import { AppointmentAdminActions, ClientAdminActions } from "./admin-operations";
+import { AppointmentAdminActions } from "./admin-operations";
 import { AdminAnalytics, type AnalyticsData } from "./admin-analytics";
 import { AdminProgram } from "./admin-program";
 import { DashboardModal } from "@/components/dashboard-modal";
@@ -16,6 +16,7 @@ import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobile
 import { clearFormErrors, dispatchDashboardSuccess, reportFormError } from "@/lib/form-feedback";
 import { formatBusinessHours, isBusinessOpenNow, type BusinessHour } from "@/lib/business-hours";
 import type {LucideIcon} from "lucide-react";
+import { AdminClientsTable, type AdminClient } from "./admin-clients-table";
 
 type Row = Record<string, unknown> & { id: string };
 type AdminUser = { user_id: string | null; email: string; role: "admin" | "superadmin" | "pending"; created_at: string };
@@ -31,6 +32,8 @@ const businessDays = [
 ];
 
 type AdminDashboardProps = {
+  initialSection?: string;
+  isRootPage: boolean;
   userEmail: string;
   adminProfile: AdminProfile;
   initialServices: Row[];
@@ -45,7 +48,12 @@ type AdminDashboardProps = {
   adminUsers: AdminUser[];
   hasBarber: boolean;
   initialAppointments: Row[];
-  clients: Row[];
+  clients: AdminClient[];
+  clientSearch: string;
+  clientPage: number;
+  clientPageSize: number;
+  clientTotal: number;
+  clientLoadError: boolean;
   analyticsData: AnalyticsData | null;
   program: {settings:Row|null;rewards:Row[];promotions:Row[];expenses:Row[];payouts:Row[]};
 };
@@ -90,6 +98,8 @@ async function uploadImages(files: File[], folder: string) {
 }
 
 export function AdminDashboard({
+  initialSection,
+  isRootPage,
   userEmail,
   adminProfile,
   initialServices,
@@ -105,11 +115,16 @@ export function AdminDashboard({
   hasBarber,
   initialAppointments,
   clients,
+  clientSearch,
+  clientPage,
+  clientPageSize,
+  clientTotal,
+  clientLoadError,
   analyticsData,
   program,
 }: AdminDashboardProps) {
   const router = useRouter();
-  const [section, setSection] = useState(isSuperadmin ? "administradores" : "agenda");
+  const section = initialSection ?? (isSuperadmin ? "administradores" : "agenda");
   const [toast, setToast] = useState<DashboardToastData | null>(null);
   const [busy, setBusy] = useState(false);
   const [navCollapsed,setNavCollapsed]=useState(false);
@@ -445,16 +460,16 @@ export function AdminDashboard({
       <div className={`admin-layout ${navCollapsed?"nav-collapsed":""}`}>
         <aside className="admin-nav dash-sidebar">
           <div className="dash-sidebar-head"><p>CONTROL CENTRAL</p><button className="dash-collapse" type="button" onClick={()=>setNavCollapsed(value=>!value)} aria-label={navCollapsed?"Abrir menú lateral":"Cerrar menú lateral"} aria-expanded={!navCollapsed} title={navCollapsed?"Abrir menú":"Cerrar menú"}>{navCollapsed?<Menu/>:<X/>}</button><PanelMobileSidebarClose/></div>
-          <button className={`admin-sidebar-profile ${section === "perfil" ? "active" : ""}`} type="button" onClick={() => setSection("perfil")} aria-label={`Ver perfil de ${adminProfile.full_name}`} title="Ver mi perfil">
+          <Link href="/admin/perfil" replace={!isRootPage} className={`admin-sidebar-profile ${section === "perfil" ? "active" : ""}`} aria-current={section === "perfil" ? "page" : undefined} aria-label={`Ver perfil de ${adminProfile.full_name}`} title="Ver mi perfil">
             <div className={`admin-sidebar-avatar ${adminProfile.avatar_url ? "has-photo" : ""}`} style={avatarStyle}>{!adminProfile.avatar_url && adminInitials}</div>
             <span><strong>{adminProfile.full_name}</strong><small>{adminRole}</small></span>
             <ChevronRight />
-          </button>
-          <nav>{navigation.map(([id,label,Icon])=><button title={label} className={`${section===id?"active":""} ${id==="negocio"?"nav-secondary-start":""}`} key={id} onClick={()=>setSection(id)}><Icon/><span>{label}</span>{section===id&&<i/>}</button>)}</nav>
+          </Link>
+          <nav aria-label="Páginas de administración">{navigation.map(([id,label,Icon])=><Link href={`/admin/${id}`} replace={!isRootPage} title={label} aria-current={section===id?"page":undefined} className={`${section===id?"active":""} ${id==="negocio"?"nav-secondary-start":""}`} key={id}><Icon/><span>{label}</span>{section===id&&<i/>}</Link>)}</nav>
           <div className="dash-sidebar-foot"><PanelThemeSelector/><Link replace href="/"><Sparkles/><span>Ver sitio público</span></Link><PanelMobileLogout/></div>
         </aside>
         <PanelMobileScrim/>
-        <section className="admin-content">
+        <section className="admin-content" key={section}>
           {section === "perfil" && <div className="admin-panel admin-profile-panel">
             <div className="admin-title"><UserRound /><div><p>CUENTA ADMINISTRATIVA</p><h1>Mi perfil</h1></div></div>
             <div className="admin-profile-identity">
@@ -474,7 +489,7 @@ export function AdminDashboard({
 
           {section === "programa" && <AdminProgram settings={program.settings} rewards={program.rewards} promotions={program.promotions} expenses={program.expenses} payouts={program.payouts} barbers={barbers} products={initialProducts} services={initialServices} />}
 
-          {section === "clientes" && <div className="admin-panel"><div className="admin-title"><Users /><div><p>USUARIOS</p><h1>Clientes</h1></div></div><p className="admin-help">Puedes dar de baja cuentas antiguas o bloquear manualmente a clientes reincidentes. Ninguna cuenta se elimina físicamente.</p><div className="admin-list client-admin-list">{clients.length?clients.map((item)=><article key={item.id}><div><strong>{String(item.full_name??item.email)}</strong><span>{String(item.email)} · {String(item.phone??"Sin teléfono")} · {String(item.status)} · {String(item.no_show_count)} inasistencia(s)</span>{Boolean(item.is_blacklisted)&&<small className="admin-alert">Lista negra informativa</small>}</div><ClientAdminActions id={item.id} status={String(item.status)} blocked={Boolean(item.is_blocked)}/></article>):<p className="admin-help">Todavía no existen clientes registrados.</p>}</div></div>}
+          {section === "clientes" && <AdminClientsTable clients={clients} query={clientSearch} page={clientPage} pageSize={clientPageSize} total={clientTotal} loadError={clientLoadError} />}
 
           {section === "horarios" && <div className="admin-panel business-hours-panel">
             <div className="admin-title"><Clock3 /><div><p>OPERACIÓN DEL LOCAL</p><h1>Días y horarios de atención</h1></div></div>
