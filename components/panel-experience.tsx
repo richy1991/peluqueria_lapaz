@@ -11,6 +11,7 @@ import {
 } from "react";
 import { LogOut, Menu, Monitor, Moon, Palette, Sun, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { FloatingSupportChat } from "@/components/floating-support-chat";
 import { DashboardToastHost } from "@/components/dashboard-toast";
 import { createClient } from "@/lib/supabase/client";
@@ -21,7 +22,13 @@ const MobileNavigationContext = createContext<{
   open: boolean;
   show: () => void;
   hide: () => void;
+  theme: "light" | "dark";
+  chromeHidden: boolean;
 } | null>(null);
+
+function subscribeToBrowser() {
+  return () => undefined;
+}
 
 function subscribe(callback: () => void) {
   window.addEventListener("storage", callback);
@@ -189,6 +196,15 @@ export function PanelMobileLogout() {
   return <button className="mobile-sidebar-logout" type="button" onClick={logout}><LogOut /><span>Cerrar sesión</span></button>;
 }
 
+export function PanelViewportPortal({ children }: { children: ReactNode }) {
+  const { open, theme, chromeHidden } = useMobileNavigation();
+  const browserReady = useSyncExternalStore(subscribeToBrowser, () => true, () => false);
+  if (!browserReady) return null;
+
+  const className = `panel-theme panel-viewport-layer ${chromeHidden && !open ? "panel-mobile-chrome-hidden" : ""} ${open ? "mobile-nav-open" : ""}`;
+  return createPortal(<div className={className} data-panel-theme={theme}>{children}</div>, document.body);
+}
+
 export function PanelExperience({ children, clientChatInHeader = false }: { children: ReactNode; clientChatInHeader?: boolean }) {
   const value = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
   const [, resolved] = value.split(":") as [Preference, "light" | "dark"];
@@ -219,6 +235,8 @@ export function PanelExperience({ children, clientChatInHeader = false }: { chil
     open: mobileNavOpen,
     show: () => setMobileNavOpen(true),
     hide: () => setMobileNavOpen(false),
+    theme: resolved,
+    chromeHidden,
   };
 
   return (

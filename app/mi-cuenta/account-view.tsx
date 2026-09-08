@@ -18,6 +18,7 @@ import {
   PanelMobileScrim,
   PanelMobileSidebarClose,
   PanelThemeSelector,
+  PanelViewportPortal,
 } from "@/components/panel-experience";
 
 export type ClientSection = "inicio" | "puntos" | "citas" | "productos" | "notificaciones" | "perfil";
@@ -130,7 +131,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
       {person?.is_blacklisted && <p className="portal-warning">La cuenta tiene una alerta por inasistencias.</p>}{person?.is_blocked && <p className="portal-error">Las nuevas reservas están bloqueadas. Contacta al negocio.</p>}
     </section></div>}
     {section !== "productos" && <ClientPromoRail products={availableProducts} replaceNavigation={replaceNavigation} />}
-  </main><ClientMainNavigation section={section} replaceNavigation={replaceNavigation} variant="mobile" /></PanelExperience>;
+  </main><PanelViewportPortal><ClientMainNavigation section={section} replaceNavigation={replaceNavigation} variant="mobile" /></PanelViewportPortal></PanelExperience>;
 }
 
 const clientMainNavigation = [
