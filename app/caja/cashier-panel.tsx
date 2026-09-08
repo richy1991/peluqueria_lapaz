@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Calculator, CirclePlus, ClipboardCheck, Gift, History, LockKeyhole, PackageOpen, Printer, ReceiptText, RotateCcw, Scissors, Sparkles, Trash2, WalletCards } from "lucide-react";
+import { ArrowRight, Calculator, CirclePlus, ClipboardCheck, Gift, History, LockKeyhole, PackageCheck, PackageOpen, Printer, ReceiptText, RotateCcw, Scissors, Sparkles, Trash2, WalletCards } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { DashboardModal } from "@/components/dashboard-modal";
 import { ModeSwitcher } from "@/components/mode-switcher";
@@ -15,10 +15,11 @@ type Row = Record<string, unknown> & { id: string };
 type RewardQuote = { reward_id: string; barber_id: string; barber_name: string; balance: number; reward_name: string; points_cost: number; eligible_base: number; discount_amount: number };
 type Capabilities = { isAdmin: boolean; isSuperadmin: boolean; isCashier: boolean; barber: { id: string; display_name: string } | null };
 type CashierSection = "servicios" | "productos" | "movimientos" | "liquidaciones" | "gastos" | "historial";
-type Props = { userEmail: string; capabilities: Capabilities; shift: Row | null; services: Row[]; barbers: Row[]; products: Row[]; clients: Row[]; appointments: Row[]; sales: Row[]; earnings: Row[]; expenses: Row[]; payouts: Row[]; movements: Row[]; workDate: string; section: CashierSection };
+type CashierRouteSection = CashierSection | "reservas";
+type Props = { userEmail: string; capabilities: Capabilities; shift: Row | null; services: Row[]; barbers: Row[]; products: Row[]; clients: Row[]; appointments: Row[]; sales: Row[]; earnings: Row[]; expenses: Row[]; payouts: Row[]; productReservations: Row[]; movements: Row[]; workDate: string; section: CashierRouteSection };
 
 export function CashierPanel(props: Props) {
-  const { userEmail, capabilities, shift, services, barbers, products, clients, appointments, sales, earnings, expenses, payouts, movements, workDate, section } = props;
+  const { userEmail, capabilities, shift, services, barbers, products, clients, appointments, sales, earnings, expenses, payouts, productReservations, movements, workDate, section } = props;
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -29,6 +30,7 @@ export function CashierPanel(props: Props) {
     const channel = supabase.channel("cashier-payment-queue")
       .on("postgres_changes", { event: "*", schema: "public", table: "appointments" }, () => router.refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "appointment_checkout_details" }, () => router.refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "product_reservations" }, () => router.refresh())
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
   }, [router]);
@@ -123,6 +125,22 @@ export function CashierPanel(props: Props) {
     if (response) { setResult(response as Record<string, unknown>); dispatchDashboardSuccess("Turno cerrado y conciliado."); router.refresh(); }
   }
 
+  async function collectReservation(event: FormEvent<HTMLFormElement>, reservationId: string) {
+    event.preventDefault(); const form = event.currentTarget; const data = new FormData(form);
+    const response = await call("collect_product_reservation", {
+      target_reservation_id: reservationId,
+      recommended_by_barber_id: String(data.get("recommended_by") ?? "") || null,
+      payment_method: String(data.get("payment_method") ?? "cash"),
+      payment_reference: String(data.get("payment_reference") ?? "") || null,
+      promotion_code: String(data.get("promotion_code") ?? "") || null,
+    }, form);
+    if (response) {
+      setResult(response as Record<string, unknown>);
+      dispatchDashboardSuccess("Apartado cobrado, stock actualizado y comprobante generado a nombre del cliente.");
+      router.refresh();
+    }
+  }
+
   async function reverseSale(event: FormEvent<HTMLFormElement>, id: string) {
     event.preventDefault(); const form = event.currentTarget; const data = new FormData(form);
     const reason = String(data.get("reason") ?? "").trim();
@@ -142,16 +160,18 @@ export function CashierPanel(props: Props) {
     <div className="admin-layout cashier-layout"><aside className="admin-nav dash-sidebar"><div className="dash-sidebar-head"><p>TERMINAL POS</p><PanelMobileSidebarClose /></div><nav>
       <Link replace className={section === "servicios" ? "active" : ""} href="/caja"><Scissors /><span>Cobrar servicios</span>{section === "servicios" && <i />}</Link>
       <Link replace className={section === "productos" ? "active" : ""} href="/caja/productos"><PackageOpen /><span>Venta de productos</span>{section === "productos" && <i />}</Link>
+      <Link replace className={section === "reservas" ? "active" : ""} href="/caja/reservas"><PackageCheck /><span>Reservas</span>{productReservations.length > 0 && <b className="cashier-nav-badge">{productReservations.length}</b>}{section === "reservas" && <i />}</Link>
       <Link replace className={section === "movimientos" ? "active" : ""} href="/caja/movimientos"><ReceiptText /><span>Libro diario</span>{section === "movimientos" && <i />}</Link>
       <Link replace className={section === "liquidaciones" ? "active" : ""} href="/caja/liquidaciones"><Calculator /><span>Liquidaciones</span>{section === "liquidaciones" && <i />}</Link>
       <Link replace className={section === "gastos" ? "active" : ""} href="/caja/gastos"><ClipboardCheck /><span>Gastos</span>{section === "gastos" && <i />}</Link>
       <Link replace className={section === "historial" ? "active" : ""} href="/caja/historial"><History /><span>Historial</span>{section === "historial" && <i />}</Link>
     </nav><div className="dash-sidebar-foot"><PanelThemeSelector /><Link replace href="/"><Sparkles /><span>Web pública</span></Link><PanelMobileLogout /></div></aside><PanelMobileScrim />
-      <section className="cashier-content"><div className="dash-page-heading"><div className="admin-title"><WalletCards /><div><p>TERMINAL POS</p><h1>{titles[section]}</h1></div></div><span className={`dash-status-pill ${shift ? "online" : "offline"}`}><i />{shift ? "Turno abierto" : "Turno cerrado"}</span></div>
+      <section className="cashier-content"><div className="dash-page-heading"><div className="admin-title"><WalletCards /><div><p>TERMINAL POS</p><h1>{section === "reservas" ? "Reservas de productos" : titles[section]}</h1></div></div><span className={`dash-status-pill ${shift ? "online" : "offline"}`}><i />{shift ? "Turno abierto" : "Turno cerrado"}</span></div>
         {error && <p className="admin-error">{error}</p>}{result && <div className="admin-message"><strong>Operación completada.</strong>{"receipt_id" in result && <Link href={`/comprobante/${String(result.receipt_id)}`}> Ver comprobante #{String(result.receipt_number)}</Link>}{Boolean(result.claim_code) && <span> Código: <b>{String(result.claim_code)}</b></span>}</div>}
         {!shift ? <OpenShift onSubmit={open} busy={busy} /> : <>
           {section === "servicios" && <ServiceDashboard appointments={appointments} clients={clients} services={services} barbers={barbers} products={products} sales={sales} busy={busy} onSubmit={sell} />}
           {section === "productos" && <ProductDashboard products={products} barbers={barbers} busy={busy} onSubmit={sell} />}
+          {section === "reservas" && <ReservationDashboard reservations={productReservations} barbers={barbers} busy={busy} onCollect={collectReservation} />}
           {section === "movimientos" && <DailyLedger movements={movements} shift={shift} operator={userEmail} busy={busy} onMovement={movement} onClose={close} workDate={workDate} />}
           {section === "liquidaciones" && <Settlements barbers={barbers} payouts={payouts} expenses={expenses} pendingByBarber={pendingByBarber} workDate={workDate} />}
           {section === "gastos" && <Expenses expenses={expenses} busy={busy} onReview={reviewExpense} />}
@@ -309,6 +329,17 @@ function ServiceSaleForm({ appointment, checkout, clients, services, barbers, pr
 
 function ProductDashboard({ products, barbers, busy, onSubmit }: { products: Row[]; barbers: Row[]; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
   return <section className="admin-panel cashier-product-sale"><div className="dash-list-head"><div><small>OPERACIÓN INDEPENDIENTE</small><h2>Registrar producto</h2></div><PackageOpen /></div><p className="admin-help">Genera únicamente un comprobante de pago. No registra cliente, referido ni puntos de fidelidad.</p><DashboardModal title="Registrar venta de producto" description="Venta sin beneficios de cliente. El stock se descontará al confirmar." triggerLabel="Nueva venta" triggerIcon={<PackageOpen />} size="large"><ProductSaleForm products={products} barbers={barbers} busy={busy} onSubmit={onSubmit} /></DashboardModal></section>;
+}
+
+function ReservationDashboard({ reservations, barbers, busy, onCollect }: { reservations: Row[]; barbers: Row[]; busy: boolean; onCollect: (event: FormEvent<HTMLFormElement>, reservationId: string) => void }) {
+  return <section className="admin-panel cashier-reservations"><div className="dash-list-head"><div><small>RETIRO EN EL LOCAL</small><h2>Productos apartados</h2></div><PackageCheck /></div><p className="admin-help">Confirma la identidad del cliente antes de cobrar. Al finalizar, el apartado sale de esta lista, se descuenta el stock y se crea un comprobante a su nombre.</p><div className="cashier-reservation-list">{reservations.length ? reservations.map(reservation => {
+    const client = reservation.profiles as { full_name?: string; email?: string; phone?: string } | null;
+    const product = reservation.products as { name?: string; brand?: string; presentation?: string; stock?: number } | null;
+    const expiresAt = new Date(String(reservation.expires_at));
+    const expired = Boolean(reservation.is_expired);
+    const total = Number(reservation.price_snapshot) * Number(reservation.quantity);
+    return <article className={expired ? "expired" : ""} key={reservation.id}><div className="cashier-reservation-main"><span className="cashier-reservation-icon"><PackageOpen /></span><div><small>{expired ? "APARTADO VENCIDO" : "LISTO PARA RETIRO"}</small><h3>{String(product?.name ?? "Producto")}</h3><p>{[product?.brand, product?.presentation].filter(Boolean).join(" · ") || "Sin presentación registrada"}</p></div></div><dl><div><dt>Cliente</dt><dd>{String(client?.full_name ?? client?.email ?? "Cliente")}</dd></div><div><dt>Contacto</dt><dd>{String(client?.phone ?? client?.email ?? "Sin contacto")}</dd></div><div><dt>Cantidad</dt><dd>{String(reservation.quantity)} unidad(es)</dd></div><div><dt>Total reservado</dt><dd>Bs {total.toFixed(2)}</dd></div><div><dt>Vencimiento</dt><dd>{new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeStyle: "short", timeZone: "America/La_Paz" }).format(expiresAt)}</dd></div><div><dt>Stock físico</dt><dd>{String(product?.stock ?? 0)}</dd></div></dl>{expired ? <p className="cashier-reservation-expired">Este apartado venció; el cliente debe realizar uno nuevo.</p> : <DashboardModal title={`Cobrar ${String(product?.name ?? "producto")}`} description={`Comprobante para ${String(client?.full_name ?? client?.email ?? "el cliente")}. El precio reservado es Bs ${total.toFixed(2)}.`} triggerLabel="Cobrar y entregar" triggerIcon={<ReceiptText />} size="large"><form className="admin-form" onSubmit={event => onCollect(event, reservation.id)}><div className="wide cashier-reservation-summary"><strong>{String(client?.full_name ?? client?.email ?? "Cliente")}</strong><span>{String(product?.name ?? "Producto")} · {String(reservation.quantity)} unidad(es) · Bs {total.toFixed(2)}</span></div><label className="wide">Vendido o recomendado por<select name="recommended_by"><option value="">Sin peluquero asociado</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label><PaymentFields allowPromotion /><button className="button button-dark wide" disabled={busy}><ReceiptText /> Confirmar pago, entrega y comprobante</button></form></DashboardModal>}</article>;
+  }) : <p className="admin-help">No hay productos apartados pendientes de retiro.</p>}</div></section>;
 }
 
 function ProductSaleForm({ products, barbers, busy, onSubmit }: { products: Row[]; barbers: Row[]; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {

@@ -6,7 +6,7 @@ import {PanelExperience} from "@/components/panel-experience";
 
 export const dynamic = "force-dynamic";
 
-export type CashierSection = "servicios" | "productos" | "movimientos" | "liquidaciones" | "gastos" | "historial";
+export type CashierSection = "servicios" | "productos" | "reservas" | "movimientos" | "liquidaciones" | "gastos" | "historial";
 
 export default function CashierPage() {
   return <CashierPageView section="servicios" />;
@@ -22,7 +22,8 @@ export async function CashierPageView({ section }: { section: CashierSection }) 
   const start = new Date(`${workDate}T00:00:00-04:00`);
   const end = new Date(start); end.setUTCDate(end.getUTCDate() + 1);
   const historyStart = new Date(end); historyStart.setUTCDate(historyStart.getUTCDate() - 31);
-  const [shift,services,barbers,products,clients,appointments,sales,earnings,expenses,payouts] = await Promise.all([
+  const requestTimestamp = new Date().getTime();
+  const [shift,services,barbers,products,clients,appointments,sales,earnings,expenses,payouts,productReservations] = await Promise.all([
     supabase.from("cash_shifts").select("*").eq("opened_by",user.id).eq("status","open").maybeSingle(),
     supabase.from("services").select("id,name,price").eq("status","active").order("name"),
     supabase.from("barber_profiles").select("id,display_name,commission_percent").eq("active",true).order("display_name"),
@@ -33,6 +34,7 @@ export async function CashierPageView({ section }: { section: CashierSection }) 
     supabase.from("barber_earnings").select("id,barber_id,kind,amount,status,created_at").eq("status","pending").lt("created_at",end.toISOString()),
     supabase.from("barber_expenses").select("id,barber_id,concept,amount,status,created_at,barber_profiles(display_name)").in("status",["pending","approved"]).lt("created_at",end.toISOString()).order("created_at",{ascending:false}),
     supabase.from("payouts").select("id,barber_id,period_start,period_end,commission_amount,incentive_amount,reimbursement_amount,deduction_amount,includes_accumulated_incentives,total_amount,status,paid_at,barber_profiles(display_name)").eq("period_start",workDate).eq("period_end",workDate).order("created_at",{ascending:false}),
+    supabase.from("product_reservations").select("id,client_id,product_id,quantity,price_snapshot,status,expires_at,created_at,profiles!product_reservations_client_id_fkey(full_name,email,phone),products(name,brand,presentation,stock)").eq("status","reserved").order("created_at",{ascending:true}),
   ]);
   return <PanelExperience><CashierPanel
     userEmail={user.email??"Caja"}
@@ -47,6 +49,7 @@ export async function CashierPageView({ section }: { section: CashierSection }) 
     earnings={earnings.data??[]}
     expenses={expenses.data??[]}
     payouts={payouts.data??[]}
+    productReservations={(productReservations.data??[]).map(item => ({ ...item, is_expired: new Date(item.expires_at).getTime() <= requestTimestamp }))}
     movements={shift.data ? (await supabase.from("cash_movements").select("id,kind,amount,payment_method,reason,created_at,sale_id").eq("shift_id",shift.data.id).order("created_at",{ascending:true})).data ?? [] : []}
     workDate={workDate}
     section={section}

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Activity, Banknote, CalendarClock, Clock3, History, Images, ReceiptText, Sparkles, UserRoundPen } from "lucide-react";
+import { Activity, Banknote, CalendarClock, Clock3, History, Images, PackageOpen, ReceiptText, Sparkles, UserRoundPen } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { PanelExperience, PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelThemeSelector } from "@/components/panel-experience";
+import { ProductCatalog } from "@/components/product-catalog";
+import { getPublicProducts } from "@/lib/public-data";
 import { createClient } from "@/lib/supabase/server";
 import { getUserCapabilities } from "@/lib/user-capabilities";
 import { AppointmentStatusActions } from "./appointment-status-actions";
@@ -12,10 +14,11 @@ import { PublicProfileManager } from "./public-profile-manager";
 
 export const dynamic = "force-dynamic";
 
-export type BarberSection = "agenda" | "perfil" | "balance" | "trabajos";
+export type BarberSection = "agenda" | "productos" | "perfil" | "balance" | "trabajos";
 
 const sectionInfo: Record<BarberSection, { eyebrow: string; title: string; description: string }> = {
   agenda: { eyebrow: "OPERACIÓN DIARIA", title: "Agenda del día", description: "Consulta tus citas asignadas y actualiza su estado." },
+  productos: { eyebrow: "CATÁLOGO", title: "Productos", description: "Consulta el catálogo completo, revisa cada detalle y aparta productos para recogerlos en el local." },
   perfil: { eyebrow: "PRESENCIA PÚBLICA", title: "Mi perfil", description: "Mantén actualizada la información que ven los clientes." },
   balance: { eyebrow: "CONTROL PERSONAL", title: "Balance económico", description: "Revisa comisiones, incentivos, gastos y liquidaciones." },
   trabajos: { eyebrow: "PORTAFOLIO", title: "Mis trabajos", description: "Publica trabajos autorizados o referencias con su fuente." },
@@ -35,7 +38,7 @@ export async function BarberView({ section }: { section: BarberSection }) {
   const start = new Date(); start.setHours(0, 0, 0, 0);
   const end = new Date(start); end.setDate(end.getDate() + 1);
   const monthStart = new Date(start); monthStart.setDate(1);
-  const [appointmentsResult, earnings, expenses, payouts, profileResult, galleryResult, servicesResult, productsResult, monthlyEarnings, commissionSettings, discounts] = await Promise.all([
+  const [appointmentsResult, earnings, expenses, payouts, profileResult, galleryResult, servicesResult, productsResult, monthlyEarnings, commissionSettings, discounts, availableProducts] = await Promise.all([
     supabase.from("appointments").select("id,service_id,starts_at,ends_at,status,service_name_snapshot,notes,reference_image_path,profiles!appointments_client_id_fkey(full_name,phone,is_blacklisted)").eq("barber_id", capabilities.barber.id).gte("starts_at", start.toISOString()).lt("starts_at", end.toISOString()).order("starts_at"),
     supabase.from("barber_earnings").select("id,kind,amount,status,created_at,sale_items(name_snapshot,unit_price_snapshot,discount_amount,barber_discount_share)").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(50),
     supabase.from("barber_expenses").select("id,concept,amount,status,created_at").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(20),
@@ -47,6 +50,7 @@ export async function BarberView({ section }: { section: BarberSection }) {
     supabase.from("barber_earnings").select("id,kind,base_amount,rate_percent,amount,status,created_at,sale_items(name_snapshot)").eq("barber_id", capabilities.barber.id).gte("created_at", monthStart.toISOString()).order("created_at", { ascending: false }),
     supabase.from("loyalty_settings").select("product_sales_commission_percent").eq("id",true).maybeSingle(),
     supabase.from("discount_applications").select("id,name_snapshot,eligible_base,discount_amount,barber_discount_share,business_discount_share,created_at").eq("barber_id",capabilities.barber.id).gte("created_at",monthStart.toISOString()).order("created_at",{ascending:false}).limit(30),
+    section === "productos" ? getPublicProducts() : Promise.resolve([]),
   ]);
 
   const appointments = appointmentsResult.data ?? [];
@@ -70,6 +74,7 @@ export async function BarberView({ section }: { section: BarberSection }) {
         <div className="dash-sidebar-head"><p>MI ESTACIÓN</p><PanelMobileSidebarClose /></div>
         <nav>
           <Link replace className={section === "agenda" ? "active" : ""} href="/barbero"><CalendarClock /><span>Agenda</span>{section === "agenda" && <i />}</Link>
+          <Link replace className={section === "productos" ? "active" : ""} href="/barbero/productos"><PackageOpen /><span>Productos</span>{section === "productos" && <i />}</Link>
           <Link replace className={section === "perfil" ? "active" : ""} href="/barbero/perfil"><UserRoundPen /><span>Editar perfil</span>{section === "perfil" && <i />}</Link>
           <Link replace className={section === "balance" ? "active" : ""} href="/barbero/balance"><Banknote /><span>Balance económico</span>{section === "balance" && <i />}</Link>
           <Link replace className={section === "trabajos" ? "active" : ""} href="/barbero/trabajos"><Images /><span>Publicar trabajos</span>{section === "trabajos" && <i />}</Link>
@@ -78,13 +83,15 @@ export async function BarberView({ section }: { section: BarberSection }) {
       </aside>
       <PanelMobileScrim />
       <section className="barber-content">
-        <section className="portal-hero dash-role-hero"><div><p className="eyebrow">{info.eyebrow}</p><h1>{info.title}</h1><p>{info.description}</p></div><div className="barber-pulse"><span><i />{active.length} citas activas</span>{section === "agenda" ? <Clock3 /> : section === "balance" ? <Banknote /> : section === "trabajos" ? <Images /> : <UserRoundPen />}</div></section>
+        <section className="portal-hero dash-role-hero"><div><p className="eyebrow">{info.eyebrow}</p><h1>{info.title}</h1><p>{info.description}</p></div><div className="barber-pulse"><span><i />{active.length} citas activas</span>{section === "agenda" ? <Clock3 /> : section === "productos" ? <PackageOpen /> : section === "balance" ? <Banknote /> : section === "trabajos" ? <Images /> : <UserRoundPen />}</div></section>
         <div className="portal-grid dash-portal-grid">
           {section === "agenda" && <>
             <section className="portal-card"><div className="portal-title"><Activity /><h2>Resumen de hoy</h2></div><strong className="streak-number">{active.length}</strong><p>cita(s) pendientes o en proceso.</p></section>
             <section className="portal-card"><div className="portal-title"><Clock3 /><h2>Próxima cita</h2></div>{active[0] ? <div className="next-appointment"><strong>{active[0].service_name_snapshot}</strong><span>{new Intl.DateTimeFormat("es-BO", { timeStyle: "short", timeZone: "America/La_Paz" }).format(new Date(active[0].starts_at))}</span></div> : <p className="portal-empty">No quedan citas pendientes hoy.</p>}</section>
             <section className="portal-card portal-wide"><div className="portal-title"><CalendarClock /><h2>Citas asignadas</h2></div><div className="portal-list agenda-list">{appointments.length ? appointments.map((item) => { const client = item.profiles as unknown as { full_name?: string; phone?: string; is_blacklisted?: boolean } | null; return <article key={item.id}><span className="agenda-time">{new Intl.DateTimeFormat("es-BO", { timeStyle: "short", timeZone: "America/La_Paz" }).format(new Date(item.starts_at))}</span><div><strong>{item.service_name_snapshot}</strong><span>{client?.full_name ?? "Cliente"} · {client?.phone ?? "Sin teléfono"} · {item.status === "pending_payment" ? "pendiente de cobro" : item.status}</span>{client?.is_blacklisted && <small className="portal-warning">Alerta de inasistencias</small>}</div><AppointmentStatusActions id={item.id} status={item.status} defaultServiceId={item.service_id} services={servicesResult.data ?? []} products={productsResult.data ?? []} /></article>; }) : <p className="portal-empty">No hay citas asignadas para hoy.</p>}</div></section>
           </>}
+
+          {section === "productos" && <section className="portal-card portal-wide barber-product-catalog"><div className="portal-title"><PackageOpen /><div><small>DISPONIBLES AHORA</small><h2>Catálogo de productos</h2></div></div><p>Selecciona un producto para ver sus fotos, presentación, existencias y precio. Puedes apartarlo durante 24 horas y pagarlo en el local.</p><ProductCatalog products={availableProducts} variant="catalog" /></section>}
 
           {section === "perfil" && profileResult.data && <section className="portal-card portal-wide"><PublicProfileManager userId={user.id} profile={profileResult.data} gallery={galleryResult.data ?? []} view="profile" /></section>}
 

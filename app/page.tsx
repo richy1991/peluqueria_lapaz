@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   ArrowRight,
   CalendarDays,
@@ -13,10 +14,16 @@ import { ProductCatalog } from "@/components/product-catalog";
 import { BearPawIcon, LegendCrownIcon, LegendDivider, StraightRazorIcon } from "@/components/legend-icons";
 import { getPublicData } from "@/lib/public-data";
 import { BusinessStatus } from "@/components/business-status";
+import { createClient } from "@/lib/supabase/server";
+import { getDashboardPath, getUserCapabilities } from "@/lib/user-capabilities";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) redirect(getDashboardPath(await getUserCapabilities(user.id)));
+
   const { services, barbers, gallery, products, business } = await getPublicData();
   return (
     <>

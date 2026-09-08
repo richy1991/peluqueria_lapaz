@@ -15,3 +15,12 @@ export async function getUserCapabilities(userId: string) {
     barber: barberResult.data,
   };
 }
+
+export type UserCapabilities = Awaited<ReturnType<typeof getUserCapabilities>>;
+
+export function getDashboardPath(capabilities: UserCapabilities) {
+  if (capabilities.isAdmin) return "/admin";
+  if (capabilities.isCashier) return "/caja";
+  if (capabilities.barber) return "/barbero";
+  return "/mi-cuenta";
+}
