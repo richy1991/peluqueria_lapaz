@@ -25,7 +25,7 @@ export default async function SettlementPage({ params }: { params: Promise<{ bar
   if (!barberResult.data) notFound();
   if (detailResult.error) throw new Error(`No se pudo cargar la liquidación: ${detailResult.error.message}`);
 
-  return <PanelExperience><CashierSettlementDetail
+  return <PanelExperience chatInHeader><CashierSettlementDetail
     userEmail={user.email ?? "Caja"}
     capabilities={capabilities}
     shiftOpen={Boolean(shiftResult.data)}

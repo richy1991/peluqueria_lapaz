@@ -3,13 +3,14 @@
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Banknote, Calculator, CheckCircle2, ClipboardCheck, History, PackageOpen, ReceiptText, Scissors, Sparkles } from "lucide-react";
+import { ArrowLeft, Banknote, Calculator, CheckCircle2, ClipboardCheck, History, PackageCheck, PackageOpen, ReceiptText, Scissors, Sparkles } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { DashboardModal } from "@/components/dashboard-modal";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelThemeSelector } from "@/components/panel-experience";
 import { clearFormErrors, dispatchDashboardError, dispatchDashboardSuccess, reportFormError } from "@/lib/form-feedback";
 import { createClient } from "@/lib/supabase/client";
+import { CashierMobileNavigation } from "../../cashier-navigation";
 import type { SettlementDetail, SettlementExpense, SettlementHistory, SettlementLine } from "./page";
 
 type Capabilities = { isAdmin: boolean; isSuperadmin: boolean; isCashier: boolean; barber: { id: string; display_name: string } | null };
@@ -69,7 +70,7 @@ export function CashierSettlementDetail({ userEmail, capabilities, shiftOpen, de
   return <main className="admin-shell dash-workspace cashier-shell">
     <header className="admin-header dash-header"><PanelMobileMenuButton /><div className="dash-brand"><Brand linked={false} /><span className="dash-live"><i /> CAJA CONECTADA</span></div><ModeSwitcher current="cashier" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier showClient={false} /><div className="dash-user"><span className="dash-avatar">{userEmail.slice(0, 2).toUpperCase()}</span><span>{userEmail}<small>Operador de caja</small></span></div></header>
     <div className="admin-layout cashier-layout"><aside className="admin-nav dash-sidebar"><div className="dash-sidebar-head"><p>TERMINAL POS</p><PanelMobileSidebarClose /></div><nav>
-      <Link replace href="/caja"><Scissors /><span>Cobrar servicios</span></Link><Link replace href="/caja/productos"><PackageOpen /><span>Venta de productos</span></Link><Link replace href="/caja/movimientos"><ReceiptText /><span>Libro diario</span></Link><Link replace className="active" href="/caja/liquidaciones"><Calculator /><span>Liquidaciones</span><i /></Link><Link replace href="/caja/gastos"><ClipboardCheck /><span>Gastos</span></Link><Link replace href="/caja/historial"><History /><span>Historial</span></Link>
+      <Link replace href="/caja"><Scissors /><span>Cobrar servicios</span></Link><Link replace href="/caja/productos"><PackageOpen /><span>Venta de productos</span></Link><Link replace href="/caja/reservas"><PackageCheck /><span>Reservas</span></Link><Link replace href="/caja/movimientos"><ReceiptText /><span>Libro diario</span></Link><Link replace className="active" href="/caja/liquidaciones"><Calculator /><span>Liquidaciones</span><i /></Link><Link replace href="/caja/gastos"><ClipboardCheck /><span>Gastos</span></Link><Link replace href="/caja/historial"><History /><span>Historial</span></Link>
     </nav><div className="dash-sidebar-foot"><PanelThemeSelector /><Link href="/sitio"><Sparkles /><span>Web pública</span></Link><PanelMobileLogout /></div></aside><PanelMobileScrim />
       <section className="cashier-content settlement-detail-content">
         <Link replace className="settlement-back" href="/caja/liquidaciones"><ArrowLeft /> Todas las liquidaciones</Link>
@@ -104,6 +105,7 @@ export function CashierSettlementDetail({ userEmail, capabilities, shiftOpen, de
         <section className="admin-panel settlement-history"><div className="dash-list-head"><div><small>TRAZABILIDAD</small><h2>Historial reciente</h2></div><History /></div><div className="settlement-concept-list">{history.length ? history.map(item => <article key={item.id}><div><strong>{date(`${item.period_start}T12:00:00-04:00`)}</strong><span>Servicios {money(item.commission_amount)} · incentivo {money(item.incentive_amount)} · gastos -{money(item.deduction_amount)}</span></div><div className="settlement-row-amount"><b>{money(item.total_amount)}</b><small>{item.status === "paid" ? "Pagada" : "Preparada"}</small></div></article>) : <p className="admin-help">Todavía no existen liquidaciones.</p>}</div></section>
       </section>
     </div>
+    <CashierMobileNavigation section="liquidaciones" />
   </main>;
 }
 

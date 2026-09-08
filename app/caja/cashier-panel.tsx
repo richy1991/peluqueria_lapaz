@@ -10,12 +10,13 @@ import { ModeSwitcher } from "@/components/mode-switcher";
 import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelThemeSelector } from "@/components/panel-experience";
 import { clearFormErrors, dispatchDashboardError, dispatchDashboardSuccess, reportFormError } from "@/lib/form-feedback";
 import { createClient } from "@/lib/supabase/client";
+import { CashierMobileNavigation, type CashierNavigationSection } from "./cashier-navigation";
 
 type Row = Record<string, unknown> & { id: string };
 type RewardQuote = { reward_id: string; barber_id: string; barber_name: string; balance: number; reward_name: string; points_cost: number; eligible_base: number; discount_amount: number };
 type Capabilities = { isAdmin: boolean; isSuperadmin: boolean; isCashier: boolean; barber: { id: string; display_name: string } | null };
-type CashierSection = "servicios" | "productos" | "movimientos" | "liquidaciones" | "gastos" | "historial";
-type CashierRouteSection = CashierSection | "reservas";
+type CashierSection = Exclude<CashierNavigationSection, "reservas">;
+type CashierRouteSection = CashierNavigationSection;
 type Props = { userEmail: string; capabilities: Capabilities; shift: Row | null; services: Row[]; barbers: Row[]; products: Row[]; clients: Row[]; appointments: Row[]; sales: Row[]; earnings: Row[]; expenses: Row[]; payouts: Row[]; productReservations: Row[]; movements: Row[]; workDate: string; section: CashierRouteSection };
 
 export function CashierPanel(props: Props) {
@@ -154,17 +155,18 @@ export function CashierPanel(props: Props) {
   const pendingByBarber = new Map<string, number>();
   earnings.filter(item => item.status === "pending" && item.kind === "service_commission").forEach(item => pendingByBarber.set(String(item.barber_id), (pendingByBarber.get(String(item.barber_id)) ?? 0) + Number(item.amount)));
   const titles: Record<CashierSection, string> = { servicios: "Cobro de servicios", productos: "Venta de productos", movimientos: "Libro diario", liquidaciones: "Liquidaciones diarias", gastos: "Gastos del equipo", historial: "Historial de ventas" };
+  const replaceNavigation = section !== "servicios";
 
   return <main className="admin-shell dash-workspace cashier-shell">
     <header className="admin-header dash-header"><PanelMobileMenuButton /><div className="dash-brand"><Brand linked={false} /><span className="dash-live"><i /> CAJA CONECTADA</span></div><ModeSwitcher current="cashier" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier showClient={false} /><div className="dash-user"><span className="dash-avatar">{userEmail.slice(0, 2).toUpperCase()}</span><span>{userEmail}<small>Operador de caja</small></span></div></header>
     <div className="admin-layout cashier-layout"><aside className="admin-nav dash-sidebar"><div className="dash-sidebar-head"><p>TERMINAL POS</p><PanelMobileSidebarClose /></div><nav>
-      <Link replace className={section === "servicios" ? "active" : ""} href="/caja"><Scissors /><span>Cobrar servicios</span>{section === "servicios" && <i />}</Link>
-      <Link replace className={section === "productos" ? "active" : ""} href="/caja/productos"><PackageOpen /><span>Venta de productos</span>{section === "productos" && <i />}</Link>
-      <Link replace className={section === "reservas" ? "active" : ""} href="/caja/reservas"><PackageCheck /><span>Reservas</span>{productReservations.length > 0 && <b className="cashier-nav-badge">{productReservations.length}</b>}{section === "reservas" && <i />}</Link>
-      <Link replace className={section === "movimientos" ? "active" : ""} href="/caja/movimientos"><ReceiptText /><span>Libro diario</span>{section === "movimientos" && <i />}</Link>
-      <Link replace className={section === "liquidaciones" ? "active" : ""} href="/caja/liquidaciones"><Calculator /><span>Liquidaciones</span>{section === "liquidaciones" && <i />}</Link>
-      <Link replace className={section === "gastos" ? "active" : ""} href="/caja/gastos"><ClipboardCheck /><span>Gastos</span>{section === "gastos" && <i />}</Link>
-      <Link replace className={section === "historial" ? "active" : ""} href="/caja/historial"><History /><span>Historial</span>{section === "historial" && <i />}</Link>
+      <Link replace={replaceNavigation} className={section === "servicios" ? "active" : ""} href="/caja"><Scissors /><span>Cobrar servicios</span>{section === "servicios" && <i />}</Link>
+      <Link replace={replaceNavigation} className={section === "productos" ? "active" : ""} href="/caja/productos"><PackageOpen /><span>Venta de productos</span>{section === "productos" && <i />}</Link>
+      <Link replace={replaceNavigation} className={section === "reservas" ? "active" : ""} href="/caja/reservas"><PackageCheck /><span>Reservas</span>{productReservations.length > 0 && <b className="cashier-nav-badge">{productReservations.length}</b>}{section === "reservas" && <i />}</Link>
+      <Link replace={replaceNavigation} className={section === "movimientos" ? "active" : ""} href="/caja/movimientos"><ReceiptText /><span>Libro diario</span>{section === "movimientos" && <i />}</Link>
+      <Link replace={replaceNavigation} className={section === "liquidaciones" ? "active" : ""} href="/caja/liquidaciones"><Calculator /><span>Liquidaciones</span>{section === "liquidaciones" && <i />}</Link>
+      <Link replace={replaceNavigation} className={section === "gastos" ? "active" : ""} href="/caja/gastos"><ClipboardCheck /><span>Gastos</span>{section === "gastos" && <i />}</Link>
+      <Link replace={replaceNavigation} className={section === "historial" ? "active" : ""} href="/caja/historial"><History /><span>Historial</span>{section === "historial" && <i />}</Link>
     </nav><div className="dash-sidebar-foot"><PanelThemeSelector /><Link href="/sitio"><Sparkles /><span>Web pública</span></Link><PanelMobileLogout /></div></aside><PanelMobileScrim />
       <section className="cashier-content"><div className="dash-page-heading"><div className="admin-title"><WalletCards /><div><p>TERMINAL POS</p><h1>{section === "reservas" ? "Reservas de productos" : titles[section]}</h1></div></div><span className={`dash-status-pill ${shift ? "online" : "offline"}`}><i />{shift ? "Turno abierto" : "Turno cerrado"}</span></div>
         {error && <p className="admin-error">{error}</p>}{result && <div className="admin-message"><strong>Operación completada.</strong>{"receipt_id" in result && <Link href={`/comprobante/${String(result.receipt_id)}`}> Ver comprobante #{String(result.receipt_number)}</Link>}{Boolean(result.claim_code) && <span> Código: <b>{String(result.claim_code)}</b></span>}</div>}
@@ -179,6 +181,7 @@ export function CashierPanel(props: Props) {
         </>}
       </section>
     </div>
+    <CashierMobileNavigation section={section} reservationCount={productReservations.length} />
   </main>;
 }
 

@@ -2,11 +2,12 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserCapabilities } from "@/lib/user-capabilities";
 import { CashierPanel } from "./cashier-panel";
+import type { CashierNavigationSection } from "./cashier-navigation";
 import {PanelExperience} from "@/components/panel-experience";
 
 export const dynamic = "force-dynamic";
 
-export type CashierSection = "servicios" | "productos" | "reservas" | "movimientos" | "liquidaciones" | "gastos" | "historial";
+export type CashierSection = CashierNavigationSection;
 
 export default function CashierPage() {
   return <CashierPageView section="servicios" />;
@@ -36,7 +37,7 @@ export async function CashierPageView({ section }: { section: CashierSection }) 
     supabase.from("payouts").select("id,barber_id,period_start,period_end,commission_amount,incentive_amount,reimbursement_amount,deduction_amount,includes_accumulated_incentives,total_amount,status,paid_at,barber_profiles(display_name)").eq("period_start",workDate).eq("period_end",workDate).order("created_at",{ascending:false}),
     supabase.from("product_reservations").select("id,client_id,product_id,quantity,price_snapshot,status,expires_at,created_at,profiles!product_reservations_client_id_fkey(full_name,email,phone),products(name,brand,presentation,stock)").eq("status","reserved").order("created_at",{ascending:true}),
   ]);
-  return <PanelExperience><CashierPanel
+  return <PanelExperience chatInHeader><CashierPanel
     userEmail={user.email??"Caja"}
     capabilities={capabilities}
     shift={shift.data}

@@ -202,11 +202,11 @@ export function PanelViewportPortal({ children }: { children: ReactNode }) {
   const browserReady = useSyncExternalStore(subscribeToBrowser, () => true, () => false);
   if (!browserReady) return null;
 
-  const className = `panel-theme panel-viewport-layer ${chromeHidden && !open ? "panel-mobile-chrome-hidden" : ""} ${open ? "mobile-nav-open" : ""} ${chatInHeader ? "client-chat-in-header" : ""}`;
+  const className = `panel-theme panel-viewport-layer ${chromeHidden && !open ? "panel-mobile-chrome-hidden" : ""} ${open ? "mobile-nav-open" : ""} ${chatInHeader ? "panel-chat-in-header" : ""}`;
   return createPortal(<div className={className} data-panel-theme={theme}>{children}</div>, document.body);
 }
 
-export function PanelExperience({ children, clientChatInHeader = false }: { children: ReactNode; clientChatInHeader?: boolean }) {
+export function PanelExperience({ children, chatInHeader = false }: { children: ReactNode; chatInHeader?: boolean }) {
   const value = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
   const [, resolved] = value.split(":") as [Preference, "light" | "dark"];
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -238,12 +238,12 @@ export function PanelExperience({ children, clientChatInHeader = false }: { chil
     hide: () => setMobileNavOpen(false),
     theme: resolved,
     chromeHidden,
-    chatInHeader: clientChatInHeader,
+    chatInHeader,
   };
 
   return (
     <MobileNavigationContext.Provider value={navigation}>
-      <div className={`panel-theme ${chromeHidden && !mobileNavOpen ? "panel-mobile-chrome-hidden" : ""} ${mobileNavOpen ? "mobile-nav-open" : ""} ${clientChatInHeader ? "client-chat-in-header" : ""}`} data-panel-theme={resolved} suppressHydrationWarning>
+      <div className={`panel-theme ${chromeHidden && !mobileNavOpen ? "panel-mobile-chrome-hidden" : ""} ${mobileNavOpen ? "mobile-nav-open" : ""} ${chatInHeader ? "panel-chat-in-header" : ""}`} data-panel-theme={resolved} suppressHydrationWarning>
         {children}
         <DashboardToastHost />
         <PanelViewportPortal><aside className="panel-floating-tools" aria-label="Atención al cliente"><FloatingSupportChat /></aside></PanelViewportPortal>

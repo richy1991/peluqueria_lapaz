@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { Activity, Banknote, CalendarClock, Clock3, History, Images, PackageOpen, ReceiptText, Sparkles, UserRoundPen } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { ModeSwitcher } from "@/components/mode-switcher";
-import { PanelExperience, PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelThemeSelector } from "@/components/panel-experience";
+import { PanelExperience, PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelThemeSelector, PanelViewportPortal } from "@/components/panel-experience";
 import { ProductCatalog } from "@/components/product-catalog";
 import { getPublicProducts } from "@/lib/public-data";
 import { createClient } from "@/lib/supabase/server";
@@ -23,6 +23,25 @@ const sectionInfo: Record<BarberSection, { eyebrow: string; title: string; descr
   balance: { eyebrow: "CONTROL PERSONAL", title: "Balance económico", description: "Revisa comisiones, incentivos, gastos y liquidaciones." },
   trabajos: { eyebrow: "PORTAFOLIO", title: "Mis trabajos", description: "Publica trabajos autorizados o referencias con su fuente." },
 };
+
+const barberMobileNavigation = [
+  { id: "agenda", href: "/barbero", label: "Agenda", icon: CalendarClock },
+  { id: "productos", href: "/barbero/productos", label: "Productos", icon: PackageOpen },
+  { id: "perfil", href: "/barbero/perfil", label: "Mi perfil", icon: UserRoundPen },
+  { id: "balance", href: "/barbero/balance", label: "Balance", icon: Banknote },
+  { id: "trabajos", href: "/barbero/trabajos", label: "Trabajos", icon: Images },
+] as const;
+
+function BarberMobileNavigation({ section }: { section: BarberSection }) {
+  const replaceNavigation = section !== "agenda";
+  return <PanelViewportPortal><nav className="panel-bottom-nav" aria-label="Accesos rápidos de peluquero">
+    {barberMobileNavigation.map(item => {
+      const Icon = item.icon;
+      const active = section === item.id;
+      return <Link key={item.id} href={item.href} replace={replaceNavigation} aria-label={item.label} aria-current={active ? "page" : undefined} className={active ? "active" : ""}><Icon /><span>{item.label}</span><i /></Link>;
+    })}
+  </nav></PanelViewportPortal>;
+}
 
 export default function BarberPage() {
   return <BarberView section="agenda" />;
@@ -61,8 +80,9 @@ export async function BarberView({ section }: { section: BarberSection }) {
   const monthProductCommission=monthProductEarnings.reduce((sum,item)=>sum+Number(item.amount),0);
   const productCommissionRate=Number(commissionSettings.data?.product_sales_commission_percent??10);
   const info = sectionInfo[section];
+  const replaceNavigation = section !== "agenda";
 
-  return <PanelExperience><main className="admin-shell dash-workspace barber-portal">
+  return <PanelExperience chatInHeader><main className="admin-shell dash-workspace barber-portal">
     <header className="admin-header dash-header">
       <PanelMobileMenuButton />
       <div className="dash-brand"><Brand linked={false} /><span className="dash-live"><i /> AGENDA SINCRONIZADA</span></div>
@@ -73,11 +93,11 @@ export async function BarberView({ section }: { section: BarberSection }) {
       <aside className="admin-nav dash-sidebar">
         <div className="dash-sidebar-head"><p>MI ESTACIÓN</p><PanelMobileSidebarClose /></div>
         <nav>
-          <Link replace className={section === "agenda" ? "active" : ""} href="/barbero"><CalendarClock /><span>Agenda</span>{section === "agenda" && <i />}</Link>
-          <Link replace className={section === "productos" ? "active" : ""} href="/barbero/productos"><PackageOpen /><span>Productos</span>{section === "productos" && <i />}</Link>
-          <Link replace className={section === "perfil" ? "active" : ""} href="/barbero/perfil"><UserRoundPen /><span>Editar perfil</span>{section === "perfil" && <i />}</Link>
-          <Link replace className={section === "balance" ? "active" : ""} href="/barbero/balance"><Banknote /><span>Balance económico</span>{section === "balance" && <i />}</Link>
-          <Link replace className={section === "trabajos" ? "active" : ""} href="/barbero/trabajos"><Images /><span>Publicar trabajos</span>{section === "trabajos" && <i />}</Link>
+          <Link replace={replaceNavigation} className={section === "agenda" ? "active" : ""} href="/barbero"><CalendarClock /><span>Agenda</span>{section === "agenda" && <i />}</Link>
+          <Link replace={replaceNavigation} className={section === "productos" ? "active" : ""} href="/barbero/productos"><PackageOpen /><span>Productos</span>{section === "productos" && <i />}</Link>
+          <Link replace={replaceNavigation} className={section === "perfil" ? "active" : ""} href="/barbero/perfil"><UserRoundPen /><span>Editar perfil</span>{section === "perfil" && <i />}</Link>
+          <Link replace={replaceNavigation} className={section === "balance" ? "active" : ""} href="/barbero/balance"><Banknote /><span>Balance económico</span>{section === "balance" && <i />}</Link>
+          <Link replace={replaceNavigation} className={section === "trabajos" ? "active" : ""} href="/barbero/trabajos"><Images /><span>Publicar trabajos</span>{section === "trabajos" && <i />}</Link>
         </nav>
         <div className="dash-sidebar-foot"><PanelThemeSelector /><Link href="/sitio"><Sparkles /><span>Web pública</span></Link><PanelMobileLogout /></div>
       </aside>
@@ -108,6 +128,7 @@ export async function BarberView({ section }: { section: BarberSection }) {
         </div>
       </section>
     </div>
+    <BarberMobileNavigation section={section} />
   </main></PanelExperience>;
 }
 
