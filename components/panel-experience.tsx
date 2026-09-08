@@ -10,7 +10,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { LogOut, Menu, Monitor, Moon, Palette, Sun, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { FloatingSupportChat } from "@/components/floating-support-chat";
 import { DashboardToastHost } from "@/components/dashboard-toast";
 import { createClient } from "@/lib/supabase/client";
@@ -46,6 +46,86 @@ function snapshot(): `${Preference}:${"light" | "dark"}` {
 
 function serverSnapshot(): `${Preference}:${"light" | "dark"}` {
   return "system:light";
+}
+
+function getScrollTop() {
+  return Math.max(window.scrollY, document.documentElement.scrollTop);
+}
+
+function useAutoHidePanelChrome(disabled: boolean) {
+  const pathname = usePathname();
+  const [hidden, setHidden] = useState(false);
+  const hiddenRef = useRef(false);
+
+  useEffect(() => {
+    const mobileViewport = window.matchMedia("(max-width: 760px)");
+    let previous = getScrollTop();
+    let direction: -1 | 0 | 1 = 0;
+    let distance = 0;
+    let frame: number | null = null;
+
+    function updateHidden(next: boolean) {
+      if (hiddenRef.current === next) return;
+      hiddenRef.current = next;
+      setHidden(next);
+    }
+
+    function reset() {
+      previous = getScrollTop();
+      direction = 0;
+      distance = 0;
+      updateHidden(false);
+    }
+
+    function measure() {
+      frame = null;
+      const current = getScrollTop();
+
+      if (disabled || !mobileViewport.matches || current <= 32) {
+        previous = current;
+        direction = 0;
+        distance = 0;
+        updateHidden(false);
+        return;
+      }
+
+      const delta = current - previous;
+      previous = current;
+      if (Math.abs(delta) < 1) return;
+
+      const nextDirection: -1 | 1 = delta > 0 ? 1 : -1;
+      if (nextDirection !== direction) {
+        direction = nextDirection;
+        distance = 0;
+      }
+      distance += Math.abs(delta);
+
+      if (direction === 1 && current > 96 && distance >= 16) {
+        distance = 0;
+        updateHidden(true);
+      } else if (direction === -1 && distance >= 10) {
+        distance = 0;
+        updateHidden(false);
+      }
+    }
+
+    function requestMeasure() {
+      if (frame === null) frame = window.requestAnimationFrame(measure);
+    }
+
+    reset();
+    window.addEventListener("scroll", requestMeasure, { passive: true });
+    window.addEventListener("pageshow", reset);
+    mobileViewport.addEventListener("change", reset);
+    return () => {
+      if (frame !== null) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", requestMeasure);
+      window.removeEventListener("pageshow", reset);
+      mobileViewport.removeEventListener("change", reset);
+    };
+  }, [disabled, pathname]);
+
+  return hidden;
 }
 
 function selectTheme(next: Preference) {
@@ -112,8 +192,8 @@ export function PanelMobileLogout() {
 export function PanelExperience({ children, clientChatInHeader = false }: { children: ReactNode; clientChatInHeader?: boolean }) {
   const value = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
   const [, resolved] = value.split(":") as [Preference, "light" | "dark"];
-  const [headerHidden, setHeaderHidden] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const chromeHidden = useAutoHidePanelChrome(mobileNavOpen);
 
   useEffect(() => {
     if (!mobileNavOpen) return;
@@ -135,46 +215,15 @@ export function PanelExperience({ children, clientChatInHeader = false }: { chil
     };
   }, [mobileNavOpen]);
 
-  useEffect(() => {
-    let previous = window.scrollY;
-    let ticking = false;
-    function update() {
-      const current = window.scrollY;
-      const delta = current - previous;
-      if (current < 24) {
-        setHeaderHidden(false);
-        previous = current;
-      } else if (delta > 7 && current > 90) {
-        setHeaderHidden(true);
-        previous = current;
-      } else if (delta < -7) {
-        setHeaderHidden(false);
-        previous = current;
-      }
-      ticking = false;
-    }
-    function onScroll() {
-      if (!ticking) {
-        ticking = true;
-        window.requestAnimationFrame(update);
-      }
-    }
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   const navigation = {
     open: mobileNavOpen,
-    show: () => {
-      setHeaderHidden(false);
-      setMobileNavOpen(true);
-    },
+    show: () => setMobileNavOpen(true),
     hide: () => setMobileNavOpen(false),
   };
 
   return (
     <MobileNavigationContext.Provider value={navigation}>
-      <div className={`panel-theme ${headerHidden ? "panel-header-hidden" : ""} ${mobileNavOpen ? "mobile-nav-open" : ""} ${clientChatInHeader ? "client-chat-in-header" : ""}`} data-panel-theme={resolved} suppressHydrationWarning>
+      <div className={`panel-theme ${chromeHidden && !mobileNavOpen ? "panel-mobile-chrome-hidden" : ""} ${mobileNavOpen ? "mobile-nav-open" : ""} ${clientChatInHeader ? "client-chat-in-header" : ""}`} data-panel-theme={resolved} suppressHydrationWarning>
         {children}
         <DashboardToastHost />
         <aside className="panel-floating-tools" aria-label="Atención al cliente"><FloatingSupportChat /></aside>
