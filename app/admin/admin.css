@@ -238,8 +238,8 @@
   /* Drawer del cliente: navegación y acciones que antes saturaban el header. */
   .panel-theme .panel-client-shell>.client-mobile-sidebar{
     position:fixed!important;z-index:190;left:0;top:0;bottom:0;
-    width:min(300px,86vw);height:100dvh;padding:14px 12px;
-    display:flex!important;flex-direction:column;overflow:hidden!important;
+    width:min(300px,86vw);height:100dvh;padding:max(14px,env(safe-area-inset-top)) 12px max(14px,env(safe-area-inset-bottom));
+    display:flex!important;flex-direction:column;overflow:hidden!important;overscroll-behavior:contain;
     color:#e6d5bc;background:linear-gradient(180deg,#1c1815 0%,#2b1f1a 62%,#342328 100%)!important;
     border-right:1px solid rgba(214,174,105,.24)!important;border-bottom:0;
     transform:translateX(-105%);visibility:hidden;
@@ -1346,6 +1346,8 @@
 /* Portal cliente v4: navegación nativa inferior y páginas independientes. */
 .client-bottom-nav{display:none}
 .panel-theme.panel-viewport-layer{position:fixed;z-index:240;inset:0;min-height:0;pointer-events:none;background:transparent}
+.panel-client-viewport-overlays{display:contents}
+.panel-theme .panel-client-viewport-overlays>.client-mobile-sidebar{pointer-events:auto}
 .client-desktop-nav{margin-left:auto;display:flex;align-items:center;gap:4px}
 .client-desktop-nav a{min-height:38px;padding:0 11px;display:flex;align-items:center;gap:7px;color:#dbe8ff;border:1px solid transparent;border-radius:9px;text-decoration:none;font-size:8px;font-weight:750;white-space:nowrap}
 .client-desktop-nav a:hover{color:#fff;background:rgba(196,225,255,.1)}

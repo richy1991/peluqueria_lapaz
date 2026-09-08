@@ -82,14 +82,6 @@ export async function ClientAccountView({ section }: { section: ClientSection })
       <ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={capabilities.isCashier} />
       <div className="client-desktop-actions"><PanelThemeSelector compact /><Link replace className="portal-public-link" href="/"><Globe2 /><span>Sitio público</span></Link></div>
     </header>
-    <aside className="dash-sidebar client-mobile-sidebar" aria-label="Menú de mi cuenta">
-      <div className="dash-sidebar-head"><p>MI CUENTA</p><PanelMobileSidebarClose /></div>
-      <nav aria-label="Opciones adicionales">
-        <Link replace={replaceNavigation} className={section === "notificaciones" ? "active" : ""} href="/mi-cuenta/notificaciones"><Bell /><span>Notificaciones</span>{unreadNotifications > 0 && <b className="client-nav-badge">{unreadNotifications}</b>}</Link>
-      </nav>
-      <div className="dash-sidebar-foot"><PanelThemeSelector /><Link replace href="/"><Globe2 /><span>Sitio público</span></Link><PanelMobileLogout /></div>
-    </aside>
-    <PanelMobileScrim />
     <section className="portal-hero client-page-hero"><p className="eyebrow">{copy.eyebrow}</p><h1>{section === "inicio" ? `Hola, ${displayName}` : copy.title}</h1><p>{copy.description}</p></section>
 
     {section === "inicio" && <div className="portal-grid client-home-dashboard">
@@ -131,7 +123,19 @@ export async function ClientAccountView({ section }: { section: ClientSection })
       {person?.is_blacklisted && <p className="portal-warning">La cuenta tiene una alerta por inasistencias.</p>}{person?.is_blocked && <p className="portal-error">Las nuevas reservas están bloqueadas. Contacta al negocio.</p>}
     </section></div>}
     {section !== "productos" && <ClientPromoRail products={availableProducts} replaceNavigation={replaceNavigation} />}
-  </main><PanelViewportPortal><ClientMainNavigation section={section} replaceNavigation={replaceNavigation} variant="mobile" /></PanelViewportPortal></PanelExperience>;
+  </main><PanelViewportPortal>
+    <div className="panel-client-shell panel-client-viewport-overlays">
+      <aside className="dash-sidebar client-mobile-sidebar" aria-label="Menú de mi cuenta">
+        <div className="dash-sidebar-head"><p>MI CUENTA</p><PanelMobileSidebarClose /></div>
+        <nav aria-label="Opciones adicionales">
+          <Link replace={replaceNavigation} className={section === "notificaciones" ? "active" : ""} href="/mi-cuenta/notificaciones"><Bell /><span>Notificaciones</span>{unreadNotifications > 0 && <b className="client-nav-badge">{unreadNotifications}</b>}</Link>
+        </nav>
+        <div className="dash-sidebar-foot"><PanelThemeSelector /><Link replace href="/"><Globe2 /><span>Sitio público</span></Link><PanelMobileLogout /></div>
+      </aside>
+      <PanelMobileScrim />
+    </div>
+    <ClientMainNavigation section={section} replaceNavigation={replaceNavigation} variant="mobile" />
+  </PanelViewportPortal></PanelExperience>;
 }
 
 const clientMainNavigation = [
