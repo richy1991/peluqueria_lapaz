@@ -130,8 +130,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
       {person?.is_blacklisted && <p className="portal-warning">La cuenta tiene una alerta por inasistencias.</p>}{person?.is_blocked && <p className="portal-error">Las nuevas reservas están bloqueadas. Contacta al negocio.</p>}
     </section></div>}
     {section !== "productos" && <ClientPromoRail products={availableProducts} replaceNavigation={replaceNavigation} />}
-    <ClientMainNavigation section={section} replaceNavigation={replaceNavigation} variant="mobile" />
-  </main></PanelExperience>;
+  </main><ClientMainNavigation section={section} replaceNavigation={replaceNavigation} variant="mobile" /></PanelExperience>;
 }
 
 const clientMainNavigation = [
