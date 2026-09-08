@@ -466,7 +466,7 @@ export function AdminDashboard({
             <ChevronRight />
           </Link>
           <nav aria-label="Páginas de administración">{navigation.map(([id,label,Icon])=><Link href={`/admin/${id}`} replace={!isRootPage} title={label} aria-current={section===id?"page":undefined} className={`${section===id?"active":""} ${id==="negocio"?"nav-secondary-start":""}`} key={id}><Icon/><span>{label}</span>{section===id&&<i/>}</Link>)}</nav>
-          <div className="dash-sidebar-foot"><PanelThemeSelector/><Link replace href="/"><Sparkles/><span>Ver sitio público</span></Link><PanelMobileLogout/></div>
+          <div className="dash-sidebar-foot"><PanelThemeSelector/><Link href="/sitio"><Sparkles/><span>Ver sitio público</span></Link><PanelMobileLogout/></div>
         </aside>
         <PanelMobileScrim/>
         <section className="admin-content" key={section}>

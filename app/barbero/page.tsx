@@ -79,7 +79,7 @@ export async function BarberView({ section }: { section: BarberSection }) {
           <Link replace className={section === "balance" ? "active" : ""} href="/barbero/balance"><Banknote /><span>Balance económico</span>{section === "balance" && <i />}</Link>
           <Link replace className={section === "trabajos" ? "active" : ""} href="/barbero/trabajos"><Images /><span>Publicar trabajos</span>{section === "trabajos" && <i />}</Link>
         </nav>
-        <div className="dash-sidebar-foot"><PanelThemeSelector /><Link replace href="/"><Sparkles /><span>Web pública</span></Link><PanelMobileLogout /></div>
+        <div className="dash-sidebar-foot"><PanelThemeSelector /><Link href="/sitio"><Sparkles /><span>Web pública</span></Link><PanelMobileLogout /></div>
       </aside>
       <PanelMobileScrim />
       <section className="barber-content">

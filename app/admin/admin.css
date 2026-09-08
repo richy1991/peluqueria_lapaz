@@ -1346,6 +1346,7 @@
 /* Portal cliente v4: navegación nativa inferior y páginas independientes. */
 .client-bottom-nav{display:none}
 .panel-theme.panel-viewport-layer{position:fixed;z-index:240;inset:0;min-height:0;pointer-events:none;background:transparent}
+.panel-theme.panel-viewport-layer>.panel-floating-tools{position:absolute;pointer-events:auto}
 .panel-client-viewport-overlays{display:contents}
 .panel-theme .panel-client-viewport-overlays>.client-mobile-sidebar{pointer-events:auto}
 .client-desktop-nav{margin-left:auto;display:flex;align-items:center;gap:4px}
@@ -1414,6 +1415,8 @@
   .barber-product-catalog>.product-grid-catalog{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.barber-product-catalog .product-card{padding:6px 6px 10px;border-radius:11px}.barber-product-catalog .product-photo{border-radius:8px}.barber-product-catalog .product-card h3{font-size:12px}.barber-product-catalog .product-meta strong{font-size:12px}
   .cashier-reservation-list>article{padding:13px;grid-template-columns:1fr;gap:13px}.cashier-reservation-list dl{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.cashier-reservation-list .dash-action{width:100%;justify-content:center}.cashier-reservation-expired{max-width:none}
   .panel-theme .panel-client-shell>.client-mobile-sidebar nav{flex:0 1 auto}.panel-theme .panel-client-shell>.client-mobile-sidebar .dash-sidebar-foot{margin-top:auto}
+  .panel-theme.panel-viewport-layer .panel-client-shell>.client-mobile-sidebar{position:absolute!important;inset:0 auto 0 0;height:100%!important;max-height:100dvh}
+  .panel-theme.panel-viewport-layer .panel-client-shell>.sidebar-scrim{position:absolute!important;inset:0}
 }
 
 /* Identidad cromática v5: borgoña, carbón, latón y crema. */
@@ -1561,7 +1564,10 @@
   .panel-theme>.client-bottom-nav svg{width:22px;height:22px;stroke-width:1.8;transition:transform .18s,color .18s}
   .panel-theme>.client-bottom-nav i{position:absolute;z-index:2;left:50%;bottom:5px;width:24px;height:3px;border-radius:999px;background:var(--dash-cyan);opacity:0;transform:translateX(-50%);transition:opacity .2s ease,transform .28s cubic-bezier(.2,1.35,.4,1)}
   .panel-theme>.client-bottom-nav>a.active{color:var(--dash-cyan)}.panel-theme>.client-bottom-nav>a.active svg{position:relative;z-index:1;stroke-width:2.5;animation:clientTabSelected .38s cubic-bezier(.2,1.45,.4,1)}.panel-theme>.client-bottom-nav>a.active i{opacity:1}.panel-theme>.client-bottom-nav>a:active svg{transform:scale(.82)}
+  .panel-theme.client-chat-in-header>.panel-floating-tools{opacity:1;transition:transform .3s cubic-bezier(.2,.8,.2,1),opacity .22s ease;will-change:transform,opacity}
   .panel-theme.client-chat-in-header>.panel-floating-tools .support-fab{background:rgba(56,29,27,.5)}.panel-theme.client-chat-in-header>.panel-floating-tools .support-fab:hover{background:rgba(101,43,51,.62)}.panel-theme.client-chat-in-header>.panel-floating-tools .support-fab>i{border-color:#692b37}
+  .panel-theme.panel-mobile-chrome-hidden.client-chat-in-header>.panel-floating-tools{opacity:0;pointer-events:none;transform:translate3d(0,-60px,0)}
+  .panel-theme.mobile-nav-open>.panel-floating-tools{opacity:0;pointer-events:none}
   .panel-theme .admin-shell .dash-header>.mobile-nav-toggle,.panel-theme .mobile-mode-menu>summary,.panel-theme .panel-client-shell .portal-header>.mobile-nav-toggle{color:#fff4df;border-color:rgba(222,188,126,.34);background:rgba(42,26,21,.55)}
   .panel-theme .mobile-mode-menu[open]>summary{color:#4d252b;background:linear-gradient(135deg,#fff5df,#dfbd7d)}
   .panel-theme .mobile-mode-menu>div{border-color:var(--dash-line);background:var(--dash-card);box-shadow:0 18px 48px rgba(35,21,17,.42)}

@@ -24,6 +24,7 @@ const MobileNavigationContext = createContext<{
   hide: () => void;
   theme: "light" | "dark";
   chromeHidden: boolean;
+  chatInHeader: boolean;
 } | null>(null);
 
 function subscribeToBrowser() {
@@ -197,11 +198,11 @@ export function PanelMobileLogout() {
 }
 
 export function PanelViewportPortal({ children }: { children: ReactNode }) {
-  const { open, theme, chromeHidden } = useMobileNavigation();
+  const { open, theme, chromeHidden, chatInHeader } = useMobileNavigation();
   const browserReady = useSyncExternalStore(subscribeToBrowser, () => true, () => false);
   if (!browserReady) return null;
 
-  const className = `panel-theme panel-viewport-layer ${chromeHidden && !open ? "panel-mobile-chrome-hidden" : ""} ${open ? "mobile-nav-open" : ""}`;
+  const className = `panel-theme panel-viewport-layer ${chromeHidden && !open ? "panel-mobile-chrome-hidden" : ""} ${open ? "mobile-nav-open" : ""} ${chatInHeader ? "client-chat-in-header" : ""}`;
   return createPortal(<div className={className} data-panel-theme={theme}>{children}</div>, document.body);
 }
 
@@ -237,6 +238,7 @@ export function PanelExperience({ children, clientChatInHeader = false }: { chil
     hide: () => setMobileNavOpen(false),
     theme: resolved,
     chromeHidden,
+    chatInHeader: clientChatInHeader,
   };
 
   return (
@@ -244,7 +246,7 @@ export function PanelExperience({ children, clientChatInHeader = false }: { chil
       <div className={`panel-theme ${chromeHidden && !mobileNavOpen ? "panel-mobile-chrome-hidden" : ""} ${mobileNavOpen ? "mobile-nav-open" : ""} ${clientChatInHeader ? "client-chat-in-header" : ""}`} data-panel-theme={resolved} suppressHydrationWarning>
         {children}
         <DashboardToastHost />
-        <aside className="panel-floating-tools" aria-label="Atención al cliente"><FloatingSupportChat /></aside>
+        <PanelViewportPortal><aside className="panel-floating-tools" aria-label="Atención al cliente"><FloatingSupportChat /></aside></PanelViewportPortal>
       </div>
     </MobileNavigationContext.Provider>
   );

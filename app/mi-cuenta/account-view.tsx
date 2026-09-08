@@ -80,7 +80,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
       <Brand linked={false} />
       <ClientMainNavigation section={section} replaceNavigation={replaceNavigation} variant="desktop" />
       <ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={capabilities.isCashier} />
-      <div className="client-desktop-actions"><PanelThemeSelector compact /><Link replace className="portal-public-link" href="/"><Globe2 /><span>Sitio público</span></Link></div>
+      <div className="client-desktop-actions"><PanelThemeSelector compact /><Link className="portal-public-link" href="/sitio"><Globe2 /><span>Sitio público</span></Link></div>
     </header>
     <section className="portal-hero client-page-hero"><p className="eyebrow">{copy.eyebrow}</p><h1>{section === "inicio" ? `Hola, ${displayName}` : copy.title}</h1><p>{copy.description}</p></section>
 
@@ -130,7 +130,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
         <nav aria-label="Opciones adicionales">
           <Link replace={replaceNavigation} className={section === "notificaciones" ? "active" : ""} href="/mi-cuenta/notificaciones"><Bell /><span>Notificaciones</span>{unreadNotifications > 0 && <b className="client-nav-badge">{unreadNotifications}</b>}</Link>
         </nav>
-        <div className="dash-sidebar-foot"><PanelThemeSelector /><Link replace href="/"><Globe2 /><span>Sitio público</span></Link><PanelMobileLogout /></div>
+        <div className="dash-sidebar-foot"><PanelThemeSelector /><Link href="/sitio"><Globe2 /><span>Sitio público</span></Link><PanelMobileLogout /></div>
       </aside>
       <PanelMobileScrim />
     </div>
