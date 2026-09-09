@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BarChart3, CalendarClock, ChevronRight, CircleDollarSign, Clock3, ImageOff, ImagePlus, LogOut, Menu, PackagePlus, Pencil, Power, Save, Scissors, Search, ShieldCheck, Sparkles, Store, Trash2, UserPlus, UserRound, UserRoundCog, Users, X } from "lucide-react";
+import { BarChart3, CalendarClock, ChevronRight, CircleDollarSign, Clock3, ImageOff, ImagePlus, LogOut, Menu, PackagePlus, Pencil, Plus, Power, Save, Scissors, Search, ShieldCheck, Sparkles, Store, Trash2, UserPlus, UserRound, UserRoundCog, Users, X } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { createClient } from "@/lib/supabase/client";
@@ -32,26 +32,80 @@ function productImageUrl(item: Row) {
   return `${supabaseUrl}/storage/v1/object/public/public-media/${encodedPath}`;
 }
 
+function ProductCategoryField({
+  categories,
+  defaultValue = "",
+  onCreate,
+}: {
+  categories: string[];
+  defaultValue?: string;
+  onCreate: (name: string) => Promise<string>;
+}) {
+  const [value, setValue] = useState(defaultValue);
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  async function saveCategory() {
+    if (saving) return;
+    setSaving(true);
+    setError("");
+    try {
+      const category = await onCreate(draft);
+      setValue(category);
+      setDraft("");
+      setAdding(false);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "No se pudo crear la categoría.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return <div className="product-category-field">
+    <label>Categoría<div className="product-category-select"><select name="category" value={value} onChange={(event) => setValue(event.target.value)} required><option value="" disabled>Selecciona una categoría</option>{categories.map((category) => <option value={category} key={category}>{category}</option>)}</select><button type="button" onClick={() => { setAdding((current) => !current); setError(""); }} aria-label="Agregar una categoría" title="Agregar una categoría" aria-expanded={adding}><Plus /></button></div></label>
+    {adding && <div className="product-new-category"><label><span>Nueva categoría</span><input value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void saveCategory(); } }} minLength={2} maxLength={60} placeholder="Ej. Cuidado de barba" autoFocus /></label><button type="button" onClick={() => void saveCategory()} disabled={saving || draft.trim().length < 2}>{saving ? "Guardando…" : "Agregar"}</button></div>}
+    {error && <small className="product-category-error" role="alert">{error}</small>}
+  </div>;
+}
+
 function AdminProductsTable({
   products,
+  initialCategories,
   busy,
   onAdd,
   onToggle,
   onUpdate,
 }: {
   products: Row[];
+  initialCategories: string[];
   busy: boolean;
   onAdd: (event: FormEvent<HTMLFormElement>) => Promise<void>;
   onToggle: (id: string, nextStatus: string) => Promise<void>;
   onUpdate: (event: FormEvent<HTMLFormElement>, item: Row) => Promise<void>;
 }) {
   const [query, setQuery] = useState("");
+  const [addedCategories, setAddedCategories] = useState<string[]>([]);
+  const categories = Array.from(new Map([...initialCategories, ...products.map((item) => String(item.category ?? "")), ...addedCategories].map((name) => name.trim()).filter(Boolean).map((name) => [name.toLocaleLowerCase("es"), name])).values()).sort((first, second) => first.localeCompare(second, "es"));
   const normalizedQuery = query.trim().toLocaleLowerCase("es");
   const visibleProducts = normalizedQuery
     ? products.filter((item) => [item.name, item.category, item.brand, item.presentation].some((value) => String(value ?? "").toLocaleLowerCase("es").includes(normalizedQuery)))
     : products;
   const inStock = products.filter((item) => Number(item.stock) > 0).length;
   const soldOut = products.length - inStock;
+
+  async function createCategory(name: string) {
+    const cleanName = name.trim().replace(/\s+/g, " ");
+    if (cleanName.length < 2) throw new Error("Escribe un nombre de al menos 2 caracteres.");
+    const existing = categories.find((category) => category.localeCompare(cleanName, "es", { sensitivity: "accent" }) === 0);
+    if (existing) return existing;
+    const { data, error } = await createClient().from("product_categories").insert({ name: cleanName }).select("name").single();
+    if (error) throw new Error(error.code === "23505" ? "Esta categoría ya existe. Actualiza la página para seleccionarla." : error.message);
+    const savedName = String(data.name);
+    setAddedCategories((current) => [...current, savedName]);
+    return savedName;
+  }
 
   return (
     <div className="admin-page admin-products-page">
@@ -82,7 +136,7 @@ function AdminProductsTable({
               {query && <button type="button" onClick={() => setQuery("")} aria-label="Limpiar búsqueda"><X /></button>}
             </label>
             <DashboardModal title="Crear producto" description="Configura inventario, precio e imagen comercial." triggerLabel="Nuevo producto" triggerIcon={<PackagePlus />} size="large">
-              <form className="admin-form" onSubmit={onAdd} acceptCharset="UTF-8"><label>Nombre<input name="name" required /></label><label>Identificador<input name="slug" placeholder="Se genera desde el nombre" /></label><label>Marca<input name="brand" /></label><label>Presentación<input name="presentation" placeholder="Ej. 250 ml" /></label><label className="wide">Descripción<input name="description" /></label><label>Categoría<input name="category" /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" required /></label><label>Stock inicial<input name="stock" type="number" min="0" required /></label><label className="wide">Imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required /></label><button className="button button-dark wide" disabled={busy}>Publicar producto</button></form>
+              <form className="admin-form" onSubmit={onAdd} acceptCharset="UTF-8"><label>Nombre<input name="name" required /></label><ProductCategoryField categories={categories} onCreate={createCategory} /><label>Marca<input name="brand" /></label><label>Presentación<input name="presentation" placeholder="Ej. 250 ml" /></label><label className="wide">Descripción<input name="description" /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" required /></label><label>Stock inicial<input name="stock" type="number" min="0" required /></label><label className="wide">Imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required /></label><button className="button button-dark wide" disabled={busy}>Publicar producto</button></form>
             </DashboardModal>
           </div>
         </div>
@@ -109,7 +163,7 @@ function AdminProductsTable({
                   <td><strong className="product-price">Bs {Number(item.price ?? 0).toFixed(2)}</strong></td>
                   <td><strong className={`product-stock ${isSoldOut ? "is-empty" : ""}`}>{stock}</strong><small>{isSoldOut ? "Sin existencias" : stock === 1 ? "unidad" : "unidades"}</small></td>
                   <td><span className={`product-status status-${isSoldOut ? "sold-out" : isActive ? "active" : "inactive"}`}>{statusLabel}</span></td>
-                  <td><div className="product-row-actions"><button type="button" onClick={() => onToggle(item.id, isActive ? "inactive" : "active")} disabled={busy} title={isActive ? "Desactivar producto" : "Activar producto"}><Power /><span>{isActive ? "Desactivar" : "Activar"}</span></button><DashboardModal title={`Editar ${String(item.name)}`} description="Actualiza la ficha comercial y el inventario." triggerLabel="Editar" triggerIcon={<Pencil />} variant="ghost" size="large"><form className="admin-form" onSubmit={(event) => onUpdate(event, item)} acceptCharset="UTF-8"><label>Nombre<input name="name" defaultValue={String(item.name)} required /></label><label>Categoría<input name="category" defaultValue={String(item.category ?? "")} /></label><label>Marca<input name="brand" defaultValue={String(item.brand ?? "")} /></label><label>Presentación<input name="presentation" defaultValue={String(item.presentation ?? "")} /></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description ?? "")} /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" defaultValue={Number(item.price)} required /></label><label>Stock<input name="stock" type="number" min="0" defaultValue={stock} required /></label><label className="wide">Reemplazar imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple /></label><button className="button button-dark wide" disabled={busy}>Guardar producto</button></form></DashboardModal></div></td>
+                  <td><div className="product-row-actions"><button type="button" onClick={() => onToggle(item.id, isActive ? "inactive" : "active")} disabled={busy} title={isActive ? "Desactivar producto" : "Activar producto"}><Power /><span>{isActive ? "Desactivar" : "Activar"}</span></button><DashboardModal title={`Editar ${String(item.name)}`} description="Actualiza la ficha comercial y el inventario." triggerLabel="Editar" triggerIcon={<Pencil />} variant="ghost" size="large"><form className="admin-form" onSubmit={(event) => onUpdate(event, item)} acceptCharset="UTF-8"><label>Nombre<input name="name" defaultValue={String(item.name)} required /></label><ProductCategoryField categories={categories} defaultValue={String(item.category ?? "")} onCreate={createCategory} /><label>Marca<input name="brand" defaultValue={String(item.brand ?? "")} /></label><label>Presentación<input name="presentation" defaultValue={String(item.presentation ?? "")} /></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description ?? "")} /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" defaultValue={Number(item.price)} required /></label><label>Stock<input name="stock" type="number" min="0" defaultValue={stock} required /></label><label className="wide">Reemplazar imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple /></label><button className="button button-dark wide" disabled={busy}>Guardar producto</button></form></DashboardModal></div></td>
                 </tr>;
               })}</tbody>
             </table>
@@ -137,6 +191,7 @@ type AdminDashboardProps = {
   initialServices: Row[];
   initialGallery: Row[];
   initialProducts: Row[];
+  initialProductCategories: string[];
   barbers: Row[];
   cashiers: Row[];
   pendingCashiers: Row[];
@@ -203,6 +258,7 @@ export function AdminDashboard({
   initialServices,
   initialGallery,
   initialProducts,
+  initialProductCategories,
   barbers,
   cashiers,
   pendingCashiers,
@@ -380,7 +436,7 @@ export function AdminDashboard({
       if (!files.length) throw new Error("Selecciona al menos una imagen del producto.");
       const imagePaths = await uploadImages(files, "products");
       const name = String(data.get("name") ?? "").trim();
-      const slug = String(data.get("slug") || name).trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+      const slug = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
       const supabase = createClient();
       const { error: insertError } = await supabase.from("products").insert({
         name,
@@ -653,7 +709,7 @@ export function AdminDashboard({
             <div className="admin-list">{initialGallery.map((item)=><article key={item.id}><div><strong>{String(item.title)}</strong><span>{String(item.status)} · consentimiento: {item.client_consent?"sí":"no"} · {Array.isArray(item.image_paths)?item.image_paths.length:1} foto(s)</span></div><div className="dash-row-actions"><button onClick={()=>toggleStatus("gallery_posts",item.id,item.status==="published"?"hidden":"published")}>{item.status==="published"?"Ocultar":"Publicar"}</button><DashboardModal title={`Editar ${String(item.title)}`} triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateGalleryPost(event,item)}><label>Título<input name="title" defaultValue={String(item.title)} required/></label><label>Reemplazar imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple/></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description??"")}/></label><label className="check-label wide"><input type="checkbox" name="featured" defaultChecked={Boolean(item.featured)}/> Destacada</label><button className="button button-dark wide" disabled={busy}>Guardar publicación</button></form></DashboardModal><button type="button" className="dash-danger-action" onClick={()=>deleteGalleryPost(item)} disabled={busy}><Trash2/> Eliminar</button></div></article>)}</div>
           </div>}
 
-          {section === "productos" && <AdminProductsTable products={initialProducts} busy={busy} onAdd={addProduct} onToggle={(id, nextStatus) => toggleStatus("products", id, nextStatus)} onUpdate={updateProduct} />}
+          {section === "productos" && <AdminProductsTable products={initialProducts} initialCategories={initialProductCategories} busy={busy} onAdd={addProduct} onToggle={(id, nextStatus) => toggleStatus("products", id, nextStatus)} onUpdate={updateProduct} />}
 
           {section === "equipo" && <div className="admin-panel team-panel">
             <div className="admin-title"><Users/><div><p>PERSONAL</p><h1>Equipo</h1></div></div>

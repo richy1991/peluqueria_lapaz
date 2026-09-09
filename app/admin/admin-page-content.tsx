@@ -40,11 +40,12 @@ export async function AdminPageContent({
   if (resolvedSection === "administradores" && !isSuperadmin) redirect("/admin/agenda");
 
   const clientPageSize = 25;
-  const [ownProfile, services, gallery, products, barbers, cashiers, pendingCashiers, settings, businessHours, adminUsers, appointments, clientDirectory, analytics,marketing,loyaltySettings,rewards,promotions,expenses,payouts] = await Promise.all([
+  const [ownProfile, services, gallery, products, productCategories, barbers, cashiers, pendingCashiers, settings, businessHours, adminUsers, appointments, clientDirectory, analytics,marketing,loyaltySettings,rewards,promotions,expenses,payouts] = await Promise.all([
     supabase.from("profiles").select("id,full_name,email,phone,avatar_url,status").eq("id", user.id).maybeSingle(),
     ["servicios", "programa"].includes(resolvedSection) ? supabase.from("services").select("*").order("created_at") : Promise.resolve({ data: [] }),
     resolvedSection === "galeria" ? supabase.from("gallery_posts").select("*").order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
     ["productos", "programa"].includes(resolvedSection) ? supabase.from("products").select("*").order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
+    resolvedSection === "productos" ? supabase.from("product_categories").select("name").eq("active", true).order("name") : Promise.resolve({ data: [] }),
     ["agenda", "equipo", "servicios", "programa"].includes(resolvedSection) ? supabase.from("barber_profiles").select("*").order("display_name") : Promise.resolve({ data: [] }),
     resolvedSection === "equipo" ? supabase.from("cashier_profiles").select("id,user_id,active,created_at,updated_at,profiles!cashier_profiles_user_id_fkey(id,full_name,email,phone,status)").order("created_at") : Promise.resolve({ data: [] }),
     resolvedSection === "equipo" ? supabase.from("pending_cashiers").select("id,email,status,expires_at,created_at").eq("status","pending").order("created_at",{ascending:false}) : Promise.resolve({ data: [] }),
@@ -91,6 +92,7 @@ export async function AdminPageContent({
       initialServices={services.data ?? []}
       initialGallery={gallery.data ?? []}
       initialProducts={products.data ?? []}
+      initialProductCategories={(productCategories.data ?? []).map((category) => String(category.name))}
       barbers={barbers.data ?? []}
       cashiers={cashiers.data ?? []}
       pendingCashiers={pendingCashiers.data ?? []}
