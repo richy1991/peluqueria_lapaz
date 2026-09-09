@@ -12,7 +12,7 @@ import { AdminAnalytics, type AnalyticsData } from "./admin-analytics";
 import { AdminProgram } from "./admin-program";
 import { DashboardModal } from "@/components/dashboard-modal";
 import { DashboardToast, type DashboardToastData } from "@/components/dashboard-toast";
-import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelThemeSelector } from "@/components/panel-experience";
+import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelResponsiveSidebar, PanelThemeSelector } from "@/components/panel-experience";
 import { clearFormErrors, dispatchDashboardSuccess, reportFormError } from "@/lib/form-feedback";
 import { formatBusinessHours, isBusinessOpenNow, type BusinessHour } from "@/lib/business-hours";
 import type {LucideIcon} from "lucide-react";
@@ -458,6 +458,7 @@ export function AdminDashboard({
         <div className="dash-user"><span className="dash-avatar">{userEmail.slice(0,2).toUpperCase()}</span><span>{userEmail}<small>Administrador</small></span><button className="desktop-logout" onClick={logout}><LogOut size={16} /> Salir</button></div>
       </header>
       <div className={`admin-layout ${navCollapsed?"nav-collapsed":""}`}>
+        <PanelResponsiveSidebar>
         <aside className="admin-nav dash-sidebar">
           <div className="dash-sidebar-head"><p>CONTROL CENTRAL</p><button className="dash-collapse" type="button" onClick={()=>setNavCollapsed(value=>!value)} aria-label={navCollapsed?"Abrir menú lateral":"Cerrar menú lateral"} aria-expanded={!navCollapsed} title={navCollapsed?"Abrir menú":"Cerrar menú"}>{navCollapsed?<Menu/>:<X/>}</button><PanelMobileSidebarClose/></div>
           <Link href="/admin/perfil" replace={!isRootPage} className={`admin-sidebar-profile ${section === "perfil" ? "active" : ""}`} aria-current={section === "perfil" ? "page" : undefined} aria-label={`Ver perfil de ${adminProfile.full_name}`} title="Ver mi perfil">
@@ -469,6 +470,7 @@ export function AdminDashboard({
           <div className="dash-sidebar-foot"><PanelThemeSelector/><Link href="/sitio"><Sparkles/><span>Ver sitio público</span></Link><PanelMobileLogout/></div>
         </aside>
         <PanelMobileScrim/>
+        </PanelResponsiveSidebar>
         <section className="admin-content" key={section}>
           {section === "perfil" && <div className="admin-panel admin-profile-panel">
             <div className="admin-title"><UserRound /><div><p>CUENTA ADMINISTRATIVA</p><h1>Mi perfil</h1></div></div>

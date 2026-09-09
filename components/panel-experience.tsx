@@ -31,6 +31,16 @@ function subscribeToBrowser() {
   return () => undefined;
 }
 
+function subscribeToMobileViewport(callback: () => void) {
+  const media = window.matchMedia("(max-width: 760px)");
+  media.addEventListener("change", callback);
+  return () => media.removeEventListener("change", callback);
+}
+
+function mobileViewportSnapshot() {
+  return window.matchMedia("(max-width: 760px)").matches;
+}
+
 function subscribe(callback: () => void) {
   window.addEventListener("storage", callback);
   window.addEventListener(EVENT, callback);
@@ -204,6 +214,13 @@ export function PanelViewportPortal({ children }: { children: ReactNode }) {
 
   const className = `panel-theme panel-viewport-layer ${chromeHidden && !open ? "panel-mobile-chrome-hidden" : ""} ${open ? "mobile-nav-open" : ""} ${chatInHeader ? "panel-chat-in-header" : ""}`;
   return createPortal(<div className={className} data-panel-theme={theme}>{children}</div>, document.body);
+}
+
+export function PanelResponsiveSidebar({ children, variant = "operations" }: { children: ReactNode; variant?: "client" | "operations" }) {
+  const mobile = useSyncExternalStore(subscribeToMobileViewport, mobileViewportSnapshot, () => false);
+  const shellClass = variant === "client" ? "panel-client-shell" : "admin-shell";
+  const sidebar = <div className={`panel-sidebar-viewport-overlays ${shellClass}`}>{children}</div>;
+  return mobile ? <PanelViewportPortal>{sidebar}</PanelViewportPortal> : sidebar;
 }
 
 export function PanelExperience({ children, chatInHeader = false }: { children: ReactNode; chatInHeader?: boolean }) {

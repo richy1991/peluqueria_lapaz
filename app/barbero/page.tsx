@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { Activity, Banknote, CalendarClock, Clock3, History, Images, PackageOpen, ReceiptText, Sparkles, UserRoundPen } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { ModeSwitcher } from "@/components/mode-switcher";
-import { PanelExperience, PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelThemeSelector, PanelViewportPortal } from "@/components/panel-experience";
+import { PanelExperience, PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelResponsiveSidebar, PanelThemeSelector, PanelViewportPortal } from "@/components/panel-experience";
 import { ProductCatalog } from "@/components/product-catalog";
 import { getPublicProducts } from "@/lib/public-data";
 import { createClient } from "@/lib/supabase/server";
@@ -90,6 +90,7 @@ export async function BarberView({ section }: { section: BarberSection }) {
       <div className="dash-user"><span className="dash-avatar">{(user.email ?? "LC").slice(0, 2).toUpperCase()}</span><span>{user.email}<small>Peluquero · {capabilities.barber.display_name}</small></span></div>
     </header>
     <div className="admin-layout barber-layout">
+      <PanelResponsiveSidebar>
       <aside className="admin-nav dash-sidebar">
         <div className="dash-sidebar-head"><p>MI ESTACIÓN</p><PanelMobileSidebarClose /></div>
         <nav>
@@ -102,6 +103,7 @@ export async function BarberView({ section }: { section: BarberSection }) {
         <div className="dash-sidebar-foot"><PanelThemeSelector /><Link href="/sitio"><Sparkles /><span>Web pública</span></Link><PanelMobileLogout /></div>
       </aside>
       <PanelMobileScrim />
+      </PanelResponsiveSidebar>
       <section className="barber-content">
         <section className="portal-hero dash-role-hero"><div><p className="eyebrow">{info.eyebrow}</p><h1>{info.title}</h1><p>{info.description}</p></div><div className="barber-pulse"><span><i />{active.length} citas activas</span>{section === "agenda" ? <Clock3 /> : section === "productos" ? <PackageOpen /> : section === "balance" ? <Banknote /> : section === "trabajos" ? <Images /> : <UserRoundPen />}</div></section>
         <div className="portal-grid dash-portal-grid">

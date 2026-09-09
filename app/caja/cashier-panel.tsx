@@ -7,7 +7,7 @@ import { ArrowRight, Calculator, CirclePlus, ClipboardCheck, Gift, History, Lock
 import { Brand } from "@/components/brand";
 import { DashboardModal } from "@/components/dashboard-modal";
 import { ModeSwitcher } from "@/components/mode-switcher";
-import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelThemeSelector } from "@/components/panel-experience";
+import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelResponsiveSidebar, PanelThemeSelector } from "@/components/panel-experience";
 import { clearFormErrors, dispatchDashboardError, dispatchDashboardSuccess, reportFormError } from "@/lib/form-feedback";
 import { createClient } from "@/lib/supabase/client";
 import { CashierMobileNavigation, type CashierNavigationSection } from "./cashier-navigation";
@@ -159,7 +159,7 @@ export function CashierPanel(props: Props) {
 
   return <main className="admin-shell dash-workspace cashier-shell">
     <header className="admin-header dash-header"><PanelMobileMenuButton /><div className="dash-brand"><Brand linked={false} /><span className="dash-live"><i /> CAJA CONECTADA</span></div><ModeSwitcher current="cashier" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier showClient={false} /><div className="dash-user"><span className="dash-avatar">{userEmail.slice(0, 2).toUpperCase()}</span><span>{userEmail}<small>Operador de caja</small></span></div></header>
-    <div className="admin-layout cashier-layout"><aside className="admin-nav dash-sidebar"><div className="dash-sidebar-head"><p>TERMINAL POS</p><PanelMobileSidebarClose /></div><nav>
+    <div className="admin-layout cashier-layout"><PanelResponsiveSidebar><aside className="admin-nav dash-sidebar"><div className="dash-sidebar-head"><p>TERMINAL POS</p><PanelMobileSidebarClose /></div><nav>
       <Link replace={replaceNavigation} className={section === "servicios" ? "active" : ""} href="/caja"><Scissors /><span>Cobrar servicios</span>{section === "servicios" && <i />}</Link>
       <Link replace={replaceNavigation} className={section === "productos" ? "active" : ""} href="/caja/productos"><PackageOpen /><span>Venta de productos</span>{section === "productos" && <i />}</Link>
       <Link replace={replaceNavigation} className={section === "reservas" ? "active" : ""} href="/caja/reservas"><PackageCheck /><span>Reservas</span>{productReservations.length > 0 && <b className="cashier-nav-badge">{productReservations.length}</b>}{section === "reservas" && <i />}</Link>
@@ -167,7 +167,7 @@ export function CashierPanel(props: Props) {
       <Link replace={replaceNavigation} className={section === "liquidaciones" ? "active" : ""} href="/caja/liquidaciones"><Calculator /><span>Liquidaciones</span>{section === "liquidaciones" && <i />}</Link>
       <Link replace={replaceNavigation} className={section === "gastos" ? "active" : ""} href="/caja/gastos"><ClipboardCheck /><span>Gastos</span>{section === "gastos" && <i />}</Link>
       <Link replace={replaceNavigation} className={section === "historial" ? "active" : ""} href="/caja/historial"><History /><span>Historial</span>{section === "historial" && <i />}</Link>
-    </nav><div className="dash-sidebar-foot"><PanelThemeSelector /><Link href="/sitio"><Sparkles /><span>Web pública</span></Link><PanelMobileLogout /></div></aside><PanelMobileScrim />
+    </nav><div className="dash-sidebar-foot"><PanelThemeSelector /><Link href="/sitio"><Sparkles /><span>Web pública</span></Link><PanelMobileLogout /></div></aside><PanelMobileScrim /></PanelResponsiveSidebar>
       <section className="cashier-content"><div className="dash-page-heading"><div className="admin-title"><WalletCards /><div><p>TERMINAL POS</p><h1>{section === "reservas" ? "Reservas de productos" : titles[section]}</h1></div></div><span className={`dash-status-pill ${shift ? "online" : "offline"}`}><i />{shift ? "Turno abierto" : "Turno cerrado"}</span></div>
         {error && <p className="admin-error">{error}</p>}{result && <div className="admin-message"><strong>Operación completada.</strong>{"receipt_id" in result && <Link href={`/comprobante/${String(result.receipt_id)}`}> Ver comprobante #{String(result.receipt_number)}</Link>}{Boolean(result.claim_code) && <span> Código: <b>{String(result.claim_code)}</b></span>}</div>}
         {!shift ? <OpenShift onSubmit={open} busy={busy} /> : <>

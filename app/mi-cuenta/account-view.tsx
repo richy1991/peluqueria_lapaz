@@ -17,6 +17,7 @@ import {
   PanelMobileMenuButton,
   PanelMobileScrim,
   PanelMobileSidebarClose,
+  PanelResponsiveSidebar,
   PanelThemeSelector,
   PanelViewportPortal,
 } from "@/components/panel-experience";
@@ -123,8 +124,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
       {person?.is_blacklisted && <p className="portal-warning">La cuenta tiene una alerta por inasistencias.</p>}{person?.is_blocked && <p className="portal-error">Las nuevas reservas están bloqueadas. Contacta al negocio.</p>}
     </section></div>}
     {section !== "productos" && <ClientPromoRail products={availableProducts} replaceNavigation={replaceNavigation} />}
-  </main><PanelViewportPortal>
-    <div className="panel-client-shell panel-client-viewport-overlays">
+  </main><PanelResponsiveSidebar variant="client">
       <aside className="dash-sidebar client-mobile-sidebar" aria-label="Menú de mi cuenta">
         <div className="dash-sidebar-head"><p>MI CUENTA</p><PanelMobileSidebarClose /></div>
         <nav aria-label="Opciones adicionales">
@@ -133,7 +133,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
         <div className="dash-sidebar-foot"><PanelThemeSelector /><Link href="/sitio"><Globe2 /><span>Sitio público</span></Link><PanelMobileLogout /></div>
       </aside>
       <PanelMobileScrim />
-    </div>
+  </PanelResponsiveSidebar><PanelViewportPortal>
     <ClientMainNavigation section={section} replaceNavigation={replaceNavigation} variant="mobile" />
   </PanelViewportPortal></PanelExperience>;
 }

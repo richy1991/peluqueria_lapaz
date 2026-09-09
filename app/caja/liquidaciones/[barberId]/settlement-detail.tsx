@@ -7,7 +7,7 @@ import { ArrowLeft, Banknote, Calculator, CheckCircle2, ClipboardCheck, History,
 import { Brand } from "@/components/brand";
 import { DashboardModal } from "@/components/dashboard-modal";
 import { ModeSwitcher } from "@/components/mode-switcher";
-import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelThemeSelector } from "@/components/panel-experience";
+import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelResponsiveSidebar, PanelThemeSelector } from "@/components/panel-experience";
 import { clearFormErrors, dispatchDashboardError, dispatchDashboardSuccess, reportFormError } from "@/lib/form-feedback";
 import { createClient } from "@/lib/supabase/client";
 import { CashierMobileNavigation } from "../../cashier-navigation";
@@ -69,9 +69,9 @@ export function CashierSettlementDetail({ userEmail, capabilities, shiftOpen, de
 
   return <main className="admin-shell dash-workspace cashier-shell">
     <header className="admin-header dash-header"><PanelMobileMenuButton /><div className="dash-brand"><Brand linked={false} /><span className="dash-live"><i /> CAJA CONECTADA</span></div><ModeSwitcher current="cashier" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier showClient={false} /><div className="dash-user"><span className="dash-avatar">{userEmail.slice(0, 2).toUpperCase()}</span><span>{userEmail}<small>Operador de caja</small></span></div></header>
-    <div className="admin-layout cashier-layout"><aside className="admin-nav dash-sidebar"><div className="dash-sidebar-head"><p>TERMINAL POS</p><PanelMobileSidebarClose /></div><nav>
+    <div className="admin-layout cashier-layout"><PanelResponsiveSidebar><aside className="admin-nav dash-sidebar"><div className="dash-sidebar-head"><p>TERMINAL POS</p><PanelMobileSidebarClose /></div><nav>
       <Link replace href="/caja"><Scissors /><span>Cobrar servicios</span></Link><Link replace href="/caja/productos"><PackageOpen /><span>Venta de productos</span></Link><Link replace href="/caja/reservas"><PackageCheck /><span>Reservas</span></Link><Link replace href="/caja/movimientos"><ReceiptText /><span>Libro diario</span></Link><Link replace className="active" href="/caja/liquidaciones"><Calculator /><span>Liquidaciones</span><i /></Link><Link replace href="/caja/gastos"><ClipboardCheck /><span>Gastos</span></Link><Link replace href="/caja/historial"><History /><span>Historial</span></Link>
-    </nav><div className="dash-sidebar-foot"><PanelThemeSelector /><Link href="/sitio"><Sparkles /><span>Web pública</span></Link><PanelMobileLogout /></div></aside><PanelMobileScrim />
+    </nav><div className="dash-sidebar-foot"><PanelThemeSelector /><Link href="/sitio"><Sparkles /><span>Web pública</span></Link><PanelMobileLogout /></div></aside><PanelMobileScrim /></PanelResponsiveSidebar>
       <section className="cashier-content settlement-detail-content">
         <Link replace className="settlement-back" href="/caja/liquidaciones"><ArrowLeft /> Todas las liquidaciones</Link>
         <div className="dash-page-heading"><div className="admin-title"><Calculator /><div><p>CIERRE DEL TURNO · {detail.work_date}</p><h1>{detail.barber.name}</h1></div></div><span className={`dash-status-pill ${shiftOpen ? "online" : "offline"}`}><i />{shiftOpen ? "Turno abierto" : "Turno cerrado"}</span></div>
