@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BarChart3, CalendarClock, ChevronRight, CircleDollarSign, Clock3, ImageOff, ImagePlus, LogOut, Menu, PackagePlus, Pencil, Plus, Power, Save, Scissors, Search, ShieldCheck, Sparkles, Store, Trash2, UserPlus, UserRound, UserRoundCog, Users, X } from "lucide-react";
@@ -23,13 +23,97 @@ type Row = Record<string, unknown> & { id: string };
 type AdminUser = { user_id: string | null; email: string; role: "admin" | "superadmin" | "pending"; created_at: string };
 type AdminProfile = { id: string; full_name: string; email: string; phone: string | null; avatar_url: string | null; status: string };
 
-function productImageUrl(item: Row) {
+function productImagePaths(item: Row) {
   const storedImages = Array.isArray(item.image_paths) ? item.image_paths.map(String).filter(Boolean) : [];
-  const path = storedImages[0] ?? String(item.image_path ?? "").trim();
+  const fallback = String(item.image_path ?? "").trim();
+  return storedImages.length ? storedImages : fallback ? [fallback] : [];
+}
+
+function publicProductImageUrl(path: string) {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
   const encodedPath = path.split("/").map(encodeURIComponent).join("/");
   return `${supabaseUrl}/storage/v1/object/public/public-media/${encodedPath}`;
+}
+
+function productImageUrl(item: Row) {
+  return publicProductImageUrl(productImagePaths(item)[0] ?? "");
+}
+
+type ExistingProductImage = { path: string; url: string };
+
+function ProductImagePicker({
+  existingImages = [],
+  required = false,
+}: {
+  existingImages?: ExistingProductImage[];
+  required?: boolean;
+}) {
+  const inputId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const previewUrlsRef = useRef(new Set<string>());
+  const [retainedImages, setRetainedImages] = useState(existingImages);
+  const [selectedImages, setSelectedImages] = useState<Array<{ file: File; url: string }>>([]);
+  const totalImages = retainedImages.length + selectedImages.length;
+
+  useEffect(() => {
+    const previewUrls = previewUrlsRef.current;
+    function resetAfterSave() {
+      setSelectedImages((current) => {
+        current.forEach(({ url }) => {
+          URL.revokeObjectURL(url);
+          previewUrls.delete(url);
+        });
+        return [];
+      });
+      if (inputRef.current) inputRef.current.value = "";
+    }
+    window.addEventListener("legend-dashboard-operation-success", resetAfterSave);
+    return () => {
+      window.removeEventListener("legend-dashboard-operation-success", resetAfterSave);
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+      previewUrls.clear();
+    };
+  }, []);
+
+  function updateFiles(nextFiles: File[]) {
+    const uniqueFiles = Array.from(new Map(nextFiles.map((file) => [`${file.name}:${file.size}:${file.lastModified}`, file])).values()).slice(0, Math.max(0, 3 - retainedImages.length));
+    const currentByFile = new Map(selectedImages.map((image) => [image.file, image]));
+    const nextImages = uniqueFiles.map((file) => {
+      const current = currentByFile.get(file);
+      if (current) return current;
+      const url = URL.createObjectURL(file);
+      previewUrlsRef.current.add(url);
+      return { file, url };
+    });
+    const nextUrls = new Set(nextImages.map(({ url }) => url));
+    selectedImages.forEach(({ url }) => {
+      if (nextUrls.has(url)) return;
+      URL.revokeObjectURL(url);
+      previewUrlsRef.current.delete(url);
+    });
+    setSelectedImages(nextImages);
+    if (!inputRef.current) return;
+    const transfer = new DataTransfer();
+    uniqueFiles.forEach((file) => transfer.items.add(file));
+    inputRef.current.files = transfer.files;
+  }
+
+  function selectFiles(event: ChangeEvent<HTMLInputElement>) {
+    updateFiles([...selectedImages.map(({ file }) => file), ...Array.from(event.currentTarget.files ?? [])]);
+  }
+
+  return <div className="product-images-field wide">
+    <div className="product-images-heading"><label htmlFor={inputId}>Imágenes del producto</label><small>{totalImages}/3 seleccionadas</small></div>
+    {retainedImages.map((image) => <input key={image.path} type="hidden" name="retained_images" value={image.path} />)}
+    <input ref={inputRef} id={inputId} className="product-images-input" name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required={required && totalImages === 0} onChange={selectFiles} disabled={totalImages >= 3} />
+    <p>JPG, PNG o WebP. Se optimizan automáticamente y puedes quitar cualquier imagen antes de guardar.</p>
+    <div className="product-image-previews" aria-live="polite">
+      {retainedImages.map((image, index) => <figure key={image.path}><span style={{ backgroundImage: `url(${JSON.stringify(image.url)})` }} role="img" aria-label={`Imagen actual ${index + 1}`} /><figcaption>Actual</figcaption><button type="button" onClick={() => setRetainedImages((current) => current.filter((item) => item.path !== image.path))} aria-label={`Quitar imagen actual ${index + 1}`}><X /></button></figure>)}
+      {selectedImages.map((preview, index) => <figure key={`${preview.file.name}:${preview.file.lastModified}`}><span style={{ backgroundImage: `url(${JSON.stringify(preview.url)})` }} role="img" aria-label={`Vista previa ${index + 1}`} /><figcaption>Nueva</figcaption><button type="button" onClick={() => updateFiles(selectedImages.filter((image) => image.file !== preview.file).map(({ file }) => file))} aria-label={`Quitar imagen nueva ${index + 1}`}><X /></button></figure>)}
+      {!totalImages && <div className="product-images-empty"><ImagePlus /><span>Selecciona hasta tres imágenes</span></div>}
+    </div>
+  </div>;
 }
 
 function ProductCategoryField({
@@ -136,7 +220,7 @@ function AdminProductsTable({
               {query && <button type="button" onClick={() => setQuery("")} aria-label="Limpiar búsqueda"><X /></button>}
             </label>
             <DashboardModal title="Crear producto" description="Configura inventario, precio e imagen comercial." triggerLabel="Nuevo producto" triggerIcon={<PackagePlus />} size="large">
-              <form className="admin-form" onSubmit={onAdd} acceptCharset="UTF-8"><label>Nombre<input name="name" required /></label><ProductCategoryField categories={categories} onCreate={createCategory} /><label>Marca<input name="brand" /></label><label>Presentación<input name="presentation" placeholder="Ej. 250 ml" /></label><label className="wide">Descripción<input name="description" /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" required /></label><label>Stock inicial<input name="stock" type="number" min="0" required /></label><label className="wide">Imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required /></label><button className="button button-dark wide" disabled={busy}>Publicar producto</button></form>
+              <form className="admin-form" onSubmit={onAdd} acceptCharset="UTF-8"><label>Nombre<input name="name" required /></label><ProductCategoryField categories={categories} onCreate={createCategory} /><label>Marca<input name="brand" /></label><label>Presentación<input name="presentation" placeholder="Ej. 250 ml" /></label><label className="wide">Descripción<input name="description" /></label><div className="product-numeric-fields wide"><label>Precio Bs<input name="price" type="number" min="0" step="0.5" inputMode="decimal" required /></label><label>Stock inicial<input name="stock" type="number" min="0" inputMode="numeric" required /></label></div><ProductImagePicker required /><button className="button button-dark wide" disabled={busy}>Publicar producto</button></form>
             </DashboardModal>
           </div>
         </div>
@@ -153,6 +237,10 @@ function AdminProductsTable({
               <thead><tr><th scope="col">Producto</th><th scope="col">Categoría</th><th scope="col">Precio</th><th scope="col">Stock</th><th scope="col">Estado</th><th scope="col"><span className="sr-only">Acciones</span></th></tr></thead>
               <tbody>{visibleProducts.map((item) => {
                 const image = productImageUrl(item);
+                const existingImages = productImagePaths(item).flatMap((path) => {
+                  const url = publicProductImageUrl(path);
+                  return url ? [{ path, url }] : [];
+                });
                 const stock = Number(item.stock ?? 0);
                 const isSoldOut = stock <= 0;
                 const isActive = item.status === "active";
@@ -163,7 +251,7 @@ function AdminProductsTable({
                   <td><strong className="product-price">Bs {Number(item.price ?? 0).toFixed(2)}</strong></td>
                   <td><strong className={`product-stock ${isSoldOut ? "is-empty" : ""}`}>{stock}</strong><small>{isSoldOut ? "Sin existencias" : stock === 1 ? "unidad" : "unidades"}</small></td>
                   <td><span className={`product-status status-${isSoldOut ? "sold-out" : isActive ? "active" : "inactive"}`}>{statusLabel}</span></td>
-                  <td><div className="product-row-actions"><button type="button" onClick={() => onToggle(item.id, isActive ? "inactive" : "active")} disabled={busy} title={isActive ? "Desactivar producto" : "Activar producto"}><Power /><span>{isActive ? "Desactivar" : "Activar"}</span></button><DashboardModal title={`Editar ${String(item.name)}`} description="Actualiza la ficha comercial y el inventario." triggerLabel="Editar" triggerIcon={<Pencil />} variant="ghost" size="large"><form className="admin-form" onSubmit={(event) => onUpdate(event, item)} acceptCharset="UTF-8"><label>Nombre<input name="name" defaultValue={String(item.name)} required /></label><ProductCategoryField categories={categories} defaultValue={String(item.category ?? "")} onCreate={createCategory} /><label>Marca<input name="brand" defaultValue={String(item.brand ?? "")} /></label><label>Presentación<input name="presentation" defaultValue={String(item.presentation ?? "")} /></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description ?? "")} /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" defaultValue={Number(item.price)} required /></label><label>Stock<input name="stock" type="number" min="0" defaultValue={stock} required /></label><label className="wide">Reemplazar imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple /></label><button className="button button-dark wide" disabled={busy}>Guardar producto</button></form></DashboardModal></div></td>
+                  <td><div className="product-row-actions"><button type="button" onClick={() => onToggle(item.id, isActive ? "inactive" : "active")} disabled={busy} title={isActive ? "Desactivar producto" : "Activar producto"}><Power /><span>{isActive ? "Desactivar" : "Activar"}</span></button><DashboardModal title={`Editar ${String(item.name)}`} description="Actualiza la ficha comercial y el inventario." triggerLabel="Editar" triggerIcon={<Pencil />} variant="ghost" size="large"><form className="admin-form" onSubmit={(event) => onUpdate(event, item)} acceptCharset="UTF-8"><label>Nombre<input name="name" defaultValue={String(item.name)} required /></label><ProductCategoryField categories={categories} defaultValue={String(item.category ?? "")} onCreate={createCategory} /><label>Marca<input name="brand" defaultValue={String(item.brand ?? "")} /></label><label>Presentación<input name="presentation" defaultValue={String(item.presentation ?? "")} /></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description ?? "")} /></label><div className="product-numeric-fields wide"><label>Precio Bs<input name="price" type="number" min="0" step="0.5" inputMode="decimal" defaultValue={Number(item.price)} required /></label><label>Stock<input name="stock" type="number" min="0" inputMode="numeric" defaultValue={stock} required /></label></div><ProductImagePicker key={String(item.updated_at ?? item.id)} existingImages={existingImages} /><button className="button button-dark wide" disabled={busy}>Guardar producto</button></form></DashboardModal></div></td>
                 </tr>;
               })}</tbody>
             </table>
@@ -430,11 +518,12 @@ export function AdminDashboard({
     const form = event.currentTarget;
     clearFormErrors(form);
     startAction();
+    let uploadedPaths: string[] = [];
     try {
       const data = new FormData(form);
       const files = data.getAll("images").filter((file): file is File => file instanceof File && file.size > 0);
       if (!files.length) throw new Error("Selecciona al menos una imagen del producto.");
-      const imagePaths = await uploadImages(files, "products");
+      uploadedPaths = await uploadImages(files, "products");
       const name = String(data.get("name") ?? "").trim();
       const slug = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
       const supabase = createClient();
@@ -447,13 +536,15 @@ export function AdminDashboard({
         presentation: String(data.get("presentation") ?? ""),
         price: Number(data.get("price")),
         stock: Number(data.get("stock")),
-        image_path: imagePaths[0] ?? null,
-        image_paths: imagePaths,
+        image_path: uploadedPaths[0] ?? null,
+        image_paths: uploadedPaths,
         status: "active",
       });
       if (insertError) throw insertError;
+      uploadedPaths = [];
       finishAction("Producto publicado.");
     } catch (productError) {
+      if (uploadedPaths.length) await createClient().storage.from("public-media").remove(uploadedPaths);
       failAction(productError, form, productError instanceof Error && productError.message.includes("imagen") ? "images" : undefined);
     }
   }
@@ -564,11 +655,44 @@ export function AdminDashboard({
   }
 
   async function updateProduct(event: FormEvent<HTMLFormElement>, item: Row) {
-    event.preventDefault(); const form=event.currentTarget; clearFormErrors(form); startAction();
-    try { const data=new FormData(form); const files=data.getAll("images").filter((file):file is File=>file instanceof File&&file.size>0);const current=Array.isArray(item.image_paths)?item.image_paths.map(String):[String(item.image_path??"")].filter(Boolean);const imagePaths=files.length?await uploadImages(files,"products"):current;
-      const { error: updateError }=await createClient().from("products").update({name:String(data.get("name")??""),description:String(data.get("description")??""),category:String(data.get("category")??""),brand:String(data.get("brand")??""),presentation:String(data.get("presentation")??""),price:Number(data.get("price")),stock:Number(data.get("stock")),image_path:imagePaths[0]??null,image_paths:imagePaths,updated_at:new Date().toISOString()}).eq("id",item.id);
-      if(updateError)throw updateError; finishAction("Producto actualizado y publicado.");
-    } catch(reason){failAction(reason,form);}
+    event.preventDefault();
+    const form = event.currentTarget;
+    clearFormErrors(form);
+    startAction();
+    let uploadedPaths: string[] = [];
+    try {
+      const data = new FormData(form);
+      const files = data.getAll("images").filter((file): file is File => file instanceof File && file.size > 0);
+      const currentImages = productImagePaths(item);
+      const retainedImages = data.getAll("retained_images").map(String).filter((path) => currentImages.includes(path));
+      if (retainedImages.length + files.length === 0) throw new Error("Conserva o selecciona al menos una imagen del producto.");
+      if (retainedImages.length + files.length > 3) throw new Error("Puedes publicar un máximo de 3 imágenes.");
+
+      uploadedPaths = await uploadImages(files, "products");
+      const imagePaths = [...retainedImages, ...uploadedPaths];
+      const supabase = createClient();
+      const { error: updateError } = await supabase.from("products").update({
+        name: String(data.get("name") ?? ""),
+        description: String(data.get("description") ?? ""),
+        category: String(data.get("category") ?? ""),
+        brand: String(data.get("brand") ?? ""),
+        presentation: String(data.get("presentation") ?? ""),
+        price: Number(data.get("price")),
+        stock: Number(data.get("stock")),
+        image_path: imagePaths[0] ?? null,
+        image_paths: imagePaths,
+        updated_at: new Date().toISOString(),
+      }).eq("id", item.id);
+      if (updateError) throw updateError;
+
+      uploadedPaths = [];
+      const removedStoredImages = currentImages.filter((path) => !retainedImages.includes(path) && !/^https?:\/\//i.test(path));
+      if (removedStoredImages.length) await supabase.storage.from("public-media").remove(removedStoredImages);
+      finishAction("Producto actualizado y publicado.");
+    } catch (reason) {
+      if (uploadedPaths.length) await createClient().storage.from("public-media").remove(uploadedPaths);
+      failAction(reason, form, reason instanceof Error && /imagen/i.test(reason.message) ? "images" : undefined);
+    }
   }
 
   async function logout() {
