@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BarChart3, CalendarClock, ChevronRight, CircleDollarSign, Clock3, ImagePlus, LogOut, Menu, PackagePlus, Save, Scissors, ShieldCheck, Sparkles, Store, Trash2, UserPlus, UserRound, UserRoundCog, Users, X } from "lucide-react";
+import { BarChart3, CalendarClock, ChevronRight, CircleDollarSign, Clock3, ImageOff, ImagePlus, LogOut, Menu, PackagePlus, Pencil, Power, Save, Scissors, Search, ShieldCheck, Sparkles, Store, Trash2, UserPlus, UserRound, UserRoundCog, Users, X } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { createClient } from "@/lib/supabase/client";
@@ -15,12 +15,110 @@ import { DashboardToast, type DashboardToastData } from "@/components/dashboard-
 import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelResponsiveSidebar, PanelThemeSelector } from "@/components/panel-experience";
 import { clearFormErrors, dispatchDashboardSuccess, reportFormError } from "@/lib/form-feedback";
 import { formatBusinessHours, isBusinessOpenNow, type BusinessHour } from "@/lib/business-hours";
+import { supabaseUrl } from "@/lib/supabase/config";
 import type {LucideIcon} from "lucide-react";
 import { AdminClientsTable, type AdminClient } from "./admin-clients-table";
 
 type Row = Record<string, unknown> & { id: string };
 type AdminUser = { user_id: string | null; email: string; role: "admin" | "superadmin" | "pending"; created_at: string };
 type AdminProfile = { id: string; full_name: string; email: string; phone: string | null; avatar_url: string | null; status: string };
+
+function productImageUrl(item: Row) {
+  const storedImages = Array.isArray(item.image_paths) ? item.image_paths.map(String).filter(Boolean) : [];
+  const path = storedImages[0] ?? String(item.image_path ?? "").trim();
+  if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path;
+  const encodedPath = path.split("/").map(encodeURIComponent).join("/");
+  return `${supabaseUrl}/storage/v1/object/public/public-media/${encodedPath}`;
+}
+
+function AdminProductsTable({
+  products,
+  busy,
+  onAdd,
+  onToggle,
+  onUpdate,
+}: {
+  products: Row[];
+  busy: boolean;
+  onAdd: (event: FormEvent<HTMLFormElement>) => Promise<void>;
+  onToggle: (id: string, nextStatus: string) => Promise<void>;
+  onUpdate: (event: FormEvent<HTMLFormElement>, item: Row) => Promise<void>;
+}) {
+  const [query, setQuery] = useState("");
+  const normalizedQuery = query.trim().toLocaleLowerCase("es");
+  const visibleProducts = normalizedQuery
+    ? products.filter((item) => [item.name, item.category, item.brand, item.presentation].some((value) => String(value ?? "").toLocaleLowerCase("es").includes(normalizedQuery)))
+    : products;
+  const inStock = products.filter((item) => Number(item.stock) > 0).length;
+  const soldOut = products.length - inStock;
+
+  return (
+    <div className="admin-page admin-products-page">
+      <header className="admin-page-header">
+        <div>
+          <p>ADMINISTRACIÓN <span>/</span> PRODUCTOS</p>
+          <h1>Productos</h1>
+          <span>Gestiona el catálogo y controla las existencias desde una tabla preparada para crecer.</span>
+        </div>
+        <div className="admin-page-count" aria-label={`${products.length} productos registrados`}>
+          <PackagePlus />
+          <span><strong>{products.length}</strong> productos</span>
+        </div>
+      </header>
+
+      <section className="admin-panel products-workspace" aria-labelledby="products-table-title">
+        <div className="products-toolbar">
+          <div>
+            <small>INVENTARIO</small>
+            <h2 id="products-table-title">Catálogo de productos</h2>
+            <p>La disponibilidad cambia automáticamente a “Agotado” cuando el stock llega a cero.</p>
+          </div>
+          <div className="products-toolbar-actions">
+            <label className="products-search">
+              <span className="sr-only">Buscar productos</span>
+              <Search aria-hidden="true" />
+              <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar producto, marca o categoría" autoComplete="off" />
+              {query && <button type="button" onClick={() => setQuery("")} aria-label="Limpiar búsqueda"><X /></button>}
+            </label>
+            <DashboardModal title="Crear producto" description="Configura inventario, precio e imagen comercial." triggerLabel="Nuevo producto" triggerIcon={<PackagePlus />} size="large">
+              <form className="admin-form" onSubmit={onAdd} acceptCharset="UTF-8"><label>Nombre<input name="name" required /></label><label>Identificador<input name="slug" placeholder="Se genera desde el nombre" /></label><label>Marca<input name="brand" /></label><label>Presentación<input name="presentation" placeholder="Ej. 250 ml" /></label><label className="wide">Descripción<input name="description" /></label><label>Categoría<input name="category" /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" required /></label><label>Stock inicial<input name="stock" type="number" min="0" required /></label><label className="wide">Imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required /></label><button className="button button-dark wide" disabled={busy}>Publicar producto</button></form>
+            </DashboardModal>
+          </div>
+        </div>
+
+        <div className="products-summary" aria-label="Resumen del inventario">
+          <span><strong>{products.length}</strong> registrados</span>
+          <span><strong>{inStock}</strong> con existencias</span>
+          <span className={soldOut ? "has-alert" : ""}><strong>{soldOut}</strong> agotados</span>
+        </div>
+
+        {visibleProducts.length ? (
+          <div className="products-table-scroll" tabIndex={0} aria-label="Tabla desplazable de productos">
+            <table className="products-data-table">
+              <thead><tr><th scope="col">Producto</th><th scope="col">Categoría</th><th scope="col">Precio</th><th scope="col">Stock</th><th scope="col">Estado</th><th scope="col"><span className="sr-only">Acciones</span></th></tr></thead>
+              <tbody>{visibleProducts.map((item) => {
+                const image = productImageUrl(item);
+                const stock = Number(item.stock ?? 0);
+                const isSoldOut = stock <= 0;
+                const isActive = item.status === "active";
+                const statusLabel = isSoldOut ? "Agotado" : isActive ? "Activo" : item.status === "archived" ? "Archivado" : "Inactivo";
+                return <tr key={item.id} className={isSoldOut ? "is-sold-out" : ""}>
+                  <td><div className="product-table-identity"><span className={image ? "has-photo" : ""} style={image ? { backgroundImage: `url(${JSON.stringify(image)})` } : undefined} role="img" aria-label={image ? `Foto de ${String(item.name)}` : `Sin foto para ${String(item.name)}`}>{!image && <ImageOff />}</span><div><strong>{String(item.name)}</strong><small>{[item.brand, item.presentation].filter(Boolean).map(String).join(" · ") || "Sin marca ni presentación"}</small></div></div></td>
+                  <td><span className="product-category">{String(item.category || "Sin categoría")}</span></td>
+                  <td><strong className="product-price">Bs {Number(item.price ?? 0).toFixed(2)}</strong></td>
+                  <td><strong className={`product-stock ${isSoldOut ? "is-empty" : ""}`}>{stock}</strong><small>{isSoldOut ? "Sin existencias" : stock === 1 ? "unidad" : "unidades"}</small></td>
+                  <td><span className={`product-status status-${isSoldOut ? "sold-out" : isActive ? "active" : "inactive"}`}>{statusLabel}</span></td>
+                  <td><div className="product-row-actions"><button type="button" onClick={() => onToggle(item.id, isActive ? "inactive" : "active")} disabled={busy} title={isActive ? "Desactivar producto" : "Activar producto"}><Power /><span>{isActive ? "Desactivar" : "Activar"}</span></button><DashboardModal title={`Editar ${String(item.name)}`} description="Actualiza la ficha comercial y el inventario." triggerLabel="Editar" triggerIcon={<Pencil />} variant="ghost" size="large"><form className="admin-form" onSubmit={(event) => onUpdate(event, item)} acceptCharset="UTF-8"><label>Nombre<input name="name" defaultValue={String(item.name)} required /></label><label>Categoría<input name="category" defaultValue={String(item.category ?? "")} /></label><label>Marca<input name="brand" defaultValue={String(item.brand ?? "")} /></label><label>Presentación<input name="presentation" defaultValue={String(item.presentation ?? "")} /></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description ?? "")} /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" defaultValue={Number(item.price)} required /></label><label>Stock<input name="stock" type="number" min="0" defaultValue={stock} required /></label><label className="wide">Reemplazar imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple /></label><button className="button button-dark wide" disabled={busy}>Guardar producto</button></form></DashboardModal></div></td>
+                </tr>;
+              })}</tbody>
+            </table>
+          </div>
+        ) : <div className="products-empty"><ImageOff /><h3>{query ? "No encontramos productos" : "Todavía no hay productos"}</h3><p>{query ? `Prueba con una búsqueda distinta de “${query}”.` : "Crea el primer producto para comenzar a controlar el inventario."}</p>{query && <button type="button" onClick={() => setQuery("")}>Ver todos los productos</button>}</div>}
+      </section>
+    </div>
+  );
+}
 const businessDays = [
   { weekday: 1, label: "Lunes" },
   { weekday: 2, label: "Martes" },
@@ -279,6 +377,7 @@ export function AdminDashboard({
     try {
       const data = new FormData(form);
       const files = data.getAll("images").filter((file): file is File => file instanceof File && file.size > 0);
+      if (!files.length) throw new Error("Selecciona al menos una imagen del producto.");
       const imagePaths = await uploadImages(files, "products");
       const name = String(data.get("name") ?? "").trim();
       const slug = String(data.get("slug") || name).trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-");
@@ -299,7 +398,7 @@ export function AdminDashboard({
       if (insertError) throw insertError;
       finishAction("Producto publicado.");
     } catch (productError) {
-      failAction(productError, form);
+      failAction(productError, form, productError instanceof Error && productError.message.includes("imagen") ? "images" : undefined);
     }
   }
 
@@ -554,13 +653,7 @@ export function AdminDashboard({
             <div className="admin-list">{initialGallery.map((item)=><article key={item.id}><div><strong>{String(item.title)}</strong><span>{String(item.status)} · consentimiento: {item.client_consent?"sí":"no"} · {Array.isArray(item.image_paths)?item.image_paths.length:1} foto(s)</span></div><div className="dash-row-actions"><button onClick={()=>toggleStatus("gallery_posts",item.id,item.status==="published"?"hidden":"published")}>{item.status==="published"?"Ocultar":"Publicar"}</button><DashboardModal title={`Editar ${String(item.title)}`} triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateGalleryPost(event,item)}><label>Título<input name="title" defaultValue={String(item.title)} required/></label><label>Reemplazar imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple/></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description??"")}/></label><label className="check-label wide"><input type="checkbox" name="featured" defaultChecked={Boolean(item.featured)}/> Destacada</label><button className="button button-dark wide" disabled={busy}>Guardar publicación</button></form></DashboardModal><button type="button" className="dash-danger-action" onClick={()=>deleteGalleryPost(item)} disabled={busy}><Trash2/> Eliminar</button></div></article>)}</div>
           </div>}
 
-          {section === "productos" && <div className="admin-panel">
-            <div className="admin-title"><PackagePlus /><div><p>CATÁLOGO</p><h1>Productos</h1></div></div>
-            <div className="dash-section-intro"><p>Publica inventario nuevo o abre una ficha existente para editarla.</p><DashboardModal title="Crear producto" description="Configura inventario, precio e imagen comercial." triggerLabel="Nuevo producto" triggerIcon={<PackagePlus/>}>
-            <form className="admin-form" onSubmit={addProduct} acceptCharset="UTF-8"><label>Nombre<input name="name" required /></label><label>Identificador<input name="slug" placeholder="se genera del nombre" /></label><label>Marca<input name="brand" /></label><label>Presentación<input name="presentation" placeholder="Ej. 250 ml" /></label><label className="wide">Descripción<input name="description" /></label><label>Categoría<input name="category" /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" required /></label><label>Stock<input name="stock" type="number" min="0" required /></label><label className="wide">Imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple /></label><button className="button button-dark wide" disabled={busy}>Publicar producto</button></form>
-            </DashboardModal></div>
-            <div className="admin-list editable-list">{initialProducts.map((item)=><article key={item.id}><div><strong>{String(item.name)}</strong><span>Bs {String(item.price)} · stock {String(item.stock)} · {String(item.status)} · {Array.isArray(item.image_paths)?item.image_paths.length:Number(Boolean(item.image_path))} foto(s)</span></div><div className="dash-row-actions"><button onClick={()=>toggleStatus("products",item.id,item.status==="active"?"inactive":"active")}>{item.status==="active"?"Desactivar":"Activar"}</button><DashboardModal title={`Editar ${String(item.name)}`} description="Actualiza la ficha comercial y el inventario." triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateProduct(event,item)} acceptCharset="UTF-8"><label>Nombre<input name="name" defaultValue={String(item.name)} required/></label><label>Categoría<input name="category" defaultValue={String(item.category??"")}/></label><label>Marca<input name="brand" defaultValue={String(item.brand??"")}/></label><label>Presentación<input name="presentation" defaultValue={String(item.presentation??"")}/></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description??"")}/></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" defaultValue={Number(item.price)} required/></label><label>Stock<input name="stock" type="number" min="0" defaultValue={Number(item.stock)} required/></label><label className="wide">Reemplazar imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple/></label><button className="button button-dark wide" disabled={busy}>Guardar producto</button></form></DashboardModal></div></article>)}</div>
-          </div>}
+          {section === "productos" && <AdminProductsTable products={initialProducts} busy={busy} onAdd={addProduct} onToggle={(id, nextStatus) => toggleStatus("products", id, nextStatus)} onUpdate={updateProduct} />}
 
           {section === "equipo" && <div className="admin-panel team-panel">
             <div className="admin-title"><Users/><div><p>PERSONAL</p><h1>Equipo</h1></div></div>
