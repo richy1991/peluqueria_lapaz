@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { isBusinessOpenNow, type BusinessHour } from "@/lib/business-hours";
+import { resolveBusinessStatus, type BusinessHour } from "@/lib/business-hours";
 
 type Props = {
   configuredStatus: string;
@@ -9,18 +9,14 @@ type Props = {
   statusMessage: string;
   timezone: string;
   hours: BusinessHour[];
+  variant?: "public" | "client";
 };
 
-function resolveStatus(configuredStatus: string, hours: BusinessHour[], timezone: string) {
-  const followsSchedule = configuredStatus === "open" || configuredStatus === "appointment_only";
-  return followsSchedule && !isBusinessOpenNow(hours, timezone) ? "schedule_closed" : configuredStatus;
-}
-
-export function BusinessStatus({ configuredStatus, initialStatus, statusMessage, timezone, hours }: Props) {
+export function BusinessStatus({ configuredStatus, initialStatus, statusMessage, timezone, hours, variant = "public" }: Props) {
   const [status, setStatus] = useState(initialStatus);
 
   useEffect(() => {
-    const update = () => setStatus(resolveStatus(configuredStatus, hours, timezone));
+    const update = () => setStatus(resolveBusinessStatus(configuredStatus, hours, timezone));
     update();
     const interval = window.setInterval(update, 30_000);
     return () => window.clearInterval(interval);
@@ -31,6 +27,7 @@ export function BusinessStatus({ configuredStatus, initialStatus, statusMessage,
     ? status === "appointment_only" ? "Atención solo con reserva" : "Abierto ahora"
     : status === "emergency_closed" ? "Cerrado por emergencia" : status === "schedule_closed" ? "Cerrado ahora" : "Cerrado temporalmente";
   const message = status === "schedule_closed" ? "Fuera del horario de atención" : statusMessage;
+  const compact = variant === "client";
 
-  return <div className={`open-pill ${isOpen ? "" : "closed-pill"}`} aria-live="polite"><span /> {text}{message ? ` · ${message}` : ""}</div>;
+  return <div className={`open-pill business-status ${isOpen ? "" : "closed-pill"} ${compact ? "client-business-status" : ""}`} aria-live="polite" title={compact && message ? message : undefined}><span /> <strong>{text}</strong>{!compact && message ? ` · ${message}` : ""}</div>;
 }

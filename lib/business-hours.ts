@@ -5,6 +5,9 @@ export type BusinessHour = {
   active: boolean;
 };
 
+export const DEFAULT_BUSINESS_TIMEZONE = "America/La_Paz";
+export type EffectiveBusinessStatus = "open" | "appointment_only" | "closed" | "emergency_closed" | "schedule_closed";
+
 const dayNames = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 const shortWeekdayToNumber: Record<string, number> = {
   Sun: 0,
@@ -27,18 +30,23 @@ function shortTime(value: string) {
 
 export function isBusinessOpenNow(
   hours: BusinessHour[],
-  timezone = "America/La_Paz",
+  timezone = DEFAULT_BUSINESS_TIMEZONE,
   now = new Date(),
 ) {
-  if (!hours.length) return true;
+  if (!hours.length) return false;
 
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
+  const options: Intl.DateTimeFormatOptions = {
     weekday: "short",
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
-  }).formatToParts(now);
+  };
+  let parts: Intl.DateTimeFormatPart[];
+  try {
+    parts = new Intl.DateTimeFormat("en-US", { ...options, timeZone: timezone }).formatToParts(now);
+  } catch {
+    parts = new Intl.DateTimeFormat("en-US", { ...options, timeZone: DEFAULT_BUSINESS_TIMEZONE }).formatToParts(now);
+  }
   const weekday = shortWeekdayToNumber[parts.find((part) => part.type === "weekday")?.value ?? ""];
   const hour = Number(parts.find((part) => part.type === "hour")?.value ?? 0);
   const minute = Number(parts.find((part) => part.type === "minute")?.value ?? 0);
@@ -47,6 +55,17 @@ export function isBusinessOpenNow(
 
   const currentMinutes = hour * 60 + minute;
   return currentMinutes >= minutesFromTime(today.opens_at) && currentMinutes < minutesFromTime(today.closes_at);
+}
+
+export function resolveBusinessStatus(
+  configuredStatus: string,
+  hours: BusinessHour[],
+  timezone = DEFAULT_BUSINESS_TIMEZONE,
+  now = new Date(),
+): EffectiveBusinessStatus {
+  if (configuredStatus === "closed" || configuredStatus === "emergency_closed") return configuredStatus;
+  const scheduledStatus = configuredStatus === "appointment_only" ? "appointment_only" : "open";
+  return isBusinessOpenNow(hours, timezone, now) ? scheduledStatus : "schedule_closed";
 }
 
 export function formatBusinessHours(hours: BusinessHour[]) {

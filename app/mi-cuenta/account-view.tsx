@@ -2,11 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Bell, CalendarDays, Flame, Gift, Globe2, Home, PackageCheck, Scissors, Star, UserRound } from "lucide-react";
 import { Brand } from "@/components/brand";
+import { BusinessStatus } from "@/components/business-status";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { ProductCatalog } from "@/components/product-catalog";
 import { createClient } from "@/lib/supabase/server";
 import { getUserCapabilities } from "@/lib/user-capabilities";
 import { getPublicProducts, type PublicProduct } from "@/lib/public-data";
+import { resolveBusinessStatus, type BusinessHour } from "@/lib/business-hours";
 import { CancelAppointmentButton, ConfirmReassignmentButton } from "./appointment-actions";
 import { CancelRedemptionButton, ClaimVisitForm, RewardButton } from "./loyalty-actions";
 import { PreferencesForm } from "./preferences-form";
@@ -45,7 +47,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
   if (section === "inicio" || section === "puntos") await supabase.rpc("refresh_my_barber_loyalty");
   if (section === "puntos") await supabase.rpc("release_expired_reward_reservations");
   const activeReservationCutoff = new Date().toISOString();
-  const [profile, appointments, reservations, notifications, loyalty, transactions, rewards, redemptions, streak, preferences, availableProducts] = await Promise.all([
+  const [profile, appointments, reservations, notifications, loyalty, transactions, rewards, redemptions, streak, preferences, availableProducts, businessSettings, businessHours] = await Promise.all([
     supabase.from("profiles").select("full_name,email,phone,avatar_url,status,no_show_count,is_blacklisted,is_blocked,referral_code").eq("id", user.id).single(),
     ["inicio", "citas"].includes(section) ? supabase.from("appointments").select("id,starts_at,status,price_snapshot,service_name_snapshot,barber_profiles(display_name)").eq("client_id", user.id).order("starts_at", { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
     ["inicio", "productos"].includes(section) ? supabase.from("product_reservations").select("id,quantity,status,expires_at,products(name)").eq("client_id", user.id).eq("status", "reserved").gt("expires_at", activeReservationCutoff).order("created_at", { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
@@ -57,6 +59,8 @@ export async function ClientAccountView({ section }: { section: ClientSection })
     section === "puntos" ? supabase.from("customer_barber_streaks").select("barber_id,current_visits,best_visits,last_visit_at,barber_profiles(display_name)").eq("user_id", user.id).order("current_visits", { ascending: false }) : Promise.resolve({ data: [] }),
     section === "notificaciones" ? supabase.from("notification_preferences").select("appointment_notifications,promotion_notifications,chat_notifications,system_notifications,muted_all").eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
     getPublicProducts(section === "productos" ? undefined : 3),
+    supabase.from("business_settings").select("business_status,status_message,timezone").eq("id", true).maybeSingle(),
+    supabase.from("business_hours").select("weekday,opens_at,closes_at,active").order("weekday"),
   ]);
 
   const person = profile.data;
@@ -74,11 +78,16 @@ export async function ClientAccountView({ section }: { section: ClientSection })
   const avatarStyle = person?.avatar_url ? { backgroundImage: `url(${JSON.stringify(person.avatar_url)})` } : undefined;
   const initials = displayName.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() || "LC";
   const replaceNavigation = section !== "inicio";
+  const clientBusinessHours = (businessHours.data ?? []) as BusinessHour[];
+  const clientBusinessTimezone = String(businessSettings.data?.timezone ?? "America/La_Paz");
+  const clientConfiguredStatus = String(businessSettings.data?.business_status ?? "open");
+  const clientInitialStatus = resolveBusinessStatus(clientConfiguredStatus, clientBusinessHours, clientBusinessTimezone);
 
   return <PanelExperience chatInHeader><main className="portal-shell panel-client-shell">
     <header className="portal-header">
       <PanelMobileMenuButton />
       <Brand linked={false} />
+      <BusinessStatus configuredStatus={clientConfiguredStatus} initialStatus={clientInitialStatus} statusMessage={String(businessSettings.data?.status_message ?? "")} timezone={clientBusinessTimezone} hours={clientBusinessHours} variant="client" />
       <ClientMainNavigation section={section} replaceNavigation={replaceNavigation} variant="desktop" />
       <ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={capabilities.isCashier} />
       <div className="client-desktop-actions"><PanelThemeSelector compact /><Link className="portal-public-link" href="/sitio"><Globe2 /><span>Sitio público</span></Link></div>

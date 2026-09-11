@@ -14,7 +14,7 @@ import { DashboardModal } from "@/components/dashboard-modal";
 import { DashboardToast, type DashboardToastData } from "@/components/dashboard-toast";
 import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelResponsiveSidebar, PanelThemeSelector } from "@/components/panel-experience";
 import { clearFormErrors, dispatchDashboardSuccess, reportFormError } from "@/lib/form-feedback";
-import { formatBusinessHours, isBusinessOpenNow, type BusinessHour } from "@/lib/business-hours";
+import { formatBusinessHours, resolveBusinessStatus, type BusinessHour } from "@/lib/business-hours";
 import { supabaseUrl } from "@/lib/supabase/config";
 import type {LucideIcon} from "lucide-react";
 import { AdminClientsTable, type AdminClient } from "./admin-clients-table";
@@ -710,9 +710,11 @@ export function AdminDashboard({
   const adminRole = isSuperadmin ? "Superadministrador" : "Administrador";
   const adminInitials = adminProfile.full_name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() || "AD";
   const avatarStyle = adminProfile.avatar_url ? { backgroundImage: `url(${JSON.stringify(adminProfile.avatar_url)})` } : undefined;
-  const scheduleOpenNow = isBusinessOpenNow(businessHours, String(settings.timezone ?? "America/La_Paz"));
+  const businessTimezone = String(settings.timezone ?? "America/La_Paz");
   const configuredStatus = String(settings.business_status ?? "open");
+  const effectiveBusinessStatus = resolveBusinessStatus(configuredStatus, businessHours, businessTimezone);
   const automaticStatus = configuredStatus === "open" || configuredStatus === "appointment_only";
+  const businessOpenNow = effectiveBusinessStatus === "open" || effectiveBusinessStatus === "appointment_only";
   const navigation:Array<[string,string,LucideIcon]>=[
     ["agenda","Agenda",CalendarClock],
     ["programa","Caja y fidelización",CircleDollarSign],
@@ -775,8 +777,8 @@ export function AdminDashboard({
           {section === "horarios" && <div className="admin-panel business-hours-panel">
             <div className="admin-title"><Clock3 /><div><p>OPERACIÓN DEL LOCAL</p><h1>Días y horarios de atención</h1></div></div>
             <div className="business-hours-summary">
-              <span className={`dash-status-pill ${automaticStatus && scheduleOpenNow ? "online" : "offline"}`}><i />{automaticStatus && scheduleOpenNow ? "Abierto ahora" : "Cerrado ahora"}</span>
-              <div><strong>{formatBusinessHours(businessHours)}</strong><small>{automaticStatus ? "El estado público se actualiza automáticamente con la hora de La Paz." : "El cierre manual configurado en Negocio tiene prioridad sobre este horario."}</small></div>
+              <span className={`dash-status-pill ${businessOpenNow ? "online" : "offline"}`}><i />{businessOpenNow ? "Abierto ahora" : "Cerrado ahora"}</span>
+              <div><strong>{formatBusinessHours(businessHours)}</strong><small>{automaticStatus ? `El estado público se actualiza automáticamente en la zona ${businessTimezone}.` : "El cierre manual configurado en Negocio tiene prioridad sobre este horario."}</small></div>
             </div>
             <form className="business-hours-form" onSubmit={saveBusinessHours}>
               {businessDays.map(({ weekday, label }) => {

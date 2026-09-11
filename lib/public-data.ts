@@ -4,7 +4,7 @@ import {
   gallery as fallbackGallery,
   services as fallbackServices,
 } from "@/lib/demo-data";
-import { formatBusinessHours, isBusinessOpenNow, type BusinessHour } from "@/lib/business-hours";
+import { formatBusinessHours, resolveBusinessStatus, type BusinessHour } from "@/lib/business-hours";
 
 export type PublicService = {
   id: string;
@@ -67,6 +67,16 @@ export type BusinessInfo = {
   coverImage: string | null;
 };
 
+const fallbackBusinessSchedule: BusinessHour[] = [
+  { weekday: 0, opens_at: "09:00", closes_at: "20:00", active: true },
+  { weekday: 1, opens_at: "09:00", closes_at: "20:00", active: false },
+  { weekday: 2, opens_at: "09:00", closes_at: "20:00", active: true },
+  { weekday: 3, opens_at: "09:00", closes_at: "20:00", active: true },
+  { weekday: 4, opens_at: "09:00", closes_at: "20:00", active: true },
+  { weekday: 5, opens_at: "09:00", closes_at: "20:00", active: true },
+  { weekday: 6, opens_at: "09:00", closes_at: "20:00", active: true },
+];
+
 const fallbackBusiness: BusinessInfo = {
   name: "Barbería LEGEND CLUB",
   description: "Tradición, calle y precisión en cada corte.",
@@ -82,7 +92,7 @@ const fallbackBusiness: BusinessInfo = {
   configuredStatus: "open",
   statusMessage: "",
   hours: "Martes a domingo · 09:00 a 20:00",
-  schedule: [],
+  schedule: fallbackBusinessSchedule,
   timezone: "America/La_Paz",
   coverImage: null,
 };
@@ -197,10 +207,8 @@ export async function getPublicData() {
 
     const row = businessResult.data;
     const businessHours = (businessHoursResult.data ?? []) as BusinessHour[];
-    const scheduledOpen = isBusinessOpenNow(businessHours, row?.timezone ?? "America/La_Paz");
     const configuredStatus = row?.business_status ?? fallbackBusiness.status;
-    const followsSchedule = configuredStatus === "open" || configuredStatus === "appointment_only";
-    const effectiveStatus = followsSchedule && !scheduledOpen ? "schedule_closed" : configuredStatus;
+    const effectiveStatus = resolveBusinessStatus(configuredStatus, businessHours, row?.timezone ?? fallbackBusiness.timezone);
     const business: BusinessInfo = row
       ? {
           name: row.business_name,
