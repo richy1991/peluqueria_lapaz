@@ -25,6 +25,7 @@ type AdminClientsTableProps = {
   pageSize: number;
   total: number;
   loadError?: boolean;
+  timezone: string;
 };
 
 const statusLabels: Record<string, string> = {
@@ -42,7 +43,7 @@ function pageHref(page: number, query: string) {
   return `/admin/clientes${suffix ? `?${suffix}` : ""}`;
 }
 
-export function AdminClientsTable({ clients, query, page, pageSize, total, loadError = false }: AdminClientsTableProps) {
+export function AdminClientsTable({ clients, query, page, pageSize, total, loadError = false, timezone }: AdminClientsTableProps) {
   const router = useRouter();
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const firstResult = total === 0 ? 0 : (page - 1) * pageSize + 1;
@@ -122,7 +123,7 @@ export function AdminClientsTable({ clients, query, page, pageSize, total, loadE
                         <td>
                           <div className="client-identity">
                             <span aria-hidden="true">{initials || "CL"}</span>
-                            <div><strong>{displayName}</strong><small>Desde {new Intl.DateTimeFormat("es-BO", { month: "short", year: "numeric", timeZone: "America/La_Paz" }).format(new Date(client.created_at))}</small></div>
+                            <div><strong>{displayName}</strong><small>Desde {new Intl.DateTimeFormat("es-BO", { month: "short", year: "numeric", timeZone: timezone }).format(new Date(client.created_at))}</small></div>
                           </div>
                         </td>
                         <td><a href={`mailto:${client.email}`}>{client.email}</a><small>{client.phone || "Sin teléfono"}</small></td>

@@ -14,8 +14,9 @@ import { DashboardModal } from "@/components/dashboard-modal";
 import { DashboardToast, type DashboardToastData } from "@/components/dashboard-toast";
 import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelResponsiveSidebar, PanelThemeSelector } from "@/components/panel-experience";
 import { clearFormErrors, dispatchDashboardSuccess, reportFormError } from "@/lib/form-feedback";
-import { formatBusinessHours, resolveBusinessStatus, type BusinessHour } from "@/lib/business-hours";
-import { supabaseUrl } from "@/lib/supabase/config";
+import { DEFAULT_BUSINESS_TIMEZONE, formatBusinessHours, resolveBusinessStatus, type BusinessHour } from "@/lib/business-hours";
+import { uploadOptimizedImages } from "@/lib/image-upload";
+import { publicMediaUrl } from "@/lib/public-media";
 import type {LucideIcon} from "lucide-react";
 import { AdminClientsTable, type AdminClient } from "./admin-clients-table";
 
@@ -29,15 +30,8 @@ function productImagePaths(item: Row) {
   return storedImages.length ? storedImages : fallback ? [fallback] : [];
 }
 
-function publicProductImageUrl(path: string) {
-  if (!path) return null;
-  if (/^https?:\/\//i.test(path)) return path;
-  const encodedPath = path.split("/").map(encodeURIComponent).join("/");
-  return `${supabaseUrl}/storage/v1/object/public/public-media/${encodedPath}`;
-}
-
 function productImageUrl(item: Row) {
-  return publicProductImageUrl(productImagePaths(item)[0] ?? "");
+  return publicMediaUrl(productImagePaths(item)[0]);
 }
 
 type ExistingProductImage = { path: string; url: string };
@@ -238,7 +232,7 @@ function AdminProductsTable({
               <tbody>{visibleProducts.map((item) => {
                 const image = productImageUrl(item);
                 const existingImages = productImagePaths(item).flatMap((path) => {
-                  const url = publicProductImageUrl(path);
+                  const url = publicMediaUrl(path);
                   return url ? [{ path, url }] : [];
                 });
                 const stock = Number(item.stock ?? 0);
@@ -299,43 +293,8 @@ type AdminDashboardProps = {
   program: {settings:Row|null;rewards:Row[];promotions:Row[];expenses:Row[];payouts:Row[]};
 };
 
-async function optimizeImage(file: File) {
-  if (!file.type.startsWith("image/")) throw new Error("Selecciona una imagen válida.");
-  if (file.size > 8 * 1024 * 1024) throw new Error("La imagen supera el límite de 8 MB.");
-
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-  canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-
-  return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => blob ? resolve(blob) : reject(new Error("No se pudo optimizar la imagen.")),
-      "image/webp",
-      0.82,
-    );
-  });
-}
-
-async function uploadImage(file: File, folder: string) {
-  const supabase = createClient();
-  const blob = await optimizeImage(file);
-  const path = `${folder}/${crypto.randomUUID()}.webp`;
-  const { error } = await supabase.storage.from("public-media").upload(path, blob, {
-    contentType: "image/webp",
-    cacheControl: "31536000",
-  });
-  if (error) throw error;
-  return path;
-}
-
 async function uploadImages(files: File[], folder: string) {
-  if (!files.length) return [];
-  if (files.length > 3) throw new Error("Puedes publicar un máximo de 3 imágenes.");
-  return Promise.all(files.map((file) => uploadImage(file, folder)));
+  return uploadOptimizedImages(files, () => `${folder}/${crypto.randomUUID()}.webp`);
 }
 
 export function AdminDashboard({
@@ -710,7 +669,7 @@ export function AdminDashboard({
   const adminRole = isSuperadmin ? "Superadministrador" : "Administrador";
   const adminInitials = adminProfile.full_name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() || "AD";
   const avatarStyle = adminProfile.avatar_url ? { backgroundImage: `url(${JSON.stringify(adminProfile.avatar_url)})` } : undefined;
-  const businessTimezone = String(settings.timezone ?? "America/La_Paz");
+  const businessTimezone = String(settings.timezone ?? DEFAULT_BUSINESS_TIMEZONE);
   const configuredStatus = String(settings.business_status ?? "open");
   const effectiveBusinessStatus = resolveBusinessStatus(configuredStatus, businessHours, businessTimezone);
   const automaticStatus = configuredStatus === "open" || configuredStatus === "appointment_only";
@@ -766,13 +725,13 @@ export function AdminDashboard({
               <div><dt>Estado</dt><dd>{adminProfile.status === "active" ? "Activo" : adminProfile.status}</dd></div>
             </dl>
           </div>}
-          {section === "agenda" && <div className="admin-panel"><div className="admin-title"><CalendarClock /><div><p>OPERACIÓN</p><h1>Reservas y agenda</h1></div></div><div className="admin-metrics"><div><strong>{initialAppointments.filter((item)=>["requested","confirmed","pending_client_confirmation"].includes(String(item.status))).length}</strong><span>Próximas o pendientes</span></div><div><strong>{initialAppointments.filter((item)=>item.status==="needs_reschedule").length}</strong><span>Por reprogramar</span></div><div><strong>{initialAppointments.length}</strong><span>Últimas reservas</span></div></div><div className="admin-list appointment-admin-list">{initialAppointments.length?initialAppointments.map((item)=>{const client=item.profiles as {full_name?:string;phone?:string;email?:string;is_blacklisted?:boolean}|null;const barber=item.barber_profiles as {display_name?:string}|null;return <article key={item.id}><div><strong>{String(item.service_name_snapshot)} · {new Intl.DateTimeFormat("es-BO",{dateStyle:"medium",timeStyle:"short",timeZone:"America/La_Paz"}).format(new Date(String(item.starts_at)))}</strong><span>{client?.full_name??client?.email??"Cliente"} · {client?.phone??"Sin teléfono"} · {barber?.display_name??"Sin asignar"} · {String(item.status)}</span>{client?.is_blacklisted&&<small className="admin-alert">Alerta por inasistencias</small>}</div><AppointmentAdminActions id={item.id} barbers={barbers as Array<{id:string;display_name:string;active?:boolean}>}/></article>}):<p className="admin-help">Todavía no existen reservas.</p>}</div></div>}
+          {section === "agenda" && <div className="admin-panel"><div className="admin-title"><CalendarClock /><div><p>OPERACIÓN</p><h1>Reservas y agenda</h1></div></div><div className="admin-metrics"><div><strong>{initialAppointments.filter((item)=>["requested","confirmed","pending_client_confirmation"].includes(String(item.status))).length}</strong><span>Próximas o pendientes</span></div><div><strong>{initialAppointments.filter((item)=>item.status==="needs_reschedule").length}</strong><span>Por reprogramar</span></div><div><strong>{initialAppointments.length}</strong><span>Últimas reservas</span></div></div><div className="admin-list appointment-admin-list">{initialAppointments.length?initialAppointments.map((item)=>{const client=item.profiles as {full_name?:string;phone?:string;email?:string;is_blacklisted?:boolean}|null;const barber=item.barber_profiles as {display_name?:string}|null;return <article key={item.id}><div><strong>{String(item.service_name_snapshot)} · {new Intl.DateTimeFormat("es-BO",{dateStyle:"medium",timeStyle:"short",timeZone:businessTimezone}).format(new Date(String(item.starts_at)))}</strong><span>{client?.full_name??client?.email??"Cliente"} · {client?.phone??"Sin teléfono"} · {barber?.display_name??"Sin asignar"} · {String(item.status)}</span>{client?.is_blacklisted&&<small className="admin-alert">Alerta por inasistencias</small>}</div><AppointmentAdminActions id={item.id} barbers={barbers as Array<{id:string;display_name:string;active?:boolean}>} timezone={businessTimezone}/></article>}):<p className="admin-help">Todavía no existen reservas.</p>}</div></div>}
 
           {section === "estadisticas" && <AdminAnalytics data={analyticsData} />}
 
           {section === "programa" && <AdminProgram settings={program.settings} rewards={program.rewards} promotions={program.promotions} expenses={program.expenses} payouts={program.payouts} barbers={barbers} products={initialProducts} services={initialServices} />}
 
-          {section === "clientes" && <AdminClientsTable clients={clients} query={clientSearch} page={clientPage} pageSize={clientPageSize} total={clientTotal} loadError={clientLoadError} />}
+          {section === "clientes" && <AdminClientsTable clients={clients} query={clientSearch} page={clientPage} pageSize={clientPageSize} total={clientTotal} loadError={clientLoadError} timezone={businessTimezone} />}
 
           {section === "horarios" && <div className="admin-panel business-hours-panel">
             <div className="admin-title"><Clock3 /><div><p>OPERACIÓN DEL LOCAL</p><h1>Días y horarios de atención</h1></div></div>

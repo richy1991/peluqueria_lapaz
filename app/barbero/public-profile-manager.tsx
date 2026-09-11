@@ -6,6 +6,8 @@ import { Camera, ImagePlus, Link2, UserRoundPen } from "lucide-react";
 import { DashboardModal } from "@/components/dashboard-modal";
 import { clearFormErrors, reportFormError } from "@/lib/form-feedback";
 import { dispatchDashboardError, dispatchDashboardSuccess } from "@/lib/form-feedback";
+import { uploadOptimizedImage } from "@/lib/image-upload";
+import { publicMediaUrl } from "@/lib/public-media";
 import { createClient } from "@/lib/supabase/client";
 
 type BarberProfile = {
@@ -24,38 +26,14 @@ type GalleryItem = {
   created_at: string;
 };
 
-async function optimizeImage(file: File) {
-  if (!file.type.match(/^image\/(jpeg|png|webp)$/)) throw new Error("Selecciona una imagen JPG, PNG o WEBP.");
-  if (file.size > 8 * 1024 * 1024) throw new Error("La imagen no puede superar 8 MB.");
-  const bitmap = await createImageBitmap(file);
-  const maximum = 1600;
-  const ratio = Math.min(1, maximum / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(bitmap.width * ratio));
-  canvas.height = Math.max(1, Math.round(bitmap.height * ratio));
-  canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.84));
-  if (!blob) throw new Error("No se pudo procesar la imagen.");
-  return blob;
-}
-
 async function uploadBarberImage(file: File, userId: string, folder: "profile" | "gallery") {
-  const blob = await optimizeImage(file);
   const path = `barbers/${userId}/${folder}/${crypto.randomUUID()}.webp`;
-  const { error } = await createClient().storage.from("public-media").upload(path, blob, {
-    contentType: "image/webp",
-    upsert: false,
-  });
-  if (error) throw error;
-  return path;
+  return uploadOptimizedImage(file, path);
 }
 
-export function PublicProfileManager({ userId, profile, gallery, view }: { userId: string; profile: BarberProfile; gallery: GalleryItem[]; view: "profile" | "gallery" }) {
+export function PublicProfileManager({ userId, profile, gallery, view, timezone }: { userId: string; profile: BarberProfile; gallery: GalleryItem[]; view: "profile" | "gallery"; timezone: string }) {
   const [busy, setBusy] = useState(false);
-  const photoUrl = useMemo(() => profile.photo_path
-    ? createClient().storage.from("public-media").getPublicUrl(profile.photo_path).data.publicUrl
-    : null, [profile.photo_path]);
+  const photoUrl = useMemo(() => publicMediaUrl(profile.photo_path), [profile.photo_path]);
 
   function fail(form: HTMLFormElement, reason: unknown, field?: string) {
     const message = reportFormError(form, reason, field);
@@ -148,7 +126,7 @@ export function PublicProfileManager({ userId, profile, gallery, view }: { userI
           <button className="button button-dark wide" disabled={busy}>{busy ? "Publicando…" : "Publicar imagen"}</button>
         </form>
       </DashboardModal>
-      <div className="barber-gallery-list">{gallery.length ? gallery.map((item) => <article key={item.id}><div><strong>{item.title}</strong><span>{item.source_type === "reference" ? "Referencia" : "Trabajo propio"} · {item.status}</span></div><time>{new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeZone: "America/La_Paz" }).format(new Date(item.created_at))}</time></article>) : <p>Aún no publicaste imágenes.</p>}</div>
+      <div className="barber-gallery-list">{gallery.length ? gallery.map((item) => <article key={item.id}><div><strong>{item.title}</strong><span>{item.source_type === "reference" ? "Referencia" : "Trabajo propio"} · {item.status}</span></div><time>{new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeZone: timezone }).format(new Date(item.created_at))}</time></article>) : <p>Aún no publicaste imágenes.</p>}</div>
     </div>}
   </section>;
 }

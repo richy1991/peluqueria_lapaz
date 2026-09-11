@@ -10,16 +10,17 @@ import { ModeSwitcher } from "@/components/mode-switcher";
 import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelResponsiveSidebar, PanelThemeSelector } from "@/components/panel-experience";
 import { clearFormErrors, dispatchDashboardError, dispatchDashboardSuccess, reportFormError } from "@/lib/form-feedback";
 import { createClient } from "@/lib/supabase/client";
+import { zonedDateTimeToDate } from "@/lib/business-time";
 import { CashierMobileNavigation } from "../../cashier-navigation";
 import type { SettlementDetail, SettlementExpense, SettlementHistory, SettlementLine } from "./page";
 
 type Capabilities = { isAdmin: boolean; isSuperadmin: boolean; isCashier: boolean; barber: { id: string; display_name: string } | null };
-type Props = { userEmail: string; capabilities: Capabilities; shiftOpen: boolean; detail: SettlementDetail; history: SettlementHistory[] };
+type Props = { userEmail: string; capabilities: Capabilities; shiftOpen: boolean; detail: SettlementDetail; history: SettlementHistory[]; timezone: string };
 
 const money = (value: number) => `Bs ${Number(value).toFixed(2)}`;
-const date = (value: string) => new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeZone: "America/La_Paz" }).format(new Date(value));
+const date = (value: string | Date, timezone: string) => new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeZone: timezone }).format(new Date(value));
 
-export function CashierSettlementDetail({ userEmail, capabilities, shiftOpen, detail, history }: Props) {
+export function CashierSettlementDetail({ userEmail, capabilities, shiftOpen, detail, history, timezone }: Props) {
   const router = useRouter();
   const [includeIncentives, setIncludeIncentives] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -86,8 +87,8 @@ export function CashierSettlementDetail({ userEmail, capabilities, shiftOpen, de
         {legacyPayout && <p className="settlement-warning">Esta liquidación fue preparada con la regla anterior y conserva un reembolso de {money(detail.payout?.reimbursement_amount ?? 0)}. Las nuevas liquidaciones descuentan los gastos.</p>}
 
         <div className="settlement-columns">
-          <ConceptPanel icon={<Scissors />} title="Servicios por liquidar" hint={`${detail.services.length} atención(es)`} items={detail.services} empty="No hay comisiones de servicios pendientes." />
-          <ConceptPanel icon={<PackageOpen />} title="Incentivos de ventas" hint="Acumulado mensual" items={detail.incentives} empty={detail.payout && detail.remaining_incentive_total > 0 ? `Quedan ${money(detail.remaining_incentive_total)} acumulados para una próxima liquidación.` : "No hay incentivos de productos pendientes."} />
+          <ConceptPanel icon={<Scissors />} title="Servicios por liquidar" hint={`${detail.services.length} atención(es)`} items={detail.services} empty="No hay comisiones de servicios pendientes." timezone={timezone} />
+          <ConceptPanel icon={<PackageOpen />} title="Incentivos de ventas" hint="Acumulado mensual" items={detail.incentives} empty={detail.payout && detail.remaining_incentive_total > 0 ? `Quedan ${money(detail.remaining_incentive_total)} acumulados para una próxima liquidación.` : "No hay incentivos de productos pendientes."} timezone={timezone} />
         </div>
 
         <section className="admin-panel settlement-expenses"><div className="dash-list-head"><div><small>DESCUENTOS DE LA LIQUIDACIÓN</small><h2>Gastos e insumos</h2></div><ClipboardCheck /></div><p className="admin-help">Los gastos aprobados restan del pago. Por seguridad, no se puede preparar una liquidación mientras exista alguno pendiente de revisión.</p><div className="settlement-concept-list">{detail.expenses.length ? detail.expenses.map(item => <ExpenseRow key={item.id} item={item} busy={busy} onReview={reviewExpense} />) : <p className="admin-help">No hay gastos pendientes de esta u otras jornadas.</p>}</div></section>
@@ -99,18 +100,18 @@ export function CashierSettlementDetail({ userEmail, capabilities, shiftOpen, de
             {pendingExpenses.length > 0 && <p className="settlement-warning">Revisa {pendingExpenses.length} gasto(s) pendiente(s) antes de continuar.</p>}
             {!shiftOpen && <p className="settlement-warning">Abre un turno de caja para preparar y pagar.</p>}
             <button className="button button-dark" disabled={busy || !shiftOpen || pendingExpenses.length > 0 || projectedTotal <= 0}>Preparar liquidación</button>
-          </form> : <div className="settlement-payment-summary"><div><span>Servicios</span><b>{money(detail.payout.commission_amount)}</b></div>{detail.payout.includes_accumulated_incentives && <div><span>Incentivo acumulado</span><b>+ {money(detail.payout.incentive_amount)}</b></div>}<div><span>Gastos descontados</span><b>- {money(detail.payout.deduction_amount)}</b></div><div className="total"><span>Total neto</span><strong>{money(detail.payout.total_amount)}</strong></div>{detail.payout.status === "approved" ? <DashboardModal title="Confirmar pago de liquidación" description={`Se registrará un egreso por ${money(detail.payout.total_amount)}. Esta acción no debe repetirse.`} triggerLabel="Registrar pago" triggerIcon={<CheckCircle2 />}><form className="admin-form" onSubmit={pay}><label className="wide">Forma de pago<select name="payment_method" required><option value="cash">Efectivo</option><option value="qr">QR</option><option value="transfer">Transferencia</option></select></label><button className="button button-dark wide" disabled={busy}>Confirmar pago y egreso</button></form></DashboardModal> : <span className="cashier-paid-mark"><CheckCircle2 /> Pagada {detail.payout.paid_at ? date(detail.payout.paid_at) : ""}</span>}</div>}
+          </form> : <div className="settlement-payment-summary"><div><span>Servicios</span><b>{money(detail.payout.commission_amount)}</b></div>{detail.payout.includes_accumulated_incentives && <div><span>Incentivo acumulado</span><b>+ {money(detail.payout.incentive_amount)}</b></div>}<div><span>Gastos descontados</span><b>- {money(detail.payout.deduction_amount)}</b></div><div className="total"><span>Total neto</span><strong>{money(detail.payout.total_amount)}</strong></div>{detail.payout.status === "approved" ? <DashboardModal title="Confirmar pago de liquidación" description={`Se registrará un egreso por ${money(detail.payout.total_amount)}. Esta acción no debe repetirse.`} triggerLabel="Registrar pago" triggerIcon={<CheckCircle2 />}><form className="admin-form" onSubmit={pay}><label className="wide">Forma de pago<select name="payment_method" required><option value="cash">Efectivo</option><option value="qr">QR</option><option value="transfer">Transferencia</option></select></label><button className="button button-dark wide" disabled={busy}>Confirmar pago y egreso</button></form></DashboardModal> : <span className="cashier-paid-mark"><CheckCircle2 /> Pagada {detail.payout.paid_at ? date(detail.payout.paid_at, timezone) : ""}</span>}</div>}
         </section>
 
-        <section className="admin-panel settlement-history"><div className="dash-list-head"><div><small>TRAZABILIDAD</small><h2>Historial reciente</h2></div><History /></div><div className="settlement-concept-list">{history.length ? history.map(item => <article key={item.id}><div><strong>{date(`${item.period_start}T12:00:00-04:00`)}</strong><span>Servicios {money(item.commission_amount)} · incentivo {money(item.incentive_amount)} · gastos -{money(item.deduction_amount)}</span></div><div className="settlement-row-amount"><b>{money(item.total_amount)}</b><small>{item.status === "paid" ? "Pagada" : "Preparada"}</small></div></article>) : <p className="admin-help">Todavía no existen liquidaciones.</p>}</div></section>
+        <section className="admin-panel settlement-history"><div className="dash-list-head"><div><small>TRAZABILIDAD</small><h2>Historial reciente</h2></div><History /></div><div className="settlement-concept-list">{history.length ? history.map(item => <article key={item.id}><div><strong>{date(zonedDateTimeToDate(`${item.period_start}T12:00:00`, timezone), timezone)}</strong><span>Servicios {money(item.commission_amount)} · incentivo {money(item.incentive_amount)} · gastos -{money(item.deduction_amount)}</span></div><div className="settlement-row-amount"><b>{money(item.total_amount)}</b><small>{item.status === "paid" ? "Pagada" : "Preparada"}</small></div></article>) : <p className="admin-help">Todavía no existen liquidaciones.</p>}</div></section>
       </section>
     </div>
     <CashierMobileNavigation section="liquidaciones" />
   </main>;
 }
 
-function ConceptPanel({ icon, title, hint, items, empty }: { icon: React.ReactNode; title: string; hint: string; items: SettlementLine[]; empty: string }) {
-  return <section className="admin-panel settlement-concept-panel"><div className="dash-list-head"><div><small>{hint}</small><h2>{title}</h2></div>{icon}</div><div className="settlement-concept-list">{items.length ? items.map(item => <article key={item.id}><div><strong>{item.name}</strong><span>Base {money(item.base_amount)} · {Number(item.rate_percent).toFixed(2)}% · {date(item.created_at)}</span></div><b>{money(item.amount)}</b></article>) : <p className="admin-help">{empty}</p>}</div></section>;
+function ConceptPanel({ icon, title, hint, items, empty, timezone }: { icon: React.ReactNode; title: string; hint: string; items: SettlementLine[]; empty: string; timezone: string }) {
+  return <section className="admin-panel settlement-concept-panel"><div className="dash-list-head"><div><small>{hint}</small><h2>{title}</h2></div>{icon}</div><div className="settlement-concept-list">{items.length ? items.map(item => <article key={item.id}><div><strong>{item.name}</strong><span>Base {money(item.base_amount)} · {Number(item.rate_percent).toFixed(2)}% · {date(item.created_at, timezone)}</span></div><b>{money(item.amount)}</b></article>) : <p className="admin-help">{empty}</p>}</div></section>;
 }
 
 function ExpenseRow({ item, busy, onReview }: { item: SettlementExpense; busy: boolean; onReview: (id: string, status: "approved" | "rejected") => void }) {

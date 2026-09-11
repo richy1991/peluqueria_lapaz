@@ -4,7 +4,8 @@ import {
   gallery as fallbackGallery,
   services as fallbackServices,
 } from "@/lib/demo-data";
-import { formatBusinessHours, resolveBusinessStatus, type BusinessHour } from "@/lib/business-hours";
+import { DEFAULT_BUSINESS_TIMEZONE, formatBusinessHours, resolveBusinessStatus, type BusinessHour } from "@/lib/business-hours";
+import { publicMediaUrl, publicMediaUrls } from "@/lib/public-media";
 
 export type PublicService = {
   id: string;
@@ -93,27 +94,9 @@ const fallbackBusiness: BusinessInfo = {
   statusMessage: "",
   hours: "Martes a domingo · 09:00 a 20:00",
   schedule: fallbackBusinessSchedule,
-  timezone: "America/La_Paz",
+  timezone: DEFAULT_BUSINESS_TIMEZONE,
   coverImage: null,
 };
-
-function publicImageUrl(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  path: string | null,
-) {
-  if (!path) return null;
-  if (/^https?:\/\//i.test(path)) return path;
-  return supabase.storage.from("public-media").getPublicUrl(path).data.publicUrl;
-}
-
-function publicImageUrls(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  paths: string[] | null | undefined,
-  fallbackPath?: string | null,
-) {
-  const source = paths?.length ? paths : fallbackPath ? [fallbackPath] : [];
-  return source.map((path) => publicImageUrl(supabase, path)).filter((path): path is string => Boolean(path)).slice(0, 3);
-}
 
 export async function getPublicData() {
   try {
@@ -167,7 +150,7 @@ export async function getPublicData() {
           role: item.bio ?? "Barbero LEGEND CLUB",
           specialties: (item.specialties ?? []).join(", "),
           image:
-            publicImageUrl(supabase, item.photo_path) ??
+            publicMediaUrl(item.photo_path) ??
             fallbackBarbers.find((barber) => barber.id === item.slug)?.image ??
             fallbackBarbers[0].image,
         }));
@@ -180,7 +163,7 @@ export async function getPublicData() {
           images: [image],
         }))
       : galleryResult.data.map((item) => {
-          const images = publicImageUrls(supabase, item.image_paths, item.image_path);
+          const images = publicMediaUrls(item.image_paths, item.image_path);
           return {
             id: item.id,
             title: item.title,
@@ -192,18 +175,21 @@ export async function getPublicData() {
 
     const products: PublicProduct[] = productsResult.error
       ? []
-      : (productsResult.data ?? []).map((item) => ({
-          id: item.id,
-          name: item.name,
-          description: item.description ?? "Producto seleccionado por nuestro equipo.",
-          category: item.category ?? "Cuidado",
-          price: Number(item.price),
-          stock: item.stock,
-          brand: item.brand ?? "",
-          presentation: item.presentation ?? "",
-          image: publicImageUrls(supabase, item.image_paths, item.image_path)[0] ?? null,
-          images: publicImageUrls(supabase, item.image_paths, item.image_path),
-        }));
+      : (productsResult.data ?? []).map((item) => {
+          const images = publicMediaUrls(item.image_paths, item.image_path);
+          return {
+            id: item.id,
+            name: item.name,
+            description: item.description ?? "Producto seleccionado por nuestro equipo.",
+            category: item.category ?? "Cuidado",
+            price: Number(item.price),
+            stock: item.stock,
+            brand: item.brand ?? "",
+            presentation: item.presentation ?? "",
+            image: images[0] ?? null,
+            images,
+          };
+        });
 
     const row = businessResult.data;
     const businessHours = (businessHoursResult.data ?? []) as BusinessHour[];
@@ -227,7 +213,7 @@ export async function getPublicData() {
           hours: businessHours.length ? formatBusinessHours(businessHours) : row.hours_text ?? fallbackBusiness.hours,
           schedule: businessHours,
           timezone: row.timezone ?? fallbackBusiness.timezone,
-          coverImage: publicImageUrl(supabase, row.cover_path),
+          coverImage: publicMediaUrl(row.cover_path),
         }
       : fallbackBusiness;
 
@@ -260,7 +246,7 @@ export async function getPublicProducts(limit?: number) {
   const { data, error } = await query;
   if (error) return [] as PublicProduct[];
   return (data ?? []).map((item) => {
-    const images = publicImageUrls(supabase, item.image_paths, item.image_path);
+    const images = publicMediaUrls(item.image_paths, item.image_path);
     return {
       id: item.id,
       name: item.name,
@@ -288,7 +274,7 @@ export async function getPublicGallery() {
     return fallbackGallery.map((image, index) => ({ id: `fallback-${index}`, title: `Trabajo destacado ${index + 1}`, image, images: [image] }));
   }
   return data.map((item) => {
-    const images = publicImageUrls(supabase, item.image_paths, item.image_path);
+    const images = publicMediaUrls(item.image_paths, item.image_path);
     return {
       id: item.id,
       title: item.title,

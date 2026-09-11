@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { DEFAULT_BUSINESS_TIMEZONE } from "@/lib/business-hours";
 
 type Profile = { full_name?: string | null; email?: string | null };
 type Conversation = {
@@ -547,7 +548,7 @@ export function FloatingSupportChat() {
       month: "short",
       hour: "2-digit",
       minute: "2-digit",
-      timeZone: "America/La_Paz",
+      timeZone: DEFAULT_BUSINESS_TIMEZONE,
     }).format(new Date(value));
   }
 
@@ -556,7 +557,7 @@ export function FloatingSupportChat() {
       weekday: "long",
       day: "numeric",
       month: "long",
-      timeZone: "America/La_Paz",
+      timeZone: DEFAULT_BUSINESS_TIMEZONE,
     }).format(new Date(value));
   }
 
@@ -645,8 +646,8 @@ export function FloatingSupportChat() {
                       {messages.map((message, index) => {
                         const mine = message.sender_id === userId;
                         const previous = messages[index - 1];
-                        const currentDay = new Date(message.created_at).toLocaleDateString("es-BO", { timeZone: "America/La_Paz" });
-                        const previousDay = previous ? new Date(previous.created_at).toLocaleDateString("es-BO", { timeZone: "America/La_Paz" }) : "";
+                        const currentDay = new Date(message.created_at).toLocaleDateString("es-BO", { timeZone: DEFAULT_BUSINESS_TIMEZONE });
+                        const previousDay = previous ? new Date(previous.created_at).toLocaleDateString("es-BO", { timeZone: DEFAULT_BUSINESS_TIMEZONE }) : "";
                         return (
                           <div className="support-message-row" key={message.id}>
                             {currentDay !== previousDay && <div className="support-date"><span>{formatMessageDate(message.created_at)}</span></div>}
@@ -654,7 +655,7 @@ export function FloatingSupportChat() {
                               <small>{mine ? "Tú" : support ? message.profiles?.full_name ?? message.profiles?.email ?? "Cliente" : "LEGEND CLUB"}</small>
                               <p>{message.body}</p>
                               <time>
-                                {new Intl.DateTimeFormat("es-BO", { hour: "2-digit", minute: "2-digit", timeZone: "America/La_Paz" }).format(new Date(message.created_at))}
+                                {new Intl.DateTimeFormat("es-BO", { hour: "2-digit", minute: "2-digit", timeZone: DEFAULT_BUSINESS_TIMEZONE }).format(new Date(message.created_at))}
                                 {mine && (message.read_at ? <CheckCheck className="is-read" aria-label="Leído" /> : <Check aria-label="Enviado" />)}
                               </time>
                             </article>

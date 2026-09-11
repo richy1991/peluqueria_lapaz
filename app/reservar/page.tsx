@@ -11,11 +11,11 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function BookingPage() {
-  const { services, barbers } = await getPublicData();
+  const { services, barbers, business } = await getPublicData();
 
   return (
     <Suspense fallback={<div className="booking-loading">Preparando horarios…</div>}>
-      <BookingFlow services={services} barbers={barbers} />
+      <BookingFlow services={services} barbers={barbers} timezone={business.timezone} />
     </Suspense>
   );
 }

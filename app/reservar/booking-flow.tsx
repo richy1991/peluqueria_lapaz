@@ -14,6 +14,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { Brand } from "@/components/brand";
+import { businessDateKey, zonedDateTimeToDate } from "@/lib/business-time";
 import { createClient } from "@/lib/supabase/client";
 import type { PublicBarber, PublicService } from "@/lib/public-data";
 
@@ -25,18 +26,18 @@ type SignedUser = {
   initials: string;
 };
 
-function availableDays() {
-  const formatter = new Intl.DateTimeFormat("es-BO", { weekday: "short" });
+function availableDays(timezone: string) {
+  const [year, month, day] = businessDateKey(new Date(), timezone).split("-").map(Number);
+  const formatter = new Intl.DateTimeFormat("es-BO", { weekday: "short", timeZone: "UTC" });
   return Array.from({ length: 6 }, (_, index) => {
-    const date = new Date();
-    date.setDate(date.getDate() + index + 1);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const dayOfMonth = String(date.getDate()).padStart(2, "0");
+    const date = new Date(Date.UTC(year, month - 1, day + index + 1, 12));
+    const itemYear = date.getUTCFullYear();
+    const itemMonth = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const dayOfMonth = String(date.getUTCDate()).padStart(2, "0");
     return {
-      id: `${year}-${month}-${dayOfMonth}`,
+      id: `${itemYear}-${itemMonth}-${dayOfMonth}`,
       day: formatter.format(date).replace(".", ""),
-      number: date.getDate(),
+      number: date.getUTCDate(),
     };
   });
 }
@@ -44,9 +45,10 @@ function availableDays() {
 type BookingFlowProps = {
   services: PublicService[];
   barbers: PublicBarber[];
+  timezone: string;
 };
 
-export function BookingFlow({ services, barbers }: BookingFlowProps) {
+export function BookingFlow({ services, barbers, timezone }: BookingFlowProps) {
   const params = useSearchParams();
   const initialService = params.get("servicio") ?? "";
   const initialBarber = params.get("peluquero") ?? "any";
@@ -68,7 +70,7 @@ export function BookingFlow({ services, barbers }: BookingFlowProps) {
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [bookingError, setBookingError] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
-  const days = useMemo(() => availableDays(), []);
+  const days = useMemo(() => availableDays(timezone), [timezone]);
 
   const service = services.find((item) => item.id === serviceId);
   const barber = barbers.find((item) => item.id === barberId);
@@ -145,8 +147,8 @@ export function BookingFlow({ services, barbers }: BookingFlowProps) {
         const formatter = new Intl.DateTimeFormat("es-BO", {
           hour: "2-digit",
           minute: "2-digit",
-          hour12: false,
-          timeZone: "America/La_Paz",
+          hourCycle: "h23",
+          timeZone: timezone,
         });
         const slots = (data ?? []) as Array<{ starts_at: string }>;
         const uniqueTimes = [...new Set<string>(
@@ -162,7 +164,7 @@ export function BookingFlow({ services, barbers }: BookingFlowProps) {
     return () => {
       active = false;
     };
-  }, [barberId, day, serviceId]);
+  }, [barberId, day, serviceId, timezone]);
 
   async function signInWithGoogle() {
     setAuthLoading(true);
@@ -195,7 +197,7 @@ export function BookingFlow({ services, barbers }: BookingFlowProps) {
     setBookingError("");
 
     const supabase = createClient();
-    const startsAt = new Date(`${day}T${time}:00-04:00`).toISOString();
+    const startsAt = zonedDateTimeToDate(`${day}T${time}:00`, timezone).toISOString();
     const { error } = await supabase.rpc("create_appointment", {
       p_service_slug: service.id,
       p_barber_slug: barberId || "any",

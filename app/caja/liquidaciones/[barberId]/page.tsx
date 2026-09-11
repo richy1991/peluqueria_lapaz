@@ -3,6 +3,8 @@ import { PanelExperience } from "@/components/panel-experience";
 import { createClient } from "@/lib/supabase/server";
 import { getUserCapabilities } from "@/lib/user-capabilities";
 import { CashierSettlementDetail } from "./settlement-detail";
+import { DEFAULT_BUSINESS_TIMEZONE } from "@/lib/business-hours";
+import { businessDateKey } from "@/lib/business-time";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +16,9 @@ export default async function SettlementPage({ params }: { params: Promise<{ bar
   const capabilities = await getUserCapabilities(user.id);
   if (!capabilities.isCashier) notFound();
 
-  const workDate = new Intl.DateTimeFormat("en-CA", { timeZone: "America/La_Paz" }).format(new Date());
+  const { data: businessSettings } = await supabase.from("business_settings").select("timezone").eq("id", true).maybeSingle();
+  const businessTimezone = String(businessSettings?.timezone ?? DEFAULT_BUSINESS_TIMEZONE);
+  const workDate = businessDateKey(new Date(), businessTimezone);
   const [barberResult, shiftResult, detailResult, historyResult] = await Promise.all([
     supabase.from("barber_profiles").select("id,display_name").eq("id", barberId).eq("active", true).maybeSingle(),
     supabase.from("cash_shifts").select("id").eq("opened_by", user.id).eq("status", "open").maybeSingle(),
@@ -31,6 +35,7 @@ export default async function SettlementPage({ params }: { params: Promise<{ bar
     shiftOpen={Boolean(shiftResult.data)}
     detail={detailResult.data as unknown as SettlementDetail}
     history={(historyResult.data ?? []) as SettlementHistory[]}
+    timezone={businessTimezone}
   /></PanelExperience>;
 }
 

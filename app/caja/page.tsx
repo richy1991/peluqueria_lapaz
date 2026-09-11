@@ -4,6 +4,8 @@ import { getUserCapabilities } from "@/lib/user-capabilities";
 import { CashierPanel } from "./cashier-panel";
 import type { CashierNavigationSection } from "./cashier-navigation";
 import {PanelExperience} from "@/components/panel-experience";
+import { DEFAULT_BUSINESS_TIMEZONE } from "@/lib/business-hours";
+import { businessDayRange } from "@/lib/business-time";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +21,9 @@ export async function CashierPageView({ section }: { section: CashierSection }) 
   if (!user) redirect("/login");
   const capabilities = await getUserCapabilities(user.id);
   if (!capabilities.isCashier) notFound();
-  const workDate = new Intl.DateTimeFormat("en-CA", { timeZone: "America/La_Paz" }).format(new Date());
-  const start = new Date(`${workDate}T00:00:00-04:00`);
-  const end = new Date(start); end.setUTCDate(end.getUTCDate() + 1);
+  const { data: businessSettings } = await supabase.from("business_settings").select("timezone").eq("id", true).maybeSingle();
+  const businessTimezone = String(businessSettings?.timezone ?? DEFAULT_BUSINESS_TIMEZONE);
+  const { date: workDate, start, end } = businessDayRange(new Date(), businessTimezone);
   const historyStart = new Date(end); historyStart.setUTCDate(historyStart.getUTCDate() - 31);
   const requestTimestamp = new Date().getTime();
   const [shift,services,barbers,products,clients,appointments,sales,earnings,expenses,payouts,productReservations] = await Promise.all([
@@ -53,6 +55,7 @@ export async function CashierPageView({ section }: { section: CashierSection }) 
     productReservations={(productReservations.data??[]).map(item => ({ ...item, is_expired: new Date(item.expires_at).getTime() <= requestTimestamp }))}
     movements={shift.data ? (await supabase.from("cash_movements").select("id,kind,amount,payment_method,reason,created_at,sale_id").eq("shift_id",shift.data.id).order("created_at",{ascending:true})).data ?? [] : []}
     workDate={workDate}
+    businessTimezone={businessTimezone}
     section={section}
   /></PanelExperience>;
 }
