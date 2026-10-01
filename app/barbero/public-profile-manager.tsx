@@ -6,7 +6,7 @@ import { Camera, ImagePlus, Link2, UserRoundPen } from "lucide-react";
 import { DashboardModal } from "@/components/dashboard-modal";
 import { clearFormErrors, reportFormError } from "@/lib/form-feedback";
 import { dispatchDashboardError, dispatchDashboardSuccess } from "@/lib/form-feedback";
-import { uploadOptimizedImage } from "@/lib/image-upload";
+import { IMAGE_INPUT_ACCEPT, uploadOptimizedImage } from "@/lib/image-upload";
 import { publicMediaUrl } from "@/lib/public-media";
 import { createClient } from "@/lib/supabase/client";
 
@@ -105,7 +105,7 @@ export function PublicProfileManager({ userId, profile, gallery, view, timezone 
       <DashboardModal title="Editar mi perfil público" description="Estos datos se mostrarán en la sección Equipo del sitio." triggerLabel="Editar perfil" triggerIcon={<UserRoundPen />}>
         <form className="admin-form" onSubmit={updateProfile} acceptCharset="UTF-8">
           <label>Nombre público<input name="public_name" defaultValue={profile.display_name} minLength={2} maxLength={80} required /></label>
-          <label>Fotografía<input name="image" type="file" accept="image/jpeg,image/png,image/webp" /></label>
+          <label>Fotografía<input name="image" type="file" accept={IMAGE_INPUT_ACCEPT} /></label>
           <label className="wide">Especialidades separadas por coma<input name="specialties" defaultValue={profile.specialties?.join(", ") ?? ""} /></label>
           <label className="wide">Presentación<textarea name="biography" defaultValue={profile.bio ?? ""} maxLength={500} /></label>
           <button className="button button-dark wide" disabled={busy}>{busy ? "Guardando…" : "Guardar perfil"}</button>
@@ -118,7 +118,7 @@ export function PublicProfileManager({ userId, profile, gallery, view, timezone 
       <DashboardModal title="Publicar en la galería" description="La imagen quedará visible en el sitio público." triggerLabel="Nueva publicación" triggerIcon={<ImagePlus />}>
         <form className="admin-form" onSubmit={publishGallery} acceptCharset="UTF-8">
           <label>Título<input name="title" minLength={2} maxLength={120} required /></label>
-          <label>Imágenes (máximo 3)<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required /></label>
+          <label>Imágenes (máximo 3)<input name="images" type="file" accept={IMAGE_INPUT_ACCEPT} multiple required /></label>
           <label>Tipo<select name="source_type" defaultValue="own_work"><option value="own_work">Trabajo propio</option><option value="reference">Modelo o referencia</option></select></label>
           <label>Enlace de la fuente <span aria-hidden="true"><Link2 size={12} /></span><input name="source_url" type="url" placeholder="https://…" /></label>
           <label className="wide">Descripción<textarea name="description" maxLength={500} /></label>

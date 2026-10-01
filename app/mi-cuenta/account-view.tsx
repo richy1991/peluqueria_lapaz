@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bell, CalendarDays, Flame, Gift, Globe2, Home, PackageCheck, Scissors, Star, UserRound } from "lucide-react";
+import { Bell, CalendarDays, Gift, Globe2, Home, PackageCheck, Scissors, Star, UserRound } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { BusinessStatus } from "@/components/business-status";
 import { ModeSwitcher } from "@/components/mode-switcher";
@@ -47,7 +47,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
   if (section === "inicio" || section === "puntos") await supabase.rpc("refresh_my_barber_loyalty");
   if (section === "puntos") await supabase.rpc("release_expired_reward_reservations");
   const activeReservationCutoff = new Date().toISOString();
-  const [profile, appointments, reservations, notifications, loyalty, transactions, rewards, redemptions, streak, preferences, availableProducts, businessSettings, businessHours] = await Promise.all([
+  const [profile, appointments, reservations, notifications, loyalty, transactions, rewards, redemptions, preferences, availableProducts, businessSettings, businessHours] = await Promise.all([
     supabase.from("profiles").select("full_name,email,phone,avatar_url,status,no_show_count,is_blacklisted,is_blocked,referral_code").eq("id", user.id).single(),
     ["inicio", "citas"].includes(section) ? supabase.from("appointments").select("id,starts_at,status,price_snapshot,service_name_snapshot,barber_profiles(display_name)").eq("client_id", user.id).order("starts_at", { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
     ["inicio", "productos"].includes(section) ? supabase.from("product_reservations").select("id,quantity,status,expires_at,products(name)").eq("client_id", user.id).eq("status", "reserved").gt("expires_at", activeReservationCutoff).order("created_at", { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
@@ -56,7 +56,6 @@ export async function ClientAccountView({ section }: { section: ClientSection })
     section === "puntos" ? supabase.from("loyalty_transactions").select("id,points,reason,created_at,barber_profiles(display_name)").eq("user_id", user.id).not("barber_id", "is", null).order("created_at", { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
     section === "puntos" ? supabase.from("rewards").select("id,name,description,points_cost,reward_type,reward_value").eq("active", true).order("points_cost") : Promise.resolve({ data: [] }),
     section === "puntos" ? supabase.from("reward_redemptions").select("id,code,status,expires_at,reward_name_snapshot,rewards(name),barber_profiles(display_name)").eq("user_id", user.id).eq("status", "pending").order("created_at", { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
-    section === "puntos" ? supabase.from("customer_barber_streaks").select("barber_id,current_visits,best_visits,last_visit_at,barber_profiles(display_name)").eq("user_id", user.id).order("current_visits", { ascending: false }) : Promise.resolve({ data: [] }),
     section === "notificaciones" ? supabase.from("notification_preferences").select("appointment_notifications,promotion_notifications,chat_notifications,system_notifications,muted_all").eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
     getPublicProducts(section === "productos" ? undefined : 3),
     supabase.from("business_settings").select("business_status,status_message,timezone").eq("id", true).maybeSingle(),
@@ -107,7 +106,6 @@ export async function ClientAccountView({ section }: { section: ClientSection })
 
     {section === "puntos" && <div className="portal-grid client-section-grid">
       <section className="portal-card portal-wide"><div className="portal-title"><Star /><h2>Mis puntos por peluquero</h2></div><p>Cada atención suma únicamente con el profesional que realizó el servicio.</p><div className="barber-loyalty-grid">{barberBalances.length ? barberBalances.map(account => <article key={account.barberId}><span>{account.barberName}</span><strong>{account.balance}</strong><small>puntos disponibles · {account.lifetimeEarned} históricos</small></article>) : <p className="portal-empty">Aún no tienes puntos. Se acreditarán con el peluquero que te atienda.</p>}</div></section>
-      <section className="portal-card"><div className="portal-title"><Flame /><h2>Rachas por peluquero</h2></div><div className="portal-list">{streak.data?.length ? streak.data.map(item => <article key={item.barber_id}><div><strong>{(item.barber_profiles as unknown as { display_name?: string } | null)?.display_name ?? "Peluquero"}</strong><span>Mejor racha: {item.best_visits}</span></div><b>{item.current_visits}</b></article>) : <p className="portal-empty">Aún no tienes rachas activas.</p>}</div></section>
       <section className="portal-card"><div className="portal-title"><Gift /><h2>Recomienda a un amigo</h2></div><p>Comparte tu código o QR. Los puntos se activan cuando tu referido completa y paga su primera atención.</p>{person?.referral_code && <ReferralCode code={person.referral_code} />}</section>
       <section className="portal-card"><div className="portal-title"><PackageCheck /><h2>Vincular atención</h2></div><p>¿Te atendiste sin cuenta? Introduce el código de tu comprobante para incorporar esa visita.</p><ClaimVisitForm /></section>
       <section className="portal-card portal-wide"><div className="portal-title"><Gift /><h2>Recompensas</h2></div><p>Mostramos las que ya puedes usar y la siguiente meta. Los puntos de distintos peluqueros no se mezclan.</p><div className="reward-grid">{visibleRewards.length ? visibleRewards.map(item => <article key={item.id}><div><strong>{item.name}</strong><span>{item.description}</span></div><RewardButton id={item.id} cost={item.points_cost} accounts={barberBalances} /></article>) : <p className="portal-empty">Las recompensas aparecerán aquí cuando el programa esté activo.</p>}</div></section>

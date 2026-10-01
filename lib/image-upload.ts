@@ -2,29 +2,74 @@
 
 import { createClient } from "@/lib/supabase/client";
 
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 const MAX_IMAGE_EDGE = 1600;
 const WEBP_QUALITY = 0.82;
-const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"]);
+export const IMAGE_INPUT_ACCEPT = "image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif";
+
+function isSupportedImage(file: File) {
+  return ALLOWED_IMAGE_TYPES.has(file.type) || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name);
+}
+
+async function loadImageForCanvas(file: File): Promise<HTMLImageElement> {
+  const url = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    image.src = url;
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error("No se pudo leer la imagen en este dispositivo. Prueba con JPG, PNG o WebP."));
+    });
+    return image;
+  } catch (error) {
+    URL.revokeObjectURL(url);
+    throw error;
+  }
+}
 
 export async function optimizeImage(file: File) {
-  if (!ALLOWED_IMAGE_TYPES.has(file.type)) throw new Error("Selecciona una imagen JPG, PNG o WebP.");
-  if (file.size > MAX_IMAGE_BYTES) throw new Error("La imagen no puede superar 8 MB.");
+  if (!isSupportedImage(file)) throw new Error("Selecciona una imagen JPG, PNG, WebP, GIF o HEIC.");
+  if (file.size > MAX_IMAGE_BYTES) throw new Error("La imagen no puede superar 15 MB.");
 
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_IMAGE_EDGE / Math.max(bitmap.width, bitmap.height));
+  let source: CanvasImageSource;
+  let width: number;
+  let height: number;
+  let dispose: () => void = () => undefined;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    source = bitmap;
+    width = bitmap.width;
+    height = bitmap.height;
+    dispose = () => bitmap.close();
+  } catch {
+    // Algunos navegadores móviles no decodifican todos los JPG mediante
+    // createImageBitmap, aunque sí pueden abrirlos con el elemento Image.
+    const image = await loadImageForCanvas(file);
+    source = image;
+    width = image.naturalWidth;
+    height = image.naturalHeight;
+    dispose = () => URL.revokeObjectURL(image.src);
+  }
+
+  if (!width || !height) {
+    dispose();
+    throw new Error("La imagen no tiene dimensiones válidas.");
+  }
+  const scale = Math.min(1, MAX_IMAGE_EDGE / Math.max(width, height));
   const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  canvas.width = Math.max(1, Math.round(width * scale));
+  canvas.height = Math.max(1, Math.round(height * scale));
   const context = canvas.getContext("2d");
   if (!context) {
-    bitmap.close();
+    dispose();
     throw new Error("El navegador no pudo procesar la imagen.");
   }
   try {
-    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    context.drawImage(source, 0, 0, canvas.width, canvas.height);
   } finally {
-    bitmap.close();
+    dispose();
   }
 
   return new Promise<Blob>((resolve, reject) => {

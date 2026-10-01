@@ -37,6 +37,7 @@ type ChatMessage = {
   profiles?: Profile | null;
 };
 type PanelPosition = { left: number; top: number };
+type ConnectionState = "connecting" | "connected" | "disconnected";
 
 function displayName(conversation?: Conversation) {
   return conversation?.profiles?.full_name
@@ -64,6 +65,7 @@ export function FloatingSupportChat() {
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState("");
   const [peerTyping, setPeerTyping] = useState(false);
+  const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
   const [panelPosition, setPanelPosition] = useState<PanelPosition | null>(null);
   const [draggingPanel, setDraggingPanel] = useState(false);
 
@@ -88,6 +90,7 @@ export function FloatingSupportChat() {
     startLeft: number;
     startTop: number;
   } | null>(null);
+  const hasRealtimeSubscriptionRef = useRef(false);
 
   useEffect(() => { openRef.current = open; }, [open]);
   useEffect(() => { selectedRef.current = selected; }, [selected]);
@@ -273,8 +276,11 @@ export function FloatingSupportChat() {
   }, [fetchConversations, refreshUnread, supabase]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => void bootstrap(false).catch(() => undefined), 0);
-    return () => window.clearTimeout(timer);
+    let active = true;
+    void bootstrap(false).catch(() => {
+      if (active) setConnectionState("disconnected");
+    });
+    return () => { active = false; };
   }, [bootstrap]);
 
   async function initialize() {
@@ -338,32 +344,80 @@ export function FloatingSupportChat() {
       event: "typing",
       payload: { userId: userIdRef.current, typing: false },
     });
-    await loadMessages(target);
+    // El mensaje se incorpora desde el evento WebSocket; no se vuelve a
+    // descargar toda la conversación después de cada envío.
     focusMessageInput(80);
   }
 
   useEffect(() => {
     if (!userId) return;
+    hasRealtimeSubscriptionRef.current = false;
+    setConnectionState("connecting");
     const channel = supabase
       .channel(`support-inbox-${userId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, async (payload) => {
         const row = (payload.eventType === "DELETE" ? payload.old : payload.new) as Partial<ChatMessage>;
         const conversationId = String(row.conversation_id ?? "");
         if (!conversationId) return;
-        const rows = await refreshIndex(false).catch(() => conversationsRef.current);
-        const conversation = rows.find((item) => item.id === conversationId);
+        const conversation = conversationsRef.current.find((item) => item.id === conversationId);
         const incoming = supportRef.current
           ? String(row.sender_id) === String(conversation?.created_by ?? "")
           : String(row.sender_id) !== userIdRef.current;
-        if (payload.eventType === "INSERT" && incoming) void playIncomingSound();
-        if (openRef.current && selectedRef.current === conversationId) {
-          const visible = document.visibilityState === "visible";
-          await loadMessages(conversationId, visible);
+
+        if (payload.eventType === "INSERT") {
+          if (!conversation) {
+            // Solo una conversación nueva requiere actualizar el índice. Los
+            // mensajes normales se procesan íntegramente desde el WebSocket.
+            void refreshIndex(false);
+          } else {
+            const updated = [
+              { ...conversation, updated_at: String(row.created_at ?? conversation.updated_at ?? "") },
+              ...conversationsRef.current.filter((item) => item.id !== conversationId),
+            ];
+            conversationsRef.current = updated;
+            setConversations(updated);
+          }
+          if (incoming) void playIncomingSound();
+          if (selectedRef.current === conversationId) {
+            setMessages((current) => current.some((message) => message.id === row.id)
+              ? current
+              : [...current, row as ChatMessage]);
+            if (openRef.current && document.visibilityState === "visible") {
+              await markConversationRead(conversationId);
+            } else if (incoming) {
+              setUnreadByConversation((current) => ({ ...current, [conversationId]: (current[conversationId] ?? 0) + 1 }));
+            }
+          } else if (incoming) {
+            setUnreadByConversation((current) => ({ ...current, [conversationId]: (current[conversationId] ?? 0) + 1 }));
+          }
+        } else if (payload.eventType === "UPDATE" && selectedRef.current === conversationId) {
+          setMessages((current) => current.map((message) => message.id === row.id ? { ...message, ...row } : message));
         }
       })
-      .subscribe();
-    return () => { void supabase.removeChannel(channel); };
-  }, [loadMessages, playIncomingSound, refreshIndex, supabase, userId]);
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          const reconnected = hasRealtimeSubscriptionRef.current;
+          hasRealtimeSubscriptionRef.current = true;
+          setConnectionState("connected");
+          if (reconnected) {
+            // Tras recuperar el socket, se consulta una sola vez para cubrir
+            // cualquier evento ocurrido mientras no hubo conexión.
+            void refreshIndex(false).then((rows) => {
+              const target = selectedRef.current;
+              if (target && rows.some((item) => item.id === target)) void loadMessages(target, true);
+            });
+          }
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          setConnectionState("disconnected");
+        } else {
+          setConnectionState("connecting");
+        }
+      });
+    return () => {
+      hasRealtimeSubscriptionRef.current = false;
+      void supabase.removeChannel(channel);
+    };
+  }, [loadMessages, markConversationRead, playIncomingSound, refreshIndex, supabase, userId]);
 
   useEffect(() => {
     if (!open || !selected || !userId) return;
@@ -438,12 +492,14 @@ export function FloatingSupportChat() {
         return;
       }
       document.body.style.overflow = "hidden";
-      const visibleHeight = viewport?.height ?? window.innerHeight;
-      const visibleWidth = viewport?.width ?? document.documentElement.clientWidth;
-      const visibleTop = viewport?.offsetTop ?? 0;
-      const visibleLeft = viewport?.offsetLeft ?? 0;
-      panel.style.setProperty("--support-modal-top", `${Math.max(0, visibleTop)}px`);
-      panel.style.setProperty("--support-modal-left", `${Math.max(0, visibleLeft)}px`);
+      const layoutHeight = document.documentElement.clientHeight || window.innerHeight;
+      const layoutWidth = document.documentElement.clientWidth || window.innerWidth;
+      const visibleHeight = Math.min(viewport?.height ?? window.innerHeight, layoutHeight);
+      const visibleWidth = Math.min(viewport?.width ?? layoutWidth, layoutWidth);
+      const visibleTop = Math.min(Math.max(0, viewport?.offsetTop ?? 0), Math.max(0, layoutHeight - visibleHeight));
+      const visibleLeft = Math.min(Math.max(0, viewport?.offsetLeft ?? 0), Math.max(0, layoutWidth - visibleWidth));
+      panel.style.setProperty("--support-modal-top", `${visibleTop}px`);
+      panel.style.setProperty("--support-modal-left", `${visibleLeft}px`);
       panel.style.setProperty("--support-modal-width", `${Math.max(1, visibleWidth)}px`);
       panel.style.setProperty("--support-modal-height", `${Math.max(1, visibleHeight)}px`);
       window.requestAnimationFrame(() => {
@@ -540,6 +596,9 @@ export function FloatingSupportChat() {
   const contactName = support ? displayName(selectedConversation) : "Soporte LEGEND CLUB";
   const contactInitials = support ? contactName.slice(0, 2).toUpperCase() : "LC";
   const unreadTotal = Object.values(unreadByConversation).reduce((total, value) => total + value, 0);
+  const connectionLabel = connectionState === "connected"
+    ? support && selected ? "Conversación activa" : "Atención privada"
+    : connectionState === "connecting" ? "Conectando…" : "Sin conexión; reintentando…";
 
   function formatConversationTime(value?: string) {
     if (!value) return "";
@@ -586,7 +645,7 @@ export function FloatingSupportChat() {
             </div>
             <div className="support-header-copy">
               <strong>{support && selected ? contactName : "LEGEND CLUB"}</strong>
-              <span className={peerTyping ? "is-typing" : ""}><i /> {peerTyping ? "Escribiendo…" : support && selected ? "Conversación activa" : "Atención privada"}</span>
+              <span className={peerTyping ? "is-typing" : ""}><i /> {peerTyping ? "Escribiendo…" : connectionLabel}</span>
             </div>
             {support && selected && (
               <button
@@ -652,7 +711,7 @@ export function FloatingSupportChat() {
                           <div className="support-message-row" key={message.id}>
                             {currentDay !== previousDay && <div className="support-date"><span>{formatMessageDate(message.created_at)}</span></div>}
                             <article className={mine ? "mine" : ""}>
-                              <small>{mine ? "Tú" : support ? message.profiles?.full_name ?? message.profiles?.email ?? "Cliente" : "LEGEND CLUB"}</small>
+                              <small>{mine ? "Tú" : support ? message.profiles?.full_name ?? message.profiles?.email ?? contactName : "LEGEND CLUB"}</small>
                               <p>{message.body}</p>
                               <time>
                                 {new Intl.DateTimeFormat("es-BO", { hour: "2-digit", minute: "2-digit", timeZone: DEFAULT_BUSINESS_TIMEZONE }).format(new Date(message.created_at))}
