@@ -230,6 +230,21 @@ export function PanelExperience({ children, chatInHeader = false }: { children: 
   const chromeHidden = useAutoHidePanelChrome(mobileNavOpen);
 
   useEffect(() => {
+    const themeColor = resolved === "dark" ? "#070b11" : "#eef4f7";
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.name = "theme-color";
+      document.head.appendChild(meta);
+    }
+    const previousColor = meta.content;
+    meta.content = themeColor;
+    return () => {
+      meta!.content = previousColor;
+    };
+  }, [resolved]);
+
+  useEffect(() => {
     if (!mobileNavOpen) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
