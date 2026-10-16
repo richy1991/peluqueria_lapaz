@@ -483,28 +483,8 @@ export function FloatingSupportChat() {
     const previousOverflow = document.body.style.overflow;
 
     const updateViewport = () => {
-      if (!panel || !isMobile.matches) {
-        panel?.style.removeProperty("--support-modal-top");
-        panel?.style.removeProperty("--support-modal-left");
-        panel?.style.removeProperty("--support-modal-width");
-        panel?.style.removeProperty("--support-modal-height");
-        document.body.style.overflow = previousOverflow;
-        return;
-      }
+      if (!panel || !isMobile.matches) return;
       document.body.style.overflow = "hidden";
-      const layoutHeight = document.documentElement.clientHeight || window.innerHeight;
-      const layoutWidth = document.documentElement.clientWidth || window.innerWidth;
-      // Fixed elements are positioned against the layout viewport. Using the
-      // visual viewport width/offset here can move the client panel outside
-      // the screen when its page has horizontal overflow.
-      const visibleHeight = Math.min(viewport?.height ?? window.innerHeight, layoutHeight);
-      const visibleWidth = layoutWidth;
-      const visibleTop = 0;
-      const visibleLeft = 0;
-      panel.style.setProperty("--support-modal-top", `${visibleTop}px`);
-      panel.style.setProperty("--support-modal-left", `${visibleLeft}px`);
-      panel.style.setProperty("--support-modal-width", `${Math.max(1, visibleWidth)}px`);
-      panel.style.setProperty("--support-modal-height", `${Math.max(1, visibleHeight)}px`);
       window.requestAnimationFrame(() => {
         const thread = messagesRef.current;
         if (thread) thread.scrollTop = thread.scrollHeight;
@@ -519,10 +499,6 @@ export function FloatingSupportChat() {
       viewport?.removeEventListener("resize", updateViewport);
       viewport?.removeEventListener("scroll", updateViewport);
       window.removeEventListener("resize", updateViewport);
-      panel?.style.removeProperty("--support-modal-top");
-      panel?.style.removeProperty("--support-modal-left");
-      panel?.style.removeProperty("--support-modal-width");
-      panel?.style.removeProperty("--support-modal-height");
       document.body.style.overflow = previousOverflow;
     };
   }, [open]);

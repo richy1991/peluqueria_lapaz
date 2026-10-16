@@ -231,6 +231,11 @@ export function PanelExperience({ children, chatInHeader = false }: { children: 
 
   useEffect(() => {
     const themeColor = resolved === "dark" ? "#070b11" : "#eef4f7";
+    const root = document.documentElement;
+    const previousRootTheme = root.dataset.panelTheme;
+    const previousBodyTheme = document.body.dataset.panelTheme;
+    const previousRootBackground = root.style.backgroundColor;
+    const previousBodyBackground = document.body.style.backgroundColor;
     let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     if (!meta) {
       meta = document.createElement("meta");
@@ -238,8 +243,18 @@ export function PanelExperience({ children, chatInHeader = false }: { children: 
       document.head.appendChild(meta);
     }
     const previousColor = meta.content;
+    root.dataset.panelTheme = resolved;
+    document.body.dataset.panelTheme = resolved;
+    root.style.backgroundColor = themeColor;
+    document.body.style.backgroundColor = themeColor;
     meta.content = themeColor;
     return () => {
+      if (previousRootTheme) root.dataset.panelTheme = previousRootTheme;
+      else delete root.dataset.panelTheme;
+      if (previousBodyTheme) document.body.dataset.panelTheme = previousBodyTheme;
+      else delete document.body.dataset.panelTheme;
+      root.style.backgroundColor = previousRootBackground;
+      document.body.style.backgroundColor = previousBodyBackground;
       meta!.content = previousColor;
     };
   }, [resolved]);
