@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ChevronLeft, ChevronRight, Search, UserRoundCheck, Users, X } from "lucide-react";
+import { DashboardModal } from "@/components/dashboard-modal";
 import { ClientAdminActions } from "./admin-operations";
 
 export type AdminClient = {
@@ -16,6 +17,14 @@ export type AdminClient = {
   is_blacklisted: boolean;
   is_blocked: boolean;
   created_at: string;
+  birthday?: string | null;
+  address?: string | null;
+  late_cancel_count?: number;
+  blacklist_reason?: string | null;
+  blocked_reason?: string | null;
+  blocked_at?: string | null;
+  photo_consent?: boolean;
+  updated_at?: string;
 };
 
 type AdminClientsTableProps = {
@@ -41,6 +50,37 @@ function pageHref(page: number, query: string) {
   if (page > 1) params.set("page", String(page));
   const suffix = params.toString();
   return `/admin/clientes${suffix ? `?${suffix}` : ""}`;
+}
+
+function ClientDetails({ client, timezone }: { client: AdminClient; timezone: string }) {
+  const date = (value: string) => new Intl.DateTimeFormat("es-BO", {
+    dateStyle: "medium",
+    timeZone: timezone,
+  }).format(new Date(value));
+
+  return (
+    <div className="client-details">
+      <dl className="client-details-grid">
+        <div><dt>Nombre completo</dt><dd>{client.full_name || "Sin nombre registrado"}</dd></div>
+        <div><dt>Correo electrónico</dt><dd><a href={`mailto:${client.email}`}>{client.email}</a></dd></div>
+        <div><dt>Teléfono</dt><dd>{client.phone ? <a href={`tel:${client.phone}`}>{client.phone}</a> : "Sin teléfono"}</dd></div>
+        <div><dt>Estado de la cuenta</dt><dd>{statusLabels[client.status] ?? client.status}</dd></div>
+        <div><dt>Acceso</dt><dd>{client.is_blocked ? "Bloqueado" : "Sin bloqueo"}</dd></div>
+        <div><dt>Fecha de registro</dt><dd>{date(client.created_at)}</dd></div>
+        <div><dt>Fecha de nacimiento</dt><dd>{client.birthday ? new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${client.birthday}T00:00:00Z`)) : "Sin registrar"}</dd></div>
+        <div><dt>Dirección</dt><dd>{client.address || "Sin registrar"}</dd></div>
+        <div><dt>Inasistencias</dt><dd>{client.no_show_count}</dd></div>
+        {client.late_cancel_count !== undefined && <div><dt>Cancelaciones tardías</dt><dd>{client.late_cancel_count}</dd></div>}
+        <div><dt>Lista de seguimiento</dt><dd>{client.is_blacklisted ? "Sí" : "No"}</dd></div>
+        {client.photo_consent !== undefined && <div><dt>Autoriza fotografías</dt><dd>{client.photo_consent ? "Sí" : "No"}</dd></div>}
+        {client.is_blocked && <div className="client-details-wide"><dt>Motivo del bloqueo</dt><dd>{client.blocked_reason || "Sin motivo registrado"}{client.blocked_at && <small>Desde {date(client.blocked_at)}</small>}</dd></div>}
+        {client.is_blacklisted && client.blacklist_reason && <div className="client-details-wide"><dt>Motivo del seguimiento</dt><dd>{client.blacklist_reason}</dd></div>}
+        {client.updated_at && <div><dt>Última actualización</dt><dd>{date(client.updated_at)}</dd></div>}
+      </dl>
+      <p className="client-details-help">Dar de baja desactiva la cuenta y permite reactivarla. Eliminar borra la cuenta permanentemente.</p>
+      <ClientAdminActions id={client.id} name={client.full_name?.trim() || client.email} status={client.status} blocked={client.is_blocked} blockedReason={client.blocked_reason} />
+    </div>
+  );
 }
 
 export function AdminClientsTable({ clients, query, page, pageSize, total, loadError = false, timezone }: AdminClientsTableProps) {
@@ -97,20 +137,18 @@ export function AdminClientsTable({ clients, query, page, pageSize, total, loadE
         </div>
 
         <p className={`clients-guidance ${loadError ? "is-error" : ""}`}>
-          {loadError ? "No se pudo cargar el directorio. Comprueba que la migración de clientes esté aplicada e inténtalo de nuevo." : "Las bajas son reversibles y ningún registro se elimina físicamente. Los bloqueos requieren un motivo."}
+          {loadError ? "No se pudo cargar el directorio. Comprueba que la migración de clientes esté aplicada e inténtalo de nuevo." : "Selecciona un cliente para ver sus datos, dar de baja, bloquear o eliminar su cuenta."}
         </p>
 
         {clients.length ? (
           <>
-            <div className="client-table-scroll" tabIndex={0} aria-label="Tabla desplazable de clientes">
+            <div className="client-table-scroll">
               <table className="client-data-table">
                 <thead>
                   <tr>
                     <th scope="col">Cliente</th>
-                    <th scope="col">Contacto</th>
+                    <th scope="col" className="client-contact-column">Contacto</th>
                     <th scope="col">Estado</th>
-                    <th scope="col">Asistencia</th>
-                    <th scope="col"><span className="sr-only">Acciones</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -119,20 +157,32 @@ export function AdminClientsTable({ clients, query, page, pageSize, total, loadE
                     const initials = displayName.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
                     const hasAlert = client.is_blacklisted || client.is_blocked;
                     return (
-                      <tr key={client.id}>
+                      <tr key={client.id} className="client-selectable-row" onClick={(event) => {
+                        if (!(event.target instanceof Element) || !event.currentTarget.contains(event.target) || event.target.closest("button, a, input, select, textarea")) return;
+                        event.currentTarget.querySelector<HTMLButtonElement>(".client-details-trigger")?.click();
+                      }}>
                         <td>
-                          <div className="client-identity">
-                            <span aria-hidden="true">{initials || "CL"}</span>
-                            <div><strong>{displayName}</strong><small>Desde {new Intl.DateTimeFormat("es-BO", { month: "short", year: "numeric", timeZone: timezone }).format(new Date(client.created_at))}</small></div>
-                          </div>
+                          <DashboardModal
+                            title={displayName}
+                            description="Consulta sus datos y administra su cuenta."
+                            eyebrow="FICHA DEL CLIENTE"
+                            triggerLabel={displayName}
+                            ariaLabel={`Ver datos y acciones de ${displayName}`}
+                            triggerClassName="client-details-trigger"
+                            triggerContent={<div className="client-identity">
+                              <span aria-hidden="true">{initials || "CL"}</span>
+                              <div><strong>{displayName}</strong><small>Ver ficha <ChevronRight aria-hidden="true" /></small></div>
+                            </div>}
+                            variant="ghost"
+                          >
+                            <ClientDetails client={client} timezone={timezone} />
+                          </DashboardModal>
                         </td>
-                        <td><a href={`mailto:${client.email}`}>{client.email}</a><small>{client.phone || "Sin teléfono"}</small></td>
+                        <td className="client-contact-column"><a href={`mailto:${client.email}`}>{client.email}</a><small>{client.phone || "Sin teléfono"}</small></td>
                         <td>
                           <span className={`client-status ${client.is_blocked ? "status-blocked" : `status-${client.status}`}`}>{client.is_blocked ? "Bloqueado" : statusLabels[client.status] ?? client.status}</span>
                           {hasAlert && <small className="client-risk"><AlertTriangle /> {client.is_blacklisted ? "Lista de seguimiento" : "Acceso restringido"}</small>}
                         </td>
-                        <td><strong>{client.no_show_count}</strong><small>{client.no_show_count === 1 ? "inasistencia" : "inasistencias"}</small></td>
-                        <td><ClientAdminActions id={client.id} status={client.status} blocked={client.is_blocked} /></td>
                       </tr>
                     );
                   })}

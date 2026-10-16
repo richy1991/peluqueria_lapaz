@@ -1296,7 +1296,7 @@
 
 .client-table-scroll{position:relative;overflow-x:auto;outline:0;scrollbar-width:thin;scrollbar-color:var(--dash-line) transparent}
 .client-table-scroll:focus-visible{box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--dash-cyan) 18%,transparent)}
-.client-data-table{width:100%;min-width:840px;border-collapse:collapse;color:var(--dash-text);table-layout:fixed}
+.client-data-table{width:100%;min-width:0;border-collapse:collapse;color:var(--dash-text);table-layout:fixed}
 .client-data-table th{height:42px;padding:0 16px;text-align:left;color:var(--dash-muted);border-bottom:1px solid var(--dash-line);background:color-mix(in srgb,var(--dash-card-2) 35%,transparent);font-size:7px;font-weight:900;letter-spacing:.11em;text-transform:uppercase}
 .client-data-table th:first-child,.client-data-table td:first-child{padding-left:26px;width:25%}
 .client-data-table th:nth-child(2){width:25%}.client-data-table th:nth-child(3){width:18%}.client-data-table th:nth-child(4){width:11%}.client-data-table th:last-child{width:21%}
@@ -1640,3 +1640,114 @@
 @keyframes panelTabSelected{0%{transform:scale(.72) translateY(2px)}58%{transform:scale(1.16) translateY(-2px)}100%{transform:scale(1) translateY(-1px)}}
 @media(prefers-reduced-motion:reduce){.panel-theme>.panel-bottom-nav,.panel-theme>.panel-bottom-nav>a::before,.panel-theme>.panel-bottom-nav svg,.panel-theme>.panel-bottom-nav i{animation:none!important;transition:none!important}}
 @media print{.panel-bottom-nav{display:none!important}}
+
+/* Directorios compactos: detalles y acciones dentro de la ficha. */
+.client-data-table th:first-child,.client-data-table td:first-child{width:40%}
+.client-data-table th:nth-child(2){width:35%}
+.client-data-table th:last-child{width:25%}
+.client-selectable-row{cursor:pointer}
+.client-details-trigger{width:100%;min-width:0;padding:0;text-align:left;color:inherit;border:0;border-radius:8px;background:transparent;font:inherit;cursor:pointer}
+.client-details-trigger:focus-visible,.products-summary button:focus-visible{outline:2px solid var(--dash-cyan);outline-offset:4px}
+.client-details-trigger .client-identity small{display:flex;align-items:center;gap:3px;color:var(--dash-cyan)}
+.client-details-trigger .client-identity small svg{width:11px;height:11px}
+.client-details-grid{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px}
+.client-details-grid>div{min-width:0;padding:12px 0;border-bottom:1px solid var(--dash-line)}
+.client-details-grid dt{margin-bottom:6px;color:var(--dash-muted);font-size:10px}
+.client-details-grid dd{margin:0;color:var(--dash-text);font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.client-details-grid dd a{color:var(--dash-cyan)}
+.client-details-grid dd small{display:block;margin-top:4px;color:var(--dash-muted)}
+.client-details-wide{grid-column:1/-1}
+.client-details-help{margin:18px 0 12px;color:var(--dash-muted);font-size:11px;line-height:1.5}
+.client-admin-actions{width:100%;min-width:0;justify-items:stretch}
+.client-admin-actions>.client-action-buttons{display:flex;flex-wrap:wrap;align-items:start;gap:6px}
+.client-action-buttons>button,.client-action-buttons>.admin-delete-action{flex:1;min-width:0}
+.client-action-buttons>.admin-delete-action>button{width:100%;justify-content:center}
+.client-admin-actions button,.admin-record-actions button,.admin-confirm-actions button{min-height:36px;padding:7px 12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;color:var(--dash-cyan);border:1px solid var(--dash-line);border-radius:8px;background:color-mix(in srgb,var(--dash-cyan) 6%,transparent);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+.client-admin-actions button:disabled,.admin-record-actions button:disabled,.admin-confirm-actions button:disabled{opacity:.5;cursor:not-allowed}
+.client-admin-actions .client-block-form{width:100%;margin-top:10px;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.client-block-form label{color:var(--dash-text);font-size:11px}
+.client-block-form textarea{width:100%;min-width:0;min-height:80px;padding:10px;border:1px solid var(--dash-line);border-radius:8px;color:var(--dash-text);background:var(--dash-card);font:inherit;font-size:12px;resize:vertical}
+.client-block-form>div{display:flex;gap:6px}
+.client-action-error,.admin-delete-error{color:#c94c46;font-size:11px;line-height:1.5}
+.admin-record-actions{margin-top:16px;padding-top:14px;display:flex;align-items:start;flex-wrap:wrap;gap:8px;border-top:1px solid var(--dash-line)}
+.admin-delete-action{min-width:0}
+.admin-delete-action.is-confirming{flex:1 0 100%}
+.admin-delete-confirmation{padding:14px;border:1px solid color-mix(in srgb,#c94c46 40%,var(--dash-line));border-radius:10px;background:color-mix(in srgb,#c94c46 6%,var(--dash-card))}
+.admin-delete-confirmation h3{margin:0 0 8px;color:var(--dash-text);font-size:15px;overflow-wrap:anywhere}
+.admin-delete-confirmation p{margin:6px 0;color:var(--dash-muted);font-size:11px;line-height:1.5}
+.admin-delete-confirmation .admin-delete-error{color:#c94c46}
+.admin-confirm-actions{margin-top:12px;display:flex;align-items:center;gap:8px}
+.panel-theme .admin-delete-action .dash-danger-action{color:#c94c46;border-color:color-mix(in srgb,#c94c46 40%,var(--dash-line));background:color-mix(in srgb,#c94c46 8%,var(--dash-card));font-size:11px}
+.panel-theme[data-panel-theme="dark"] .admin-delete-action .dash-danger-action{color:#ffaaa3}
+.admin-gallery-preview{margin-bottom:14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.admin-gallery-preview>span{aspect-ratio:1;border:1px solid var(--dash-line);border-radius:10px;background:center/cover no-repeat var(--dash-card)}
+.admin-managed-list article>div:first-child{min-width:0;flex:1;overflow-wrap:anywhere}
+.admin-managed-list article>.dash-row-actions{width:auto;flex:none;display:flex;margin:0 0 0 auto}
+.admin-managed-list .dash-action{min-height:36px;font-size:10px;white-space:nowrap}
+.admin-managed-list .dash-action>svg{width:14px;height:14px}
+.products-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.products-summary>button{min-width:0;min-height:36px;padding:7px 10px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--dash-line);border-radius:9px;background:var(--dash-card);color:var(--dash-muted);font-size:10px;font-weight:700;cursor:pointer}
+.products-summary>button strong{font-size:13px}
+.products-summary>button[aria-pressed="true"]{color:var(--dash-text);border-color:var(--dash-cyan);background:color-mix(in srgb,var(--dash-cyan) 12%,var(--dash-card));box-shadow:inset 0 -2px 0 var(--dash-cyan)}
+.products-data-table{min-width:0}
+.products-data-table th:first-child,.products-data-table td:first-child{width:32%}
+.products-data-table th:nth-child(2){width:15%}
+.products-data-table th:nth-child(3){width:14%}
+.products-data-table th:nth-child(4){width:10%}
+.products-data-table th:nth-child(5){width:13%}
+.products-data-table th:last-child{width:16%}
+.product-row-actions>.dash-action{min-height:34px;height:auto}
+.dash-modal:focus{outline:none}
+.dash-modal>header>div:nth-child(2){min-width:0}
+.dash-modal header h2{overflow-wrap:anywhere}
+.dash-modal-icon,.dash-modal-close{flex-shrink:0}
+
+@media(max-width:760px){
+  .client-data-table{min-width:0}
+  .client-data-table th:first-child,.client-data-table td:first-child{width:65%;padding-left:12px}
+  .client-data-table th:last-child{width:35%}
+  .client-contact-column{display:none}
+  .client-data-table td{height:64px;padding:9px 10px}
+  .client-identity{gap:8px}
+  .client-identity>span{width:30px;height:30px;flex-basis:30px;border-radius:9px}
+  .client-status{max-width:100%;font-size:7px;white-space:normal;overflow-wrap:anywhere}
+  .client-risk{font-size:7px!important}
+  .client-details-grid{gap:0 12px}
+  .client-details-grid dd{font-size:11px}
+  .client-admin-actions button,.admin-record-actions button,.admin-confirm-actions button{min-height:36px;padding:7px 9px;font-size:10px}
+  .panel-theme .admin-delete-action .dash-danger-action{font-size:10px}
+  .products-toolbar-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:7px}
+  .products-toolbar-actions>.dash-action{width:auto;min-width:0;min-height:40px;padding:0 9px;font-size:9px;gap:5px}
+  .products-toolbar-actions>.dash-action svg{width:14px;height:14px}
+  .products-search{width:100%;height:40px;padding-left:8px;gap:4px}
+  .products-search input{font-size:10px}
+  .products-summary{padding:8px;gap:5px;overflow:visible}
+  .products-summary>button{min-height:36px;padding:6px 3px;gap:4px;font-size:8px;white-space:nowrap}
+  .products-summary>button strong{font-size:11px}
+  .products-data-table{min-width:0}
+  .products-data-table th:first-child,.products-data-table td:first-child{width:39%;padding-left:9px}
+  .products-data-table th:nth-child(2),.products-data-table td:nth-child(2),.products-data-table th:nth-child(5),.products-data-table td:nth-child(5){display:none}
+  .products-data-table th:nth-child(3){width:21%}
+  .products-data-table th:nth-child(4){width:13%}
+  .products-data-table th:last-child{width:27%}
+  .products-data-table th{padding-inline:4px;font-size:7px;letter-spacing:0}
+  .products-data-table td{height:65px;padding:8px 4px}
+  .product-table-identity{gap:6px}
+  .product-table-identity>span{width:30px;height:36px;flex-basis:30px;border-radius:7px}
+  .product-table-identity strong{font-size:10px}
+  .product-table-identity small{font-size:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .product-price{font-size:9px}
+  .product-stock{font-size:12px}
+  .products-data-table td>small{display:none}
+  .product-row-actions>.dash-action{min-height:34px;padding:0 5px;gap:3px;font-size:8px}
+  .product-row-actions svg{width:11px;height:11px;flex-basis:11px}
+  .admin-managed-list{margin-top:14px}
+  .admin-managed-list article{min-height:64px;flex-wrap:nowrap;gap:10px;padding-block:10px}
+  .admin-managed-list article strong{font-size:12px}
+  .admin-managed-list article span{font-size:9px;line-height:1.4}
+  .admin-managed-list .dash-action{min-height:34px;padding:0 8px;font-size:9px;gap:5px}
+  .admin-managed-list .dash-action>span{font-size:9px}
+  .dash-modal{height:100dvh;max-height:100dvh}
+  .dash-modal header h2{font-size:24px}
+  .dash-modal>header{gap:10px}
+}

@@ -3,7 +3,7 @@
 import { ChangeEvent, FormEvent, useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BarChart3, CalendarClock, ChevronRight, CircleDollarSign, Clock3, ImageOff, ImagePlus, LogOut, Menu, PackagePlus, Pencil, Plus, Power, Save, Scissors, Search, ShieldCheck, Sparkles, Store, Trash2, UserPlus, UserRound, UserRoundCog, Users, X } from "lucide-react";
+import { BarChart3, CalendarClock, ChevronRight, CircleDollarSign, Clock3, ImageOff, ImagePlus, LogOut, Menu, PackagePlus, Pencil, Plus, Power, Save, Scissors, Search, ShieldCheck, Sparkles, Store, UserPlus, UserRound, UserRoundCog, Users, X } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +19,7 @@ import { IMAGE_INPUT_ACCEPT, uploadOptimizedImages } from "@/lib/image-upload";
 import { publicMediaUrl } from "@/lib/public-media";
 import type {LucideIcon} from "lucide-react";
 import { AdminClientsTable, type AdminClient } from "./admin-clients-table";
+import { AdminDeleteAction } from "./admin-delete-action";
 
 type Row = Record<string, unknown> & { id: string };
 type AdminUser = { user_id: string | null; email: string; role: "admin" | "superadmin" | "pending"; created_at: string };
@@ -164,12 +165,16 @@ function AdminProductsTable({
   onUpdate: (event: FormEvent<HTMLFormElement>, item: Row) => Promise<void>;
 }) {
   const [query, setQuery] = useState("");
+  const [stockFilter, setStockFilter] = useState<"all" | "in-stock" | "sold-out">("all");
   const [addedCategories, setAddedCategories] = useState<string[]>([]);
   const categories = Array.from(new Map([...initialCategories, ...products.map((item) => String(item.category ?? "")), ...addedCategories].map((name) => name.trim()).filter(Boolean).map((name) => [name.toLocaleLowerCase("es"), name])).values()).sort((first, second) => first.localeCompare(second, "es"));
   const normalizedQuery = query.trim().toLocaleLowerCase("es");
-  const visibleProducts = normalizedQuery
-    ? products.filter((item) => [item.name, item.category, item.brand, item.presentation].some((value) => String(value ?? "").toLocaleLowerCase("es").includes(normalizedQuery)))
-    : products;
+  const visibleProducts = products.filter((item) => {
+    const matchesQuery = !normalizedQuery || [item.name, item.category, item.brand, item.presentation].some((value) => String(value ?? "").toLocaleLowerCase("es").includes(normalizedQuery));
+    const stock = Number(item.stock ?? 0);
+    const matchesStock = stockFilter === "all" || (stockFilter === "in-stock" ? stock > 0 : stock <= 0);
+    return matchesQuery && matchesStock;
+  });
   const inStock = products.filter((item) => Number(item.stock) > 0).length;
   const soldOut = products.length - inStock;
 
@@ -219,14 +224,15 @@ function AdminProductsTable({
           </div>
         </div>
 
-        <div className="products-summary" aria-label="Resumen del inventario">
-          <span><strong>{products.length}</strong> registrados</span>
-          <span><strong>{inStock}</strong> con existencias</span>
-          <span className={soldOut ? "has-alert" : ""}><strong>{soldOut}</strong> agotados</span>
+        <div className="products-summary" role="group" aria-label="Filtrar inventario">
+          <button type="button" aria-pressed={stockFilter === "all"} onClick={() => setStockFilter("all")}><strong>{products.length}</strong> registrados</button>
+          <button type="button" aria-pressed={stockFilter === "in-stock"} onClick={() => setStockFilter("in-stock")}><strong>{inStock}</strong> con existencias</button>
+          <button type="button" className={soldOut ? "has-alert" : ""} aria-pressed={stockFilter === "sold-out"} onClick={() => setStockFilter("sold-out")}><strong>{soldOut}</strong> agotados</button>
         </div>
+        <p className="sr-only" role="status">{visibleProducts.length} productos encontrados.</p>
 
         {visibleProducts.length ? (
-          <div className="products-table-scroll" tabIndex={0} aria-label="Tabla desplazable de productos">
+          <div className="products-table-scroll">
             <table className="products-data-table">
               <thead><tr><th scope="col">Producto</th><th scope="col">Categoría</th><th scope="col">Precio</th><th scope="col">Stock</th><th scope="col">Estado</th><th scope="col"><span className="sr-only">Acciones</span></th></tr></thead>
               <tbody>{visibleProducts.map((item) => {
@@ -240,17 +246,25 @@ function AdminProductsTable({
                 const isActive = item.status === "active";
                 const statusLabel = isSoldOut ? "Agotado" : isActive ? "Activo" : item.status === "archived" ? "Archivado" : "Inactivo";
                 return <tr key={item.id} className={isSoldOut ? "is-sold-out" : ""}>
-                  <td><div className="product-table-identity"><span className={image ? "has-photo" : ""} style={image ? { backgroundImage: `url(${JSON.stringify(image)})` } : undefined} role="img" aria-label={image ? `Foto de ${String(item.name)}` : `Sin foto para ${String(item.name)}`}>{!image && <ImageOff />}</span><div><strong>{String(item.name)}</strong><small>{[item.brand, item.presentation].filter(Boolean).map(String).join(" · ") || "Sin marca ni presentación"}</small></div></div></td>
-                  <td><span className="product-category">{String(item.category || "Sin categoría")}</span></td>
-                  <td><strong className="product-price">Bs {Number(item.price ?? 0).toFixed(2)}</strong></td>
-                  <td><strong className={`product-stock ${isSoldOut ? "is-empty" : ""}`}>{stock}</strong><small>{isSoldOut ? "Sin existencias" : stock === 1 ? "unidad" : "unidades"}</small></td>
-                  <td><span className={`product-status status-${isSoldOut ? "sold-out" : isActive ? "active" : "inactive"}`}>{statusLabel}</span></td>
-                  <td><div className="product-row-actions"><button type="button" onClick={() => onToggle(item.id, isActive ? "inactive" : "active")} disabled={busy} title={isActive ? "Desactivar producto" : "Activar producto"}><Power /><span>{isActive ? "Desactivar" : "Activar"}</span></button><DashboardModal title={`Editar ${String(item.name)}`} description="Actualiza la ficha comercial y el inventario." triggerLabel="Editar" triggerIcon={<Pencil />} variant="ghost" size="large"><form className="admin-form" onSubmit={(event) => onUpdate(event, item)} acceptCharset="UTF-8"><label>Nombre<input name="name" defaultValue={String(item.name)} required /></label><ProductCategoryField categories={categories} defaultValue={String(item.category ?? "")} onCreate={createCategory} /><label>Marca<input name="brand" defaultValue={String(item.brand ?? "")} /></label><label>Presentación<input name="presentation" defaultValue={String(item.presentation ?? "")} /></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description ?? "")} /></label><div className="product-numeric-fields wide"><label>Precio Bs<input name="price" type="number" min="0" step="0.5" inputMode="decimal" defaultValue={Number(item.price)} required /></label><label>Stock<input name="stock" type="number" min="0" inputMode="numeric" defaultValue={stock} required /></label></div><ProductImagePicker key={String(item.updated_at ?? item.id)} existingImages={existingImages} /><button className="button button-dark wide" disabled={busy}>Guardar producto</button></form></DashboardModal></div></td>
+                  <td data-label="Producto"><div className="product-table-identity"><span className={image ? "has-photo" : ""} style={image ? { backgroundImage: `url(${JSON.stringify(image)})` } : undefined} role="img" aria-label={image ? `Foto de ${String(item.name)}` : `Sin foto para ${String(item.name)}`}>{!image && <ImageOff />}</span><div><strong>{String(item.name)}</strong><small>{[item.brand, item.presentation].filter(Boolean).map(String).join(" · ") || "Sin marca ni presentación"}</small></div></div></td>
+                  <td data-label="Categoría"><span className="product-category">{String(item.category || "Sin categoría")}</span></td>
+                  <td data-label="Precio"><strong className="product-price">Bs {Number(item.price ?? 0).toFixed(2)}</strong></td>
+                  <td data-label="Stock"><strong className={`product-stock ${isSoldOut ? "is-empty" : ""}`}>{stock}</strong><small>{isSoldOut ? "Sin existencias" : stock === 1 ? "unidad" : "unidades"}</small></td>
+                  <td data-label="Estado"><span className={`product-status status-${isSoldOut ? "sold-out" : isActive ? "active" : "inactive"}`}>{statusLabel}</span></td>
+                  <td data-label="Acciones"><div className="product-row-actions">
+                    <DashboardModal title={String(item.name)} eyebrow="FICHA DEL PRODUCTO" description={`Estado: ${statusLabel}. Administra la ficha comercial y el inventario.`} triggerLabel="Ver ficha" triggerIcon={<Pencil />} variant="ghost" size="large">
+                      <form className="admin-form" onSubmit={(event) => onUpdate(event, item)} acceptCharset="UTF-8"><label>Nombre<input name="name" defaultValue={String(item.name)} required /></label><ProductCategoryField categories={categories} defaultValue={String(item.category ?? "")} onCreate={createCategory} /><label>Marca<input name="brand" defaultValue={String(item.brand ?? "")} /></label><label>Presentación<input name="presentation" defaultValue={String(item.presentation ?? "")} /></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description ?? "")} /></label><div className="product-numeric-fields wide"><label>Precio Bs<input name="price" type="number" min="0" step="0.5" inputMode="decimal" defaultValue={Number(item.price)} required /></label><label>Stock<input name="stock" type="number" min="0" inputMode="numeric" defaultValue={stock} required /></label></div><ProductImagePicker key={String(item.updated_at ?? item.id)} existingImages={existingImages} /><button className="button button-dark wide" disabled={busy}>Guardar producto</button></form>
+                      <div className="admin-record-actions">
+                        <button type="button" className="dash-action dash-action-ghost" onClick={() => onToggle(item.id, isActive ? "inactive" : "active")} disabled={busy}><Power /><span>{isActive ? "Desactivar" : "Activar"}</span></button>
+                        <AdminDeleteAction entity="product" id={item.id} label={String(item.name)} imagePaths={productImagePaths(item)} disabled={busy} />
+                      </div>
+                    </DashboardModal>
+                  </div></td>
                 </tr>;
               })}</tbody>
             </table>
           </div>
-        ) : <div className="products-empty"><ImageOff /><h3>{query ? "No encontramos productos" : "Todavía no hay productos"}</h3><p>{query ? `Prueba con una búsqueda distinta de “${query}”.` : "Crea el primer producto para comenzar a controlar el inventario."}</p>{query && <button type="button" onClick={() => setQuery("")}>Ver todos los productos</button>}</div>}
+        ) : <div className="products-empty"><ImageOff /><h3>{products.length ? "No hay productos con estos filtros" : "Todavía no hay productos"}</h3><p>{products.length ? "Cambia la búsqueda o el filtro de existencias para ver más productos." : "Crea el primer producto para comenzar a controlar el inventario."}</p>{(query || stockFilter !== "all") && <button type="button" onClick={() => { setQuery(""); setStockFilter("all"); }}>Ver todos los productos</button>}</div>}
       </section>
     </div>
   );
@@ -518,18 +532,6 @@ export function AdminDashboard({
     finishAction("Estado actualizado.");
   }
 
-  async function deleteGalleryPost(item: Row) {
-    if (!window.confirm(`¿Eliminar definitivamente "${String(item.title)}" de la galería?`)) return;
-    startAction();
-    const supabase = createClient();
-    const { error: deleteError } = await supabase.from("gallery_posts").delete().eq("id", item.id);
-    if (deleteError) return failAction(deleteError);
-    const imagePaths = Array.isArray(item.image_paths) ? item.image_paths.map(String) : [String(item.image_path ?? "")];
-    const storedPaths = imagePaths.filter((path) => path && !/^https?:\/\//i.test(path));
-    if (storedPaths.length) await supabase.storage.from("public-media").remove(storedPaths);
-    finishAction("La publicación se eliminó de la galería.");
-  }
-
   async function manageAdmin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -662,6 +664,22 @@ export function AdminDashboard({
     router.refresh();
   }
 
+  function renderBarberActions(item: Row) {
+    const invitation = pendingBarbers.find((pending) => String(pending.barber_profile_id) === item.id && String(pending.status) === "pending");
+    const isActive = Boolean(item.active);
+    const accountStatus = item.user_id ? "Cuenta vinculada" : invitation ? `Invitado: ${String(invitation.email)}` : "Sin correo asociado";
+    return <div className="dash-row-actions"><DashboardModal title={String(item.display_name)} eyebrow="FICHA DEL PELUQUERO" description={`${isActive ? "Activo" : "Inactivo"}. ${accountStatus}.`} triggerLabel="Ver ficha" triggerIcon={<Pencil />} variant="ghost">
+      <form className="admin-form" onSubmit={(event) => updateBarber(event, item.id)} acceptCharset="UTF-8">
+        <label>Nombre público<input name="display_name" defaultValue={String(item.display_name)} required /></label>
+        <label>Especialidades<input name="specialties" defaultValue={Array.isArray(item.specialties) ? item.specialties.join(", ") : ""} /></label>
+        <label className="wide">Biografía<textarea name="bio" defaultValue={String(item.bio ?? "")} /></label>
+        <button className="button button-dark wide" disabled={busy}>Guardar información</button>
+      </form>
+      {!item.user_id && !invitation && <form className="link-account-form" onSubmit={(event) => linkBarber(event, item.id)}><input name="account_email" type="email" inputMode="email" aria-label="Correo Google del peluquero" placeholder="correo Google del peluquero" required /><button disabled={busy}>Guardar correo de invitación</button></form>}
+      <div className="admin-record-actions"><button type="button" className="dash-action dash-action-ghost" disabled={busy} onClick={() => toggleBarber(item.id, !isActive)}><Power /><span>{isActive ? "Desactivar" : "Reactivar"}</span></button><AdminDeleteAction entity="barber" id={item.id} label={String(item.display_name)} disabled={busy} /></div>
+    </DashboardModal></div>;
+  }
+
   const settings = initialSettings ?? {};
   const activeBarbers = barbers.filter((item) => Boolean(item.active));
   const inactiveBarbers = barbers.filter((item) => !item.active);
@@ -727,7 +745,7 @@ export function AdminDashboard({
               <div><dt>Estado</dt><dd>{adminProfile.status === "active" ? "Activo" : adminProfile.status}</dd></div>
             </dl>
           </div>}
-          {section === "agenda" && <div className="admin-panel"><div className="admin-title"><CalendarClock /><div><p>OPERACIÓN</p><h1>Reservas y agenda</h1></div></div><div className="admin-metrics"><div><strong>{initialAppointments.filter((item)=>["requested","confirmed","pending_client_confirmation"].includes(String(item.status))).length}</strong><span>Próximas o pendientes</span></div><div><strong>{initialAppointments.filter((item)=>item.status==="needs_reschedule").length}</strong><span>Por reprogramar</span></div><div><strong>{initialAppointments.length}</strong><span>Últimas reservas</span></div></div><div className="admin-list appointment-admin-list">{initialAppointments.length?initialAppointments.map((item)=>{const client=item.profiles as {full_name?:string;phone?:string;email?:string;is_blacklisted?:boolean}|null;const barber=item.barber_profiles as {display_name?:string}|null;return <article key={item.id}><div><strong>{String(item.service_name_snapshot)} · {new Intl.DateTimeFormat("es-BO",{dateStyle:"medium",timeStyle:"short",timeZone:businessTimezone}).format(new Date(String(item.starts_at)))}</strong><span>{client?.full_name??client?.email??"Cliente"} · {client?.phone??"Sin teléfono"} · {barber?.display_name??"Sin asignar"} · {String(item.status)}</span>{client?.is_blacklisted&&<small className="admin-alert">Alerta por inasistencias</small>}</div><AppointmentAdminActions id={item.id} barbers={barbers as Array<{id:string;display_name:string;active?:boolean}>} timezone={businessTimezone}/></article>}):<p className="admin-help">Todavía no existen reservas.</p>}</div></div>}
+          {section === "agenda" && <div className="admin-panel"><div className="admin-title"><CalendarClock /><div><p>OPERACIÓN</p><h1>Reservas y agenda</h1></div></div><div className="admin-metrics"><div><strong>{initialAppointments.filter((item)=>["requested","confirmed","pending_client_confirmation"].includes(String(item.status))).length}</strong><span>Próximas o pendientes</span></div><div><strong>{initialAppointments.filter((item)=>item.status==="needs_reschedule").length}</strong><span>Por reprogramar</span></div><div><strong>{initialAppointments.length}</strong><span>Últimas reservas</span></div></div><div className="admin-list appointment-admin-list">{initialAppointments.length?initialAppointments.map((item)=>{const client=item.profiles as {full_name?:string;phone?:string;email?:string;is_blacklisted?:boolean}|null;const barber=item.barber_profiles as {display_name?:string}|null;return <article key={item.id}><div><strong>{String(item.service_name_snapshot)} · {new Intl.DateTimeFormat("es-BO",{dateStyle:"medium",timeStyle:"short",timeZone:businessTimezone}).format(new Date(String(item.starts_at)))}</strong><span>{client?.full_name??client?.email??String(item.client_name_snapshot??"Cliente")} · {client?.phone??"Sin teléfono"} · {barber?.display_name??String(item.barber_name_snapshot??"Sin asignar")} · {String(item.status)}</span>{client?.is_blacklisted&&<small className="admin-alert">Alerta por inasistencias</small>}</div><AppointmentAdminActions id={item.id} barbers={barbers as Array<{id:string;display_name:string;active?:boolean}>} timezone={businessTimezone}/></article>}):<p className="admin-help">Todavía no existen reservas.</p>}</div></div>}
 
           {section === "estadisticas" && <AdminAnalytics data={analyticsData} />}
 
@@ -785,7 +803,13 @@ export function AdminDashboard({
               <button className="button button-dark wide" disabled={busy}>Agregar servicio</button>
             </form>
             </DashboardModal></div>
-            <div className="admin-list">{initialServices.map((item)=><article key={item.id}><div><strong>{String(item.name)}</strong><span>Bs {String(item.price)} · {String(item.duration_minutes)} min · {String(item.status)}</span></div><div className="dash-row-actions"><button onClick={()=>toggleStatus("services",item.id,item.status==="active"?"inactive":"active")}>{item.status==="active"?"Desactivar":"Activar"}</button><DashboardModal title={`Editar ${String(item.name)}`} triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateService(event,item)}><label>Nombre<input name="name" defaultValue={String(item.name)} required/></label><label>Categoría<input name="category" defaultValue={String(item.category??"")}/></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description??"")}/></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" defaultValue={Number(item.price)} required/></label><label>Duración<input name="duration_minutes" type="number" min="5" defaultValue={Number(item.duration_minutes)} required/></label><label>Gracia<input name="grace_minutes" type="number" min="0" defaultValue={Number(item.grace_minutes??10)}/></label><button className="button button-dark wide" disabled={busy}>Guardar servicio</button></form></DashboardModal></div></article>)}</div>
+            <div className="admin-list admin-managed-list">{initialServices.map((item) => <article key={item.id}>
+              <div><strong>{String(item.name)}</strong><span>Bs {String(item.price)} · {String(item.duration_minutes)} min · {item.status === "active" ? "Activo" : "Inactivo"}</span></div>
+              <div className="dash-row-actions"><DashboardModal title={String(item.name)} eyebrow="FICHA DEL SERVICIO" description={`Estado: ${item.status === "active" ? "Activo" : "Inactivo"}. Actualiza el servicio o administra su disponibilidad.`} triggerLabel="Ver ficha" triggerIcon={<Pencil />} variant="ghost">
+                <form className="admin-form" onSubmit={(event) => updateService(event, item)}><label>Nombre<input name="name" defaultValue={String(item.name)} required /></label><label>Categoría<input name="category" defaultValue={String(item.category ?? "")} /></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description ?? "")} /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" defaultValue={Number(item.price)} required /></label><label>Duración<input name="duration_minutes" type="number" min="5" defaultValue={Number(item.duration_minutes)} required /></label><label>Gracia<input name="grace_minutes" type="number" min="0" defaultValue={Number(item.grace_minutes ?? 10)} /></label><button className="button button-dark wide" disabled={busy}>Guardar servicio</button></form>
+                <div className="admin-record-actions"><button type="button" className="dash-action dash-action-ghost" disabled={busy} onClick={() => toggleStatus("services", item.id, item.status === "active" ? "inactive" : "active")}><Power /><span>{item.status === "active" ? "Desactivar" : "Activar"}</span></button><AdminDeleteAction entity="service" id={item.id} label={String(item.name)} disabled={busy} /></div>
+              </DashboardModal></div>
+            </article>)}</div>
           </div>}
 
           {section === "galeria" && <div className="admin-panel">
@@ -793,7 +817,14 @@ export function AdminDashboard({
             <div className="dash-section-intro"><p>Publica imágenes optimizadas únicamente con autorización del cliente.</p><DashboardModal title="Publicar trabajo" description="La imagen será optimizada automáticamente." triggerLabel="Nueva publicación" triggerIcon={<ImagePlus/>}>
             <form className="admin-form" onSubmit={addGalleryPost} acceptCharset="UTF-8"><label>Título<input name="title" required /></label><label>Imágenes (máximo 3)<input name="images" type="file" accept={IMAGE_INPUT_ACCEPT} multiple required /></label><label className="wide">Descripción<input name="description" /></label><label className="check-label wide"><input type="checkbox" name="client_consent" /> Confirmo que existe autorización del cliente.</label><label className="check-label wide"><input type="checkbox" name="featured" /> Marcar como destacada.</label><button className="button button-dark wide" disabled={busy}>Optimizar y publicar</button></form>
             </DashboardModal></div>
-            <div className="admin-list">{initialGallery.map((item)=><article key={item.id}><div><strong>{String(item.title)}</strong><span>{String(item.status)} · consentimiento: {item.client_consent?"sí":"no"} · {Array.isArray(item.image_paths)?item.image_paths.length:1} foto(s)</span></div><div className="dash-row-actions"><button onClick={()=>toggleStatus("gallery_posts",item.id,item.status==="published"?"hidden":"published")}>{item.status==="published"?"Ocultar":"Publicar"}</button><DashboardModal title={`Editar ${String(item.title)}`} triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateGalleryPost(event,item)}><label>Título<input name="title" defaultValue={String(item.title)} required/></label><label>Reemplazar imágenes (máximo 3)<input name="images" type="file" accept={IMAGE_INPUT_ACCEPT} multiple/></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description??"")}/></label><label className="check-label wide"><input type="checkbox" name="featured" defaultChecked={Boolean(item.featured)}/> Destacada</label><button className="button button-dark wide" disabled={busy}>Guardar publicación</button></form></DashboardModal><button type="button" className="dash-danger-action" onClick={()=>deleteGalleryPost(item)} disabled={busy}><Trash2/> Eliminar</button></div></article>)}</div>
+            <div className="admin-list admin-managed-list">{initialGallery.map((item) => <article key={item.id}>
+              <div><strong>{String(item.title)}</strong><span>{item.status === "published" ? "Publicada" : "Oculta"} · consentimiento: {item.client_consent ? "sí" : "no"} · {Array.isArray(item.image_paths) ? item.image_paths.length : 1} foto(s)</span></div>
+              <div className="dash-row-actions"><DashboardModal title={String(item.title)} eyebrow="FICHA DE LA PUBLICACIÓN" description={`${item.status === "published" ? "Publicada" : "Oculta"}. Consentimiento del cliente: ${item.client_consent ? "sí" : "no"}.`} triggerLabel="Ver ficha" triggerIcon={<Pencil />} variant="ghost">
+                <div className="admin-gallery-preview">{productImagePaths(item).map((path, index) => { const url = publicMediaUrl(path); return url ? <span key={`${path}-${index}`} role="img" aria-label={`Foto ${index + 1} de ${String(item.title)}`} style={{ backgroundImage: `url(${JSON.stringify(url)})` }} /> : null; })}</div>
+                <form className="admin-form" onSubmit={(event) => updateGalleryPost(event, item)}><label>Título<input name="title" defaultValue={String(item.title)} required /></label><label>Reemplazar imágenes (máximo 3)<input name="images" type="file" accept={IMAGE_INPUT_ACCEPT} multiple /></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description ?? "")} /></label><label className="check-label wide"><input type="checkbox" name="featured" defaultChecked={Boolean(item.featured)} /> Destacada</label><button className="button button-dark wide" disabled={busy}>Guardar publicación</button></form>
+                <div className="admin-record-actions"><button type="button" className="dash-action dash-action-ghost" disabled={busy} onClick={() => toggleStatus("gallery_posts", item.id, item.status === "published" ? "hidden" : "published")}><Power /><span>{item.status === "published" ? "Ocultar" : "Publicar"}</span></button><AdminDeleteAction entity="gallery" id={item.id} label={String(item.title)} imagePaths={productImagePaths(item)} disabled={busy} /></div>
+              </DashboardModal></div>
+            </article>)}</div>
           </div>}
 
           {section === "productos" && <AdminProductsTable products={initialProducts} initialCategories={initialProductCategories} busy={busy} onAdd={addProduct} onToggle={(id, nextStatus) => toggleStatus("products", id, nextStatus)} onUpdate={updateProduct} />}
@@ -814,7 +845,7 @@ export function AdminDashboard({
 
             <section className="team-role-section">
               <header><div><Scissors/><span><small>ROL OPERATIVO</small><h2>Peluqueros</h2></span></div><b>{activeBarbers.length} activos</b></header>
-              <div className="admin-list editable-list team-list">{activeBarbers.length ? activeBarbers.map((item)=>{const invitation=pendingBarbers.find((pending)=>String(pending.barber_profile_id)===item.id&&String(pending.status)==="pending");const accountStatus=item.user_id?"Cuenta vinculada":invitation?`Invitado · ${String(invitation.email)}`:"Sin correo asociado";return <article key={item.id}><div><strong>{String(item.display_name)}</strong><span><i className="team-status-dot"/> Activo · {Array.isArray(item.specialties)?item.specialties.join(", "):"Sin especialidades"} · {accountStatus}</span></div><div className="dash-row-actions"><button disabled={busy} onClick={()=>toggleBarber(item.id,false)}>Desactivar</button><DashboardModal title={`Editar ${String(item.display_name)}`} description={invitation?"Su correo ya está registrado. El acceso se activará automáticamente cuando inicie sesión con Google.":"Actualiza su perfil público o asocia un correo para su acceso."} triggerLabel="Editar" variant="ghost"><form className="admin-form" onSubmit={(event)=>updateBarber(event,item.id)} acceptCharset="UTF-8"><label>Nombre público<input name="display_name" defaultValue={String(item.display_name)} required/></label><label>Especialidades<input name="specialties" defaultValue={Array.isArray(item.specialties)?item.specialties.join(", "):""}/></label><label className="wide">Biografía<textarea name="bio" defaultValue={String(item.bio??"")}/></label><button className="button button-dark wide" disabled={busy}>Guardar información</button></form>{!item.user_id&&!invitation&&<form className="link-account-form" onSubmit={(event)=>linkBarber(event,item.id)}><input name="account_email" type="email" inputMode="email" placeholder="correo Google del peluquero" required/><button disabled={busy}>Guardar correo de invitación</button></form>}</DashboardModal></div></article>}) : <p className="admin-help">No hay peluqueros activos.</p>}</div>
+              <div className="admin-list editable-list team-list admin-managed-list">{activeBarbers.length ? activeBarbers.map((item) => { const invitation = pendingBarbers.find((pending) => String(pending.barber_profile_id) === item.id && String(pending.status) === "pending"); const accountStatus = item.user_id ? "Cuenta vinculada" : invitation ? `Invitado · ${String(invitation.email)}` : "Sin correo asociado"; return <article key={item.id}><div><strong>{String(item.display_name)}</strong><span><i className="team-status-dot" /> Activo · {Array.isArray(item.specialties) ? item.specialties.join(", ") : "Sin especialidades"} · {accountStatus}</span></div>{renderBarberActions(item)}</article>; }) : <p className="admin-help">No hay peluqueros activos.</p>}</div>
             </section>
 
             <section className="team-role-section">
@@ -826,7 +857,7 @@ export function AdminDashboard({
             <details className="inactive-team">
               <summary><span>Ver personal inactivo</span><b>{inactiveTeamCount}</b></summary>
               <div className="inactive-team-content">
-                <section><h3>Peluqueros inactivos</h3><div className="admin-list team-list">{inactiveBarbers.length ? inactiveBarbers.map((item)=><article key={item.id}><div><strong>{String(item.display_name)}</strong><span>Inactivo · {Array.isArray(item.specialties)?item.specialties.join(", "):"Sin especialidades"}</span></div><button disabled={busy} onClick={()=>toggleBarber(item.id,true)}>Reactivar</button></article>) : <p className="admin-help">No hay peluqueros inactivos.</p>}</div></section>
+                <section><h3>Peluqueros inactivos</h3><div className="admin-list team-list admin-managed-list">{inactiveBarbers.length ? inactiveBarbers.map((item) => <article key={item.id}><div><strong>{String(item.display_name)}</strong><span>Inactivo · {Array.isArray(item.specialties) ? item.specialties.join(", ") : "Sin especialidades"}</span></div>{renderBarberActions(item)}</article>) : <p className="admin-help">No hay peluqueros inactivos.</p>}</div></section>
                 <section><h3>Cajeros inactivos</h3><div className="admin-list team-list">{inactiveCashiers.length ? inactiveCashiers.map((item)=>{const profile=item.profiles as Row|null;const email=String(profile?.email??"");return <article key={item.id}><div><strong>{String(profile?.full_name??profile?.email??"Cajero")}</strong><span>Inactivo · {email}</span></div><button disabled={busy||!email} onClick={()=>toggleCashier(email,true)}>Reactivar</button></article>}) : <p className="admin-help">No hay cajeros inactivos.</p>}</div></section>
               </div>
             </details>

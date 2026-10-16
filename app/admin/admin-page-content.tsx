@@ -53,7 +53,7 @@ export async function AdminPageContent({
     ["negocio", "horarios"].includes(resolvedSection) ? supabase.from("business_settings").select("*").eq("id", true).single() : Promise.resolve({ data: null }),
     resolvedSection === "horarios" ? supabase.from("business_hours").select("weekday,opens_at,closes_at,active").order("weekday") : Promise.resolve({ data: [] }),
     resolvedSection === "administradores" && isSuperadmin ? supabase.rpc("list_admin_users") : Promise.resolve({ data: [] }),
-    resolvedSection === "agenda" ? supabase.from("appointments").select("id,starts_at,status,service_name_snapshot,price_snapshot,profiles!appointments_client_id_fkey(full_name,email,phone,is_blacklisted),barber_profiles(display_name)").order("starts_at", { ascending: false }).limit(100) : Promise.resolve({ data: [] }),
+    resolvedSection === "agenda" ? supabase.from("appointments").select("id,starts_at,status,service_name_snapshot,client_name_snapshot,barber_name_snapshot,price_snapshot,profiles!appointments_client_id_fkey(full_name,email,phone,is_blacklisted),barber_profiles(display_name)").order("starts_at", { ascending: false }).limit(100) : Promise.resolve({ data: [] }),
     resolvedSection === "clientes"
       ? supabase.rpc("admin_list_clients", { search_term: clientSearch || null, page_number: clientPage, page_size: clientPageSize })
       : Promise.resolve({ data: { rows: [], total: 0 }, error: null }),
@@ -70,7 +70,7 @@ export async function AdminPageContent({
   const clientRows = Array.isArray(clientPayload.rows) ? clientPayload.rows : [];
   const clientTotal = Number(clientPayload.total ?? 0);
   const clientTotalPages = Math.max(1, Math.ceil(clientTotal / clientPageSize));
-  if (resolvedSection === "clientes" && clientTotal > 0 && clientPage > clientTotalPages) {
+  if (resolvedSection === "clientes" && !clientDirectory.error && clientPage > clientTotalPages) {
     const query = new URLSearchParams();
     if (clientSearch) query.set("q", clientSearch);
     if (clientTotalPages > 1) query.set("page", String(clientTotalPages));
