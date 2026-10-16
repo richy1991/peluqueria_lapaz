@@ -4,6 +4,7 @@ import { Brand } from "./brand";
 import type { BusinessInfo } from "@/lib/public-data";
 
 export function SiteFooter({ business }: { business?: BusinessInfo }) {
+  const publicSection = (section: string) => `/?vista=publica#${section}`;
   return (
     <footer className="site-footer">
       <div className="container footer-grid">
@@ -13,10 +14,10 @@ export function SiteFooter({ business }: { business?: BusinessInfo }) {
         </div>
         <div>
           <h3>Explora</h3>
-          <Link href="/#servicios">Servicios</Link>
-          <Link href="/#equipo">Nuestro equipo</Link>
-          <Link href="/#galeria">Trabajos</Link>
-          <Link href="/#productos">Productos</Link>
+          <Link href={publicSection("servicios")}>Servicios</Link>
+          <Link href={publicSection("equipo")}>Nuestro equipo</Link>
+          <Link href={publicSection("galeria")}>Trabajos</Link>
+          <Link href={publicSection("productos")}>Productos</Link>
           <Link href="/reservar">Reservar</Link>
         </div>
         <div>
