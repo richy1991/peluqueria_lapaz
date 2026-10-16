@@ -483,8 +483,22 @@ export function FloatingSupportChat() {
     const previousOverflow = document.body.style.overflow;
 
     const updateViewport = () => {
-      if (!panel || !isMobile.matches) return;
+      if (!panel || !isMobile.matches) {
+        panel?.style.removeProperty("--support-modal-top");
+        panel?.style.removeProperty("--support-modal-left");
+        panel?.style.removeProperty("--support-modal-width");
+        panel?.style.removeProperty("--support-modal-height");
+        document.body.style.overflow = previousOverflow;
+        return;
+      }
       document.body.style.overflow = "hidden";
+      const layoutHeight = document.documentElement.clientHeight || window.innerHeight;
+      const layoutWidth = document.documentElement.clientWidth || window.innerWidth;
+      const visibleHeight = Math.min(viewport?.height ?? window.innerHeight, layoutHeight);
+      panel.style.setProperty("--support-modal-top", "0px");
+      panel.style.setProperty("--support-modal-left", "0px");
+      panel.style.setProperty("--support-modal-width", `${Math.max(1, layoutWidth)}px`);
+      panel.style.setProperty("--support-modal-height", `${Math.max(1, visibleHeight)}px`);
       window.requestAnimationFrame(() => {
         const thread = messagesRef.current;
         if (thread) thread.scrollTop = thread.scrollHeight;
@@ -499,6 +513,10 @@ export function FloatingSupportChat() {
       viewport?.removeEventListener("resize", updateViewport);
       viewport?.removeEventListener("scroll", updateViewport);
       window.removeEventListener("resize", updateViewport);
+      panel?.style.removeProperty("--support-modal-top");
+      panel?.style.removeProperty("--support-modal-left");
+      panel?.style.removeProperty("--support-modal-width");
+      panel?.style.removeProperty("--support-modal-height");
       document.body.style.overflow = previousOverflow;
     };
   }, [open]);

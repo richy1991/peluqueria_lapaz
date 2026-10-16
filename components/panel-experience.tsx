@@ -230,10 +230,7 @@ export function PanelExperience({ children, chatInHeader = false }: { children: 
   const chromeHidden = useAutoHidePanelChrome(mobileNavOpen);
 
   useEffect(() => {
-    const isClientPanel = Boolean(document.querySelector(".panel-client-shell"));
-    const themeColor = isClientPanel
-      ? resolved === "dark" ? "#0b1220" : "#f3ead8"
-      : resolved === "dark" ? "#070b11" : "#f6fafb";
+    const themeColor = resolved === "dark" ? "#070b11" : "#eef4f7";
     const root = document.documentElement;
     const previousRootTheme = root.dataset.panelTheme;
     const previousBodyTheme = document.body.dataset.panelTheme;

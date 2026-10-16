@@ -1121,7 +1121,13 @@
 
 @media(max-width:760px){
   .panel-theme.panel-viewport-layer>.panel-floating-tools .support-window{
-    z-index:260!important;
+    position:fixed!important;
+    inset:var(--support-modal-top,0) auto auto var(--support-modal-left,0)!important;
+    right:auto!important;bottom:auto!important;left:var(--support-modal-left,0)!important;
+    width:var(--support-modal-width,100vw)!important;min-width:0!important;max-width:none!important;
+    height:var(--support-modal-height,100dvh)!important;min-height:0!important;max-height:none!important;
+    z-index:300!important;transform:none!important;
+    border-radius:0!important;
   }
 }
 
@@ -1373,7 +1379,7 @@
 .panel-theme .dash-sidebar nav a:first-child:not(.active){color:var(--dash-muted);border-color:transparent;background:transparent;box-shadow:none}
 .panel-theme .dash-sidebar nav a:first-child:not(.active):hover{color:var(--dash-text);border-color:var(--dash-line);background:color-mix(in srgb,var(--dash-cyan) 6%,transparent)}
 .panel-theme.panel-viewport-layer{position:fixed;z-index:240;inset:0;min-height:0;pointer-events:none;background:transparent}
-.panel-theme.panel-viewport-layer>.panel-floating-tools{position:absolute;pointer-events:auto}
+.panel-theme.panel-viewport-layer>.panel-floating-tools{position:absolute;z-index:260;pointer-events:auto}
 .dash-modal-backdrop{z-index:300}
 .panel-sidebar-viewport-overlays{display:contents}.panel-sidebar-viewport-overlays>.sidebar-scrim{display:none!important}
 .client-desktop-nav{margin-left:auto;display:flex;align-items:center;gap:4px}
