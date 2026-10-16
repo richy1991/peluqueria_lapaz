@@ -93,6 +93,10 @@ export function FloatingSupportChat() {
   const hasRealtimeSubscriptionRef = useRef(false);
 
   useEffect(() => { openRef.current = open; }, [open]);
+  useEffect(() => {
+    document.body.classList.toggle("support-chat-open", open);
+    return () => document.body.classList.remove("support-chat-open");
+  }, [open]);
   useEffect(() => { selectedRef.current = selected; }, [selected]);
   useEffect(() => { userIdRef.current = userId; }, [userId]);
   useEffect(() => { supportRef.current = support; }, [support]);

@@ -230,7 +230,10 @@ export function PanelExperience({ children, chatInHeader = false }: { children: 
   const chromeHidden = useAutoHidePanelChrome(mobileNavOpen);
 
   useEffect(() => {
-    const themeColor = resolved === "dark" ? "#070b11" : "#eef4f7";
+    const themedPanel = document.querySelector<HTMLElement>(".panel-client-shell, .admin-shell");
+    const computedTheme = themedPanel ? getComputedStyle(themedPanel) : null;
+    const themeColor = computedTheme?.getPropertyValue("--dash-bg").trim()
+      || (resolved === "dark" ? "#070b11" : "#eef4f7");
     const root = document.documentElement;
     const previousRootTheme = root.dataset.panelTheme;
     const previousBodyTheme = document.body.dataset.panelTheme;
