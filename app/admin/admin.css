@@ -1641,6 +1641,13 @@
   .panel-theme.panel-chat-in-header>.panel-floating-tools{opacity:1;transition:transform .3s cubic-bezier(.2,.8,.2,1),opacity .22s ease;will-change:transform,opacity}
   .panel-theme.panel-chat-in-header>.panel-floating-tools .support-fab{color:var(--chrome-text);border-color:var(--chrome-line);background:var(--chrome-control-bg)}.panel-theme.panel-chat-in-header>.panel-floating-tools .support-fab:hover{background:var(--chrome-hover)}.panel-theme.panel-chat-in-header>.panel-floating-tools .support-fab>i{border-color:var(--chrome-accent)}
   .panel-theme.panel-mobile-chrome-hidden.panel-chat-in-header>.panel-floating-tools{opacity:0;pointer-events:none;transform:translate3d(0,-60px,0)}
+  body.support-chat-open .panel-theme.panel-chat-in-header>.panel-floating-tools,
+  body.support-chat-open .panel-theme.mobile-nav-open>.panel-floating-tools{
+    opacity:1!important;pointer-events:auto!important;transform:none!important;z-index:400!important
+  }
+  body.support-chat-open .panel-theme.panel-viewport-layer>.panel-floating-tools .support-window{
+    opacity:1!important;visibility:visible!important
+  }
   .panel-theme.mobile-nav-open>.panel-floating-tools{opacity:0;pointer-events:none}
   .panel-theme .admin-shell .dash-header>.mobile-nav-toggle,.panel-theme .mobile-mode-menu>summary,.panel-theme .panel-client-shell .portal-header>.mobile-nav-toggle,.panel-theme .panel-client-shell .portal-header>.portal-public-link{color:var(--chrome-text);border-color:var(--chrome-line);background:var(--chrome-control-bg)}
   .panel-theme .mobile-mode-menu[open]>summary{color:var(--chrome-active-text);background:var(--chrome-active-bg)}
