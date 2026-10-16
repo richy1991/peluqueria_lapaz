@@ -1103,8 +1103,8 @@
 @media(max-width:760px){
   .dashboard-toast{top:68px;right:10px;width:calc(100vw - 20px)}
   .support-window,.support-window.support-agent,.support-window.support-client{
-    inset:var(--support-modal-top,0) auto auto var(--support-modal-left,0)!important;
-    right:auto!important;bottom:auto!important;box-sizing:border-box;
+    inset:var(--support-modal-top,0) 0 auto 0!important;
+    right:0!important;bottom:auto!important;left:0!important;box-sizing:border-box;
     width:var(--support-modal-width,100vw)!important;min-width:0!important;max-width:none!important;
     height:var(--support-modal-height,100dvh)!important;min-height:0!important;max-height:none!important;
     grid-template-rows:calc(58px + env(safe-area-inset-top)) minmax(0,1fr)!important;

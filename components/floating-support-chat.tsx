@@ -497,7 +497,11 @@ export function FloatingSupportChat() {
       const visibleHeight = Math.min(viewport?.height ?? window.innerHeight, layoutHeight);
       const visibleWidth = Math.min(viewport?.width ?? layoutWidth, layoutWidth);
       const visibleTop = Math.min(Math.max(0, viewport?.offsetTop ?? 0), Math.max(0, layoutHeight - visibleHeight));
-      const visibleLeft = Math.min(Math.max(0, viewport?.offsetLeft ?? 0), Math.max(0, layoutWidth - visibleWidth));
+      // The panel is position: fixed. visualViewport.offsetLeft is the
+      // visual viewport's coordinate inside the layout viewport and must not
+      // be used as the panel's screen position, otherwise horizontal page
+      // overflow can push the client chat off-screen.
+      const visibleLeft = 0;
       panel.style.setProperty("--support-modal-top", `${visibleTop}px`);
       panel.style.setProperty("--support-modal-left", `${visibleLeft}px`);
       panel.style.setProperty("--support-modal-width", `${Math.max(1, visibleWidth)}px`);
