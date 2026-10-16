@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import {
   ArrowLeft,
@@ -630,7 +631,8 @@ export function FloatingSupportChat() {
         </button>
       )}
 
-      {open && (
+      {open && typeof document !== "undefined" && createPortal((
+        <div className="panel-theme support-chat-modal-root" data-panel-theme={document.body.dataset.panelTheme ?? "light"}>
         <section
           ref={panelRef}
           onClick={handlePanelClick}
@@ -756,7 +758,8 @@ export function FloatingSupportChat() {
             </div>
           )}
         </section>
-      )}
+        </div>
+      ), document.body)}
     </>
   );
 }

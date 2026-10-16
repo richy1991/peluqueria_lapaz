@@ -1380,6 +1380,10 @@
 .panel-theme .dash-sidebar nav a:first-child:not(.active):hover{color:var(--dash-text);border-color:var(--dash-line);background:color-mix(in srgb,var(--dash-cyan) 6%,transparent)}
 .panel-theme.panel-viewport-layer{position:fixed;z-index:240;inset:0;min-height:0;pointer-events:none;background:transparent}
 .panel-theme.panel-viewport-layer>.panel-floating-tools{position:absolute;z-index:260;pointer-events:auto}
+.support-chat-modal-root{
+  position:fixed;z-index:10000;inset:0;isolation:isolate;pointer-events:none
+}
+.support-chat-modal-root>.support-window{pointer-events:auto}
 .dash-modal-backdrop{z-index:300}
 .panel-sidebar-viewport-overlays{display:contents}.panel-sidebar-viewport-overlays>.sidebar-scrim{display:none!important}
 .client-desktop-nav{margin-left:auto;display:flex;align-items:center;gap:4px}
@@ -1612,6 +1616,14 @@
 .panel-theme .panel-theme-selector>summary{color:var(--chrome-muted);border-color:var(--chrome-line);background:var(--chrome-control-bg)}.panel-theme .panel-theme-selector>summary>svg{color:var(--chrome-icon)}.panel-theme .panel-theme-selector>.panel-theme-options{border-color:var(--dash-line);background:var(--dash-card)}.panel-theme .panel-theme-selector>.panel-theme-options button{color:var(--dash-muted);border-color:var(--dash-line);background:color-mix(in srgb,var(--dash-copper) 7%,transparent)}.panel-theme .panel-theme-selector>.panel-theme-options button:hover{color:var(--dash-text);border-color:color-mix(in srgb,var(--dash-copper) 38%,var(--dash-line));background:color-mix(in srgb,var(--dash-copper) 13%,transparent)}.panel-theme .panel-theme-selector>.panel-theme-options button.active{color:var(--chrome-active-text);border-color:var(--chrome-active-line);background:var(--chrome-active-bg)}
 
 @media(max-width:760px){
+  .support-chat-modal-root>.support-window{
+    position:fixed!important;
+    inset:var(--support-modal-top,0) auto auto var(--support-modal-left,0)!important;
+    right:auto!important;bottom:auto!important;left:var(--support-modal-left,0)!important;
+    width:var(--support-modal-width,100vw)!important;min-width:0!important;max-width:none!important;
+    height:var(--support-modal-height,100dvh)!important;min-height:0!important;max-height:none!important;
+    z-index:10001!important;transform:none!important;border-radius:0!important
+  }
   /* Un solo estado gobierna el chrome móvil superior e inferior. */
   .panel-theme :is(.dash-header,.portal-header){transform:translate3d(0,0,0);transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .22s ease;will-change:transform}
   .panel-theme.panel-mobile-chrome-hidden :is(.dash-header,.portal-header){pointer-events:none;transform:translate3d(0,calc(-100% - 3px),0);box-shadow:none!important}
