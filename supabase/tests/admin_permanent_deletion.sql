@@ -68,7 +68,8 @@ begin
   assert directory->'rows'->0 ? 'birthday', 'Falta la fecha de nacimiento';
 
   update public.business_settings set timezone = 'America/La_Paz' where id;
-  update public.business_hours set active = true, opens_at = '09:00', closes_at = '20:00';
+  update public.business_hours set active = true, opens_at = '09:00', closes_at = '20:00',
+    afternoon_opens_at = null, afternoon_closes_at = null;
   insert into public.appointments(id, client_id, barber_id, service_id, starts_at, ends_at, blocked_until,
       duration_snapshot, price_snapshot, service_name_snapshot)
     values (appointment, client, barber, service, '2030-01-08 10:00-04', '2030-01-08 10:30-04', '2030-01-08 10:35-04',

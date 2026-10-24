@@ -51,7 +51,7 @@ export async function AdminPageContent({
     resolvedSection === "equipo" ? supabase.from("pending_barbers").select("id,email,status,barber_profile_id,expires_at,created_at").eq("status","pending").order("created_at",{ascending:false}) : Promise.resolve({ data: [] }),
     resolvedSection === "equipo" ? supabase.from("pending_cashiers").select("id,email,status,expires_at,created_at").eq("status","pending").order("created_at",{ascending:false}) : Promise.resolve({ data: [] }),
     ["negocio", "horarios"].includes(resolvedSection) ? supabase.from("business_settings").select("*").eq("id", true).single() : Promise.resolve({ data: null }),
-    resolvedSection === "horarios" ? supabase.from("business_hours").select("weekday,opens_at,closes_at,active").order("weekday") : Promise.resolve({ data: [] }),
+    resolvedSection === "horarios" ? supabase.from("business_hours").select("*").order("weekday") : Promise.resolve({ data: [], error: null }),
     resolvedSection === "administradores" && isSuperadmin ? supabase.rpc("list_admin_users") : Promise.resolve({ data: [] }),
     resolvedSection === "agenda" ? supabase.from("appointments").select("id,starts_at,status,service_name_snapshot,client_name_snapshot,barber_name_snapshot,price_snapshot,profiles!appointments_client_id_fkey(full_name,email,phone,is_blacklisted),barber_profiles(display_name)").order("starts_at", { ascending: false }).limit(100) : Promise.resolve({ data: [] }),
     resolvedSection === "clientes"
@@ -100,6 +100,7 @@ export async function AdminPageContent({
       pendingCashiers={pendingCashiers.data ?? []}
       initialSettings={settings.data}
       initialBusinessHours={businessHours.data ?? []}
+      businessHoursLoadError={Boolean(businessHours.error)}
       isSuperadmin={Boolean(isSuperadmin)}
       adminUsers={adminUsers.data ?? []}
       hasBarber={Boolean(capabilities.barber)}

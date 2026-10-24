@@ -14,7 +14,7 @@ import { DashboardModal } from "@/components/dashboard-modal";
 import { DashboardToast, type DashboardToastData } from "@/components/dashboard-toast";
 import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelResponsiveSidebar, PanelThemeSelector } from "@/components/panel-experience";
 import { clearFormErrors, dispatchDashboardSuccess, reportFormError } from "@/lib/form-feedback";
-import { DEFAULT_BUSINESS_TIMEZONE, formatBusinessHours, resolveBusinessStatus, type BusinessHour } from "@/lib/business-hours";
+import { DEFAULT_BUSINESS_TIMEZONE, formatBusinessHours, getBusinessHourError, prepareBusinessHourForSave, resolveBusinessStatus, type BusinessHour } from "@/lib/business-hours";
 import { IMAGE_INPUT_ACCEPT, uploadOptimizedImages } from "@/lib/image-upload";
 import { publicMediaUrl } from "@/lib/public-media";
 import type {LucideIcon} from "lucide-react";
@@ -294,6 +294,7 @@ type AdminDashboardProps = {
   pendingCashiers: Row[];
   initialSettings: Record<string, unknown> | null;
   initialBusinessHours: BusinessHour[];
+  businessHoursLoadError: boolean;
   isSuperadmin: boolean;
   adminUsers: AdminUser[];
   hasBarber: boolean;
@@ -327,6 +328,7 @@ export function AdminDashboard({
   pendingCashiers,
   initialSettings,
   initialBusinessHours,
+  businessHoursLoadError,
   isSuperadmin,
   adminUsers,
   hasBarber,
@@ -347,7 +349,9 @@ export function AdminDashboard({
   const [navCollapsed,setNavCollapsed]=useState(false);
   const [businessHours, setBusinessHours] = useState<BusinessHour[]>(() => Array.from({ length: 7 }, (_, weekday) => {
     const saved = initialBusinessHours.find((item) => item.weekday === weekday);
-    return saved ?? { weekday, active: weekday !== 1, opens_at: "09:00", closes_at: "20:00" };
+    return saved
+      ? prepareBusinessHourForSave(saved)
+      : { weekday, active: weekday !== 1, opens_at: "09:00", closes_at: "20:00", afternoon_opens_at: null, afternoon_closes_at: null };
   }));
   const toastIdRef = useRef(0);
 
@@ -405,18 +409,22 @@ export function AdminDashboard({
     event.preventDefault();
     const form = event.currentTarget;
     clearFormErrors(form);
+    if (businessHoursLoadError) return failAction(new Error("Recarga la página para cargar los horarios antes de guardar."));
     startAction();
-    const rows = businessHours;
-    const invalid = rows.find((row) => row.active && row.opens_at >= row.closes_at);
-    if (invalid) {
-      setBusy(false);
-      return failAction(new Error("La hora de cierre debe ser posterior a la hora de apertura."), form, `closes_${invalid.weekday}`);
+    const rows = businessHours.map((row) => prepareBusinessHourForSave(row, initialBusinessHours.find((saved) => saved.weekday === row.weekday)));
+    for (const row of rows) {
+      const invalid = getBusinessHourError(row);
+      if (invalid) {
+        const label = businessDays.find((day) => day.weekday === row.weekday)?.label;
+        return failAction(new Error(`${label}: ${invalid.message}`), form, `${invalid.field}_${row.weekday}`);
+      }
     }
     const { error: scheduleError } = await createClient().from("business_hours").upsert(
       rows.map((row) => ({ ...row, updated_at: new Date().toISOString() })),
       { onConflict: "weekday" },
     );
     if (scheduleError) return failAction(scheduleError, form);
+    setBusinessHours(rows);
     finishAction("Días y horarios de atención actualizados.");
   }
 
@@ -755,21 +763,34 @@ export function AdminDashboard({
 
           {section === "horarios" && <div className="admin-panel business-hours-panel">
             <div className="admin-title"><Clock3 /><div><p>OPERACIÓN DEL LOCAL</p><h1>Días y horarios de atención</h1></div></div>
-            <div className="business-hours-summary">
+            <p className="business-hours-help">Configura la apertura y el cierre de cada turno por día. El local estará cerrado desde el cierre de la mañana hasta la apertura de la tarde; tú decides la hora y la duración del descanso. Para atender un solo turno, deja ambas horas de la tarde vacías.</p>
+            {businessHoursLoadError ? <p className="admin-error" role="alert">No se pudieron cargar los horarios. Recarga la página antes de editarlos.</p> : <div className="business-hours-summary">
               <span className={`dash-status-pill ${businessOpenNow ? "online" : "offline"}`}><i />{businessOpenNow ? "Abierto ahora" : "Cerrado ahora"}</span>
               <div><strong>{formatBusinessHours(businessHours)}</strong><small>{automaticStatus ? `El estado público se actualiza automáticamente en la zona ${businessTimezone}.` : "El cierre manual configurado en Negocio tiene prioridad sobre este horario."}</small></div>
-            </div>
-            <form className="business-hours-form" onSubmit={saveBusinessHours}>
+            </div>}
+            {!businessHoursLoadError && <form className="business-hours-form" onSubmit={saveBusinessHours} onChange={(event) => clearFormErrors(event.currentTarget)}>
               {businessDays.map(({ weekday, label }) => {
-                const day = businessHours.find((item) => item.weekday === weekday) ?? { weekday, active: false, opens_at: "09:00", closes_at: "20:00" };
+                const day = businessHours.find((item) => item.weekday === weekday) ?? { weekday, active: false, opens_at: "09:00", closes_at: "20:00", afternoon_opens_at: null, afternoon_closes_at: null };
                 const updateDay = (changes: Partial<BusinessHour>) => setBusinessHours((current) => current.map((item) => item.weekday === weekday ? { ...item, ...changes } : item));
                 return <article className={day.active ? "active" : "closed"} key={weekday}>
-                  <label className="business-day-toggle"><input type="checkbox" checked={day.active} onChange={(event) => updateDay({ active: event.target.checked })} /><span><strong>{label}</strong><small>{day.active ? "Día de atención" : "Cerrado"}</small></span></label>
-                  {day.active && <div className="business-day-times"><label>Apertura<input name={`opens_${weekday}`} type="time" value={day.opens_at.slice(0, 5)} onChange={(event) => updateDay({ opens_at: event.target.value })} required /></label><span>hasta</span><label>Cierre<input name={`closes_${weekday}`} type="time" value={day.closes_at.slice(0, 5)} onChange={(event) => updateDay({ closes_at: event.target.value })} required /></label></div>}
+                  <label className="business-day-toggle"><input type="checkbox" checked={day.active} disabled={busy} onChange={(event) => updateDay({ active: event.target.checked })} /><span><strong>{label}</strong><small>{day.active ? "Día de atención" : "Cerrado"}</small></span></label>
+                  {day.active && <div className="business-day-times">
+                    <fieldset disabled={busy}><legend>Turno mañana</legend><div className="business-shift-times">
+                      <label>Apertura<input aria-label={`${label}: apertura de la mañana`} name={`opens_at_${weekday}`} type="time" value={day.opens_at.slice(0, 5)} onChange={(event) => updateDay({ opens_at: event.target.value })} required /></label>
+                      <span>hasta</span>
+                      <label>Cierre<input aria-label={`${label}: cierre de la mañana`} name={`closes_at_${weekday}`} type="time" value={day.closes_at.slice(0, 5)} onChange={(event) => updateDay({ closes_at: event.target.value })} required /></label>
+                    </div></fieldset>
+                    <fieldset disabled={busy}><legend>Turno tarde <small>(opcional)</small></legend><div className="business-shift-times">
+                      <label>Apertura<input aria-label={`${label}: apertura de la tarde`} name={`afternoon_opens_at_${weekday}`} type="time" value={day.afternoon_opens_at?.slice(0, 5) ?? ""} onChange={(event) => updateDay({ afternoon_opens_at: event.target.value || null })} required={Boolean(day.afternoon_closes_at)} /></label>
+                      <span>hasta</span>
+                      <label>Cierre<input aria-label={`${label}: cierre de la tarde`} name={`afternoon_closes_at_${weekday}`} type="time" value={day.afternoon_closes_at?.slice(0, 5) ?? ""} onChange={(event) => updateDay({ afternoon_closes_at: event.target.value || null })} required={Boolean(day.afternoon_opens_at)} /></label>
+                    </div></fieldset>
+                    <p className="business-day-break">{!getBusinessHourError(day) && day.afternoon_opens_at ? `Cerrado por descanso: ${day.closes_at.slice(0, 5)}–${day.afternoon_opens_at.slice(0, 5)}` : "El descanso se define entre los dos turnos."}</p>
+                  </div>}
                 </article>;
               })}
               <button className="button button-dark" disabled={busy}><Save size={17} /> Guardar horarios</button>
-            </form>
+            </form>}
           </div>}
 
           {section === "negocio" && <div className="admin-panel">

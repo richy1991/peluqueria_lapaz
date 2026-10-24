@@ -56,7 +56,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
     section === "notificaciones" ? supabase.from("notification_preferences").select("appointment_notifications,promotion_notifications,chat_notifications,system_notifications,muted_all").eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
     getPublicProducts(section === "productos" ? undefined : 3),
     supabase.from("business_settings").select("business_status,status_message,timezone").eq("id", true).maybeSingle(),
-    supabase.from("business_hours").select("weekday,opens_at,closes_at,active").order("weekday"),
+    supabase.from("business_hours").select("*").order("weekday"),
   ]);
 
   const person = profile.data;

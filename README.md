@@ -25,6 +25,14 @@ npm run dev
 
 Abrir `http://localhost:3000`.
 
+## Horarios con descanso
+
+En `/admin/horarios`, cada día permite configurar apertura y cierre del turno mañana y del turno tarde. El intervalo entre ambos es el descanso; su hora y duración pueden variar por día. Dejar ambas horas de la tarde vacías mantiene una sola jornada.
+
+Antes de guardar turnos, aplicar `supabase/migrations/202610230001_business_hours_shifts.sql` mediante el flujo de migraciones. Los horarios guardados anteriormente se conservan sin añadir un descanso automáticamente. La migración también excluye las reservas durante el descanso y las citas que lo atraviesan.
+
+Pruebas de horarios (Node 22.18 o posterior): `node --test tests/business-hours.test.mjs`. Las pruebas de base de datos están en `supabase/tests/business_hours_shifts.sql`, para ejecutarlas en Supabase local o una base desechable con las migraciones aplicadas.
+
 ## Configuración de producción
 
 1. Copiar `.env.example` como `.env.local` y completar la URL y la clave publicable.

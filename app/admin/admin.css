@@ -1222,7 +1222,32 @@
 .panel-theme[data-panel-theme="light"] .admin-profile-identity,.panel-theme[data-panel-theme="light"] .admin-profile-details>div{background:#f7fbfc}
 
 /* Horario general que controla el estado público y limita la agenda. */
-.business-hours-panel{max-width:980px}.business-hours-summary{margin:18px 0;padding:14px;display:flex;align-items:center;gap:15px;border:1px solid var(--dash-line);border-radius:13px;background:var(--dash-card-2)}.business-hours-summary .dash-status-pill{flex:none}.business-hours-summary>div{min-width:0;display:grid;gap:5px}.business-hours-summary strong{color:var(--dash-text);font-size:12px}.business-hours-summary small{color:var(--dash-muted);font-size:9px;line-height:1.45}.business-hours-form{display:grid;gap:8px}.business-hours-form>article{min-height:66px;padding:10px 13px;display:flex;align-items:center;justify-content:space-between;gap:14px;border:1px solid var(--dash-line);border-left:4px solid var(--dash-line);border-radius:11px;background:var(--dash-card-2)}.business-hours-form>article.active{border-left-color:var(--legend-success)}.business-day-toggle{display:flex;align-items:center;gap:10px;cursor:pointer}.business-day-toggle input{width:19px;height:19px;accent-color:var(--legend-primary)}.business-day-toggle span{display:grid;gap:3px}.business-day-toggle strong{color:var(--dash-text);font-size:11px}.business-day-toggle small{color:var(--dash-muted);font-size:8px}.business-day-times{display:flex;align-items:end;gap:9px}.business-day-times>label{display:grid;gap:4px;color:var(--dash-muted);font-size:8px;font-weight:800;text-transform:uppercase}.business-day-times input{min-height:38px;padding:7px 9px;color:var(--dash-text);border:1px solid var(--dash-line);border-radius:8px;background:var(--dash-card)}.business-day-times>span{padding-bottom:11px;color:var(--dash-muted);font-size:8px}.business-hours-form>.button{justify-self:end;margin-top:8px}
+.business-hours-panel{max-width:980px;container-type:inline-size}
+.business-hours-help{margin:14px 0;color:var(--dash-muted);font-size:12px;line-height:1.65}
+.business-hours-summary{margin:18px 0;padding:14px;display:flex;align-items:center;gap:15px;border:1px solid var(--dash-line);border-radius:13px;background:var(--dash-card-2)}
+.business-hours-summary .dash-status-pill{flex:none}
+.business-hours-summary>div{min-width:0;display:grid;gap:5px}
+.business-hours-summary strong{color:var(--dash-text);font-size:12px;line-height:1.6}
+.business-hours-summary small{color:var(--dash-muted);font-size:9px;line-height:1.45}
+.business-hours-form{display:grid;gap:10px}
+.business-hours-form>article{min-height:66px;padding:14px;display:flex;flex-wrap:wrap;align-items:flex-start;gap:14px 22px;border:1px solid var(--dash-line);border-left:4px solid var(--dash-line);border-radius:11px;background:var(--dash-card-2)}
+.business-hours-form>article.active{border-left-color:var(--legend-success)}
+.business-day-toggle{display:flex;align-items:center;gap:10px;flex:0 0 110px;cursor:pointer}
+.business-day-toggle input{width:19px;height:19px;accent-color:var(--legend-primary)}
+.business-day-toggle span{display:grid;gap:3px}
+.business-day-toggle strong{color:var(--dash-text);font-size:12px}
+.business-day-toggle small{color:var(--dash-muted);font-size:10px}
+.business-day-times{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));flex:1 1 430px;min-width:0;gap:10px 18px}
+.business-day-times fieldset{min-width:0;margin:0;padding:0;border:0}
+.business-day-times legend{margin-bottom:8px;color:var(--dash-text);font-size:12px;font-weight:800}
+.business-day-times legend small{color:var(--dash-muted);font-size:10px;font-weight:400}
+.business-shift-times{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:end;gap:6px}
+.business-shift-times>label{display:grid;min-width:0;gap:4px;color:var(--dash-muted);font-size:9px;font-weight:800;text-transform:uppercase}
+.business-day-times input{width:100%;min-width:0;min-height:40px;padding:7px;color:var(--dash-text);border:1px solid var(--dash-line);border-radius:8px;background:var(--dash-card)}
+.business-shift-times>span{padding-bottom:13px;color:var(--dash-muted);font-size:9px}
+.business-day-break{grid-column:1/-1;margin:0;color:var(--dash-muted);font-size:11px;line-height:1.5}
+.business-hours-form>.button{justify-self:end;margin-top:8px}
+@container(max-width:520px){.business-day-times{grid-template-columns:minmax(0,1fr)}}
 
 /* Los bloques internos de Caja deben respetar la superficie y el contraste del tema. */
 .panel-theme :is(.cashier-compact-status span,.cashier-product-toggle,.cashier-client-modes,.cashier-service-line,.cashier-history-filters,.cashier-ledger-summary article,.cashier-settlement-summary>article,.settlement-net-preview,.settlement-payment-summary>div,.settlement-metrics article){color:var(--dash-text);border-color:var(--dash-line);background:var(--dash-card-2)}
@@ -1230,7 +1255,7 @@
 .panel-theme :is(.cashier-client-selected,.cashier-reward-options>label.selected,.cashier-ledger-summary .ledger-grand-total,.settlement-incentive-check){border-color:color-mix(in srgb,var(--dash-cyan) 38%,transparent);background:color-mix(in srgb,var(--dash-cyan) 10%,var(--dash-card-2))}
 .panel-theme .ledger-head{color:var(--dash-text);background:color-mix(in srgb,var(--legend-primary) 16%,var(--dash-card-2))}
 .panel-theme[data-panel-theme="light"] .admin-message{color:#176345;background:#e4f6ed;border-color:rgba(19,164,122,.28)}.panel-theme[data-panel-theme="light"] .admin-error{color:#8c2f27;background:#fdebea;border-color:rgba(200,77,67,.25)}
-@media(max-width:760px){.business-hours-panel{padding:14px!important}.business-hours-summary{margin:11px 0;align-items:flex-start;flex-direction:column}.business-hours-form>article{min-height:58px;align-items:stretch;flex-direction:column}.business-day-times{display:grid;grid-template-columns:1fr auto 1fr;align-items:end}.business-day-times input{width:100%}.business-hours-form>.button{width:100%;justify-content:center}.business-hours-summary strong{font-size:10px}}
+@media(max-width:760px){.business-hours-panel{padding:14px!important}.business-hours-summary{margin:11px 0;align-items:flex-start;flex-direction:column}.business-hours-form>article{min-height:58px;align-items:stretch;flex-direction:column}.business-day-toggle,.business-day-times{flex-basis:auto}.business-hours-form>.button{width:100%;justify-content:center}.business-hours-summary strong{font-size:11px}}
 
 /* Inicio y secciones del cliente con patrón de aplicación. */
 .client-page-hero{padding-top:38px;padding-bottom:38px}.client-page-hero h1{font-size:clamp(30px,4.5vw,52px)}

@@ -2,6 +2,8 @@ export type BusinessHour = {
   weekday: number;
   opens_at: string;
   closes_at: string;
+  afternoon_opens_at: string | null;
+  afternoon_closes_at: string | null;
   active: boolean;
 };
 
@@ -26,6 +28,50 @@ function minutesFromTime(value: string) {
 
 function shortTime(value: string) {
   return value.slice(0, 5);
+}
+
+export function getBusinessHourError(day: BusinessHour): { field: "opens_at" | "closes_at" | "afternoon_opens_at" | "afternoon_closes_at"; message: string } | null {
+  const validTime = (value: string | null): value is string => Boolean(value && /^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(value));
+  if (!validTime(day.opens_at)) return { field: "opens_at", message: "Completa la apertura del turno mañana." };
+  if (!validTime(day.closes_at)) return { field: "closes_at", message: "Completa el cierre del turno mañana." };
+  if (minutesFromTime(day.opens_at) >= minutesFromTime(day.closes_at)) {
+    return { field: "closes_at", message: "El cierre de la mañana debe ser posterior a su apertura." };
+  }
+  if (!day.afternoon_opens_at && !day.afternoon_closes_at) return null;
+  if (!validTime(day.afternoon_opens_at)) return { field: "afternoon_opens_at", message: "Completa la apertura del turno tarde o deja ambas horas de la tarde vacías." };
+  if (!validTime(day.afternoon_closes_at)) return { field: "afternoon_closes_at", message: "Completa el cierre del turno tarde o deja ambas horas de la tarde vacías." };
+  if (minutesFromTime(day.afternoon_opens_at) <= minutesFromTime(day.closes_at)) {
+    return { field: "afternoon_opens_at", message: "La tarde debe comenzar después del cierre de la mañana para dejar un descanso." };
+  }
+  if (minutesFromTime(day.afternoon_closes_at) <= minutesFromTime(day.afternoon_opens_at)) {
+    return { field: "afternoon_closes_at", message: "El cierre de la tarde debe ser posterior a su apertura." };
+  }
+  return null;
+}
+
+export function prepareBusinessHourForSave(day: BusinessHour, saved?: BusinessHour): BusinessHour {
+  // Un borrador incompleto de un día cerrado no debe impedir guardar los demás días.
+  const source = !day.active && getBusinessHourError(day)
+    ? saved && !getBusinessHourError(saved)
+      ? saved
+      : { opens_at: "09:00", closes_at: "20:00", afternoon_opens_at: null, afternoon_closes_at: null }
+    : day;
+  return {
+    weekday: day.weekday,
+    active: day.active,
+    opens_at: shortTime(source.opens_at),
+    closes_at: shortTime(source.closes_at),
+    afternoon_opens_at: source.afternoon_opens_at ? shortTime(source.afternoon_opens_at) : null,
+    afternoon_closes_at: source.afternoon_closes_at ? shortTime(source.afternoon_closes_at) : null,
+  };
+}
+
+function windowsForDay(day: BusinessHour) {
+  const windows = [{ opens_at: day.opens_at, closes_at: day.closes_at }];
+  if (day.afternoon_opens_at && day.afternoon_closes_at) {
+    windows.push({ opens_at: day.afternoon_opens_at, closes_at: day.afternoon_closes_at });
+  }
+  return windows;
 }
 
 export function isBusinessOpenNow(
@@ -54,7 +100,9 @@ export function isBusinessOpenNow(
   if (!today) return false;
 
   const currentMinutes = hour * 60 + minute;
-  return currentMinutes >= minutesFromTime(today.opens_at) && currentMinutes < minutesFromTime(today.closes_at);
+  return windowsForDay(today).some((window) =>
+    currentMinutes >= minutesFromTime(window.opens_at) && currentMinutes < minutesFromTime(window.closes_at),
+  );
 }
 
 export function resolveBusinessStatus(
@@ -82,7 +130,10 @@ export function formatBusinessHours(hours: BusinessHour[]) {
     const previousDay = current?.at(-1)?.weekday;
     const isConsecutive = previousDay !== undefined
       && orderedDays.indexOf(item.weekday) === orderedDays.indexOf(previousDay) + 1;
-    const sameHours = current?.[0]?.opens_at === item.opens_at && current?.[0]?.closes_at === item.closes_at;
+    const sameHours = current?.[0]?.opens_at === item.opens_at
+      && current?.[0]?.closes_at === item.closes_at
+      && current?.[0]?.afternoon_opens_at === item.afternoon_opens_at
+      && current?.[0]?.afternoon_closes_at === item.afternoon_closes_at;
     if (current && isConsecutive && sameHours) current.push(item);
     else groups.push([item]);
   });
@@ -91,6 +142,11 @@ export function formatBusinessHours(hours: BusinessHour[]) {
     const first = dayNames[group[0].weekday];
     const last = dayNames[group[group.length - 1].weekday];
     const days = group.length === 1 ? first : group.length === 2 ? `${first} y ${last}` : `${first} a ${last}`;
-    return `${days[0].toUpperCase()}${days.slice(1)} · ${shortTime(group[0].opens_at)}–${shortTime(group[0].closes_at)}`;
+    const day = group[0];
+    const morning = `${shortTime(day.opens_at)}–${shortTime(day.closes_at)}`;
+    const afternoon = day.afternoon_opens_at && day.afternoon_closes_at
+      ? ` y ${shortTime(day.afternoon_opens_at)}–${shortTime(day.afternoon_closes_at)} (descanso: ${shortTime(day.closes_at)}–${shortTime(day.afternoon_opens_at)})`
+      : "";
+    return `${days[0].toUpperCase()}${days.slice(1)} · ${morning}${afternoon}`;
   }).join("; ");
 }

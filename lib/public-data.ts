@@ -68,15 +68,14 @@ export type BusinessInfo = {
   coverImage: string | null;
 };
 
-const fallbackBusinessSchedule: BusinessHour[] = [
-  { weekday: 0, opens_at: "09:00", closes_at: "20:00", active: true },
-  { weekday: 1, opens_at: "09:00", closes_at: "20:00", active: false },
-  { weekday: 2, opens_at: "09:00", closes_at: "20:00", active: true },
-  { weekday: 3, opens_at: "09:00", closes_at: "20:00", active: true },
-  { weekday: 4, opens_at: "09:00", closes_at: "20:00", active: true },
-  { weekday: 5, opens_at: "09:00", closes_at: "20:00", active: true },
-  { weekday: 6, opens_at: "09:00", closes_at: "20:00", active: true },
-];
+const fallbackBusinessSchedule: BusinessHour[] = Array.from({ length: 7 }, (_, weekday) => ({
+  weekday,
+  opens_at: "09:00",
+  closes_at: "20:00",
+  afternoon_opens_at: null,
+  afternoon_closes_at: null,
+  active: weekday !== 1,
+}));
 
 const fallbackBusiness: BusinessInfo = {
   name: "Barbería LEGEND CLUB",
@@ -128,7 +127,7 @@ export async function getPublicData() {
           .order("created_at", { ascending: false })
           .limit(12),
         supabase.from("business_settings").select("*").eq("id", true).maybeSingle(),
-        supabase.from("business_hours").select("weekday,opens_at,closes_at,active").order("weekday"),
+        supabase.from("business_hours").select("*").order("weekday"),
       ]);
 
     const services: PublicService[] = servicesResult.error
