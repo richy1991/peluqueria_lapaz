@@ -15,12 +15,16 @@ export function InstallAppButton({ compact = false }: { compact?: boolean }) {
   const [installed, setInstalled] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [platform, setPlatform] = useState<InstallPlatform>("desktop");
+  const [iosBrowser, setIosBrowser] = useState<"safari" | "other">("safari");
+  const [isXiaomi, setIsXiaomi] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
     const userAgent = navigator.userAgent;
     const isIos = /iphone|ipad|ipod/i.test(userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     setPlatform(isIos ? "ios" : /android/i.test(userAgent) ? "android" : "desktop");
+    setIsXiaomi(/xiaomi|redmi|miui/i.test(userAgent));
+    if (isIos) setIosBrowser(/safari/i.test(userAgent) && !/crios|fxios|edgios/i.test(userAgent) ? "safari" : "other");
     const standalone = window.matchMedia("(display-mode: standalone)").matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
     setInstalled(standalone);
     const onBeforeInstallPrompt = (event: Event) => {
@@ -58,11 +62,16 @@ export function InstallAppButton({ compact = false }: { compact?: boolean }) {
   }
 
   if (installed) return <span className="pwa-installed"><Smartphone size={16} /> App instalada</span>;
-  const instructions = platform === "ios"
-    ? "En iPhone o iPad: pulsa Compartir en Safari y elige “Agregar a inicio”."
-    : platform === "android"
-      ? "En Android o Huawei: confirma “Instalar” en el diálogo. Si no aparece, abre el menú del navegador y elige “Instalar aplicación” o “Agregar a pantalla principal”."
-      : "En Chrome, Edge, Firefox o Safari: usa el icono de instalación de la barra de direcciones o el menú del navegador.";
+  let instructions = "En Chrome, Edge, Firefox o Safari: usa el icono de instalación de la barra de direcciones o el menú del navegador.";
+  if (platform === "ios") {
+    instructions = iosBrowser === "safari"
+      ? "En iPhone o iPad: pulsa Compartir en Safari y elige “Agregar a inicio”."
+      : "iOS solo permite instalar desde Safari. Copia esta dirección, ábrela en Safari y pulsa Compartir → Agregar a inicio.";
+  } else if (platform === "android") {
+    instructions = isXiaomi
+      ? "En Redmi/Xiaomi: confirma “Instalar” si aparece. Si no aparece, abre el menú del navegador y elige “Instalar aplicación” o “Agregar a pantalla principal”. En Mi Browser puede aparecer como “Añadir a pantalla de inicio”."
+      : "En Android o Huawei: confirma “Instalar” en el diálogo. Si no aparece, abre el menú del navegador y elige “Instalar aplicación” o “Agregar a pantalla principal”.";
+  }
   return <div className={`pwa-install ${compact ? "pwa-install-compact" : ""}`}>
     <button type="button" className={compact ? "button button-small" : "button"} onClick={install}><Download size={17} /> Instalar la app</button>
     {showHelp && <div className="pwa-install-help" role="status"><strong>Instalación segura</strong><span>{instructions}</span><small>El sistema solicitará tu confirmación. No se instala nada sin tu permiso.</small>{message && <small>{message}</small>}<button type="button" onClick={() => setShowHelp(false)} aria-label="Cerrar instrucciones"><ExternalLink size={14} /> Entendido</button></div>}

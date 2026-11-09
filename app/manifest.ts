@@ -7,6 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/panel",
     description: "Servicios, galería, productos y reservas de Barbería LEGEND CLUB.",
     start_url: "/panel",
+    scope: "/",
     display: "standalone",
     orientation: "portrait",
     background_color: "#efe2c4",
