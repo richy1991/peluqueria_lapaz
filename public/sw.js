@@ -1,4 +1,4 @@
-const CACHE="legend-club-static-v3";
+const CACHE="legend-club-static-v4";
 const ASSETS=["/brand/icon-192.png","/brand/icon-512.png","/brand/legend-club-logo.webp","/manifest.webmanifest"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)));self.skipWaiting()});
 self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))));self.clients.claim()});
