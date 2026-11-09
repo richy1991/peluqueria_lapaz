@@ -13,7 +13,6 @@ import { CancelAppointmentButton, ConfirmReassignmentButton } from "./appointmen
 import { ClaimVisitForm } from "./loyalty-actions";
 import { PreferencesForm } from "./preferences-form";
 import { PushNotificationSetup } from "@/components/push-notification-setup";
-import { InstallAppButton } from "@/components/install-app-button";
 import { ReferralCode } from "./referral-code";
 import {
   PanelExperience,
@@ -81,11 +80,11 @@ export async function ClientAccountView({ section }: { section: ClientSection })
       <ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={capabilities.isCashier} />
       <div className="client-desktop-actions"><PanelThemeSelector compact /><Link className="portal-public-link" href="/sitio"><Globe2 /><span>Sitio público</span></Link></div>
     </header>
-    <section className="portal-hero client-page-hero"><p className="eyebrow">{copy.eyebrow}</p><h1>{section === "inicio" ? `Hola, ${displayName}` : copy.title}</h1><p>{copy.description}</p><InstallAppButton compact /></section>
+    <section className="portal-hero client-page-hero"><h1>{section === "inicio" ? `Hola, ${displayName}` : copy.title}</h1></section>
 
     {section === "inicio" && <div className="portal-grid client-home-dashboard">
       <section className="portal-card portal-wide client-home-overview">
-        <div className="client-home-heading"><div><small>RESUMEN DE HOY</small><h2>Todo listo para tu próxima visita.</h2><p>Reserva una atención, revisa tus beneficios o aparta un producto desde tu cuenta.</p></div><Link href="/reservar?return=%2Fmi-cuenta">Reservar cita <Scissors /></Link></div>
+        <div className="client-home-heading"><div><small>MI CUENTA</small><h2>¿Qué necesitas hacer?</h2></div><Link href="/reservar?return=%2Fmi-cuenta">Reservar <Scissors /></Link></div>
         <div className="client-home-kpis">
           <Link href="/mi-cuenta/puntos"><Star /><span><strong>{maxBalance}</strong> puntos disponibles</span></Link>
           <Link href="/mi-cuenta/citas"><CalendarDays /><span><strong>{activeAppointments.length}</strong> {activeAppointments.length === 1 ? "cita activa" : "citas activas"}</span></Link>
@@ -96,10 +95,9 @@ export async function ClientAccountView({ section }: { section: ClientSection })
     </div>}
 
     {section === "puntos" && <div className="portal-grid client-section-grid">
-      <section className="portal-card portal-wide"><div className="portal-title"><Star /><h2>Mis puntos por peluquero</h2></div><p>Cada atención suma únicamente con el profesional que realizó el servicio.</p><div className="barber-loyalty-grid">{barberBalances.length ? barberBalances.map(account => <article key={account.barberId}><span>{account.barberName}</span><strong>{account.balance}</strong><small>puntos disponibles · {account.lifetimeEarned} históricos</small></article>) : <p className="portal-empty">Aún no tienes puntos. Se acreditarán con el peluquero que te atienda.</p>}</div></section>
-      <section className="portal-card"><div className="portal-title"><Gift /><h2>Recomienda a un amigo</h2></div><p>Comparte tu código o QR. Los puntos se activan cuando tu referido completa y paga su primera atención.</p>{person?.referral_code && <ReferralCode code={person.referral_code} />}</section>
-      <section className="portal-card"><div className="portal-title"><PackageCheck /><h2>Vincular atención</h2></div><p>¿Te atendiste sin cuenta? Introduce el código de tu comprobante para incorporar esa visita.</p><ClaimVisitForm /></section>
-      <section className="portal-card portal-wide"><div className="portal-title"><Gift /><h2>Canje de puntos</h2></div><p>El canje se realiza directamente en caja al momento de pagar tu servicio. Indica al operador que deseas usar tus puntos.</p></section>
+      <section className="portal-card portal-wide"><div className="portal-title"><Star /><h2>Puntos por peluquero</h2></div><div className="barber-loyalty-grid">{barberBalances.length ? barberBalances.map(account => <article key={account.barberId}><span>{account.barberName}</span><strong>{account.balance}</strong><small>disponibles</small></article>) : <p className="portal-empty">Aún no tienes puntos.</p>}</div></section>
+      <section className="portal-card"><div className="portal-title"><Gift /><h2>Recomendar</h2></div>{person?.referral_code && <ReferralCode code={person.referral_code} />}</section>
+      <section className="portal-card"><div className="portal-title"><PackageCheck /><h2>Agregar una visita</h2></div><ClaimVisitForm /></section>
       <section className="portal-card"><div className="portal-title"><Star /><h2>Historial de puntos</h2></div><div className="portal-list">{transactions.data?.length ? transactions.data.map(item => <article key={item.id}><div><strong>{item.reason}</strong><span>{(item.barber_profiles as unknown as { display_name?: string } | null)?.display_name ?? (item.barber_id_snapshot ? "Peluquero eliminado" : "Peluquero")} · {new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeZone: clientBusinessTimezone }).format(new Date(item.created_at))}</span></div><b className={item.points > 0 ? "points-positive" : "points-negative"}>{item.points > 0 ? "+" : ""}{item.points}</b></article>) : <p className="portal-empty">Aún no tienes movimientos.</p>}</div></section>
     </div>}
 
@@ -107,7 +105,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
 
     {section === "productos" && <div className="portal-grid client-section-grid client-products-page">
       <section className="portal-card portal-wide client-reservations-card"><div className="portal-title"><PackageCheck /><h2>Mis productos apartados</h2></div><div className="portal-list">{reservations.data?.length ? reservations.data.map(item => <article key={item.id}><div><strong>{(item.products as unknown as { name?: string } | null)?.name ?? "Producto"}</strong><span>{item.quantity} unidad(es) · {item.status === "reserved" ? "apartado" : item.status}</span></div><b>Vence {new Intl.DateTimeFormat("es-BO", { dateStyle: "short", timeStyle: "short", timeZone: clientBusinessTimezone }).format(new Date(item.expires_at))}</b></article>) : <p className="portal-empty">No tienes productos apartados.</p>}</div></section>
-      <section className="portal-card portal-wide client-catalog-card"><div className="portal-title"><PackageCheck /><div><small>DISPONIBLES AHORA</small><h2>Todos los productos</h2></div></div><p>Selecciona un producto para ver sus fotos y detalles. Puedes apartarlo durante 24 horas y pagarlo al recogerlo.</p><ProductCatalog products={availableProducts} variant="catalog" /></section>
+      <section className="portal-card portal-wide client-catalog-card"><div className="portal-title"><PackageCheck /><h2>Catálogo</h2></div><ProductCatalog products={availableProducts} variant="catalog" /></section>
     </div>}
 
     {section === "notificaciones" && <div className="portal-grid client-section-grid">
