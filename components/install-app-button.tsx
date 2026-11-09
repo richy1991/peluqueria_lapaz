@@ -10,23 +10,31 @@ type InstallPromptEvent = Event & {
 
 type InstallPlatform = "android" | "ios" | "desktop";
 
+function getInstallContext() {
+  if (typeof navigator === "undefined") {
+    return { platform: "desktop" as const, iosBrowser: "safari" as const, isXiaomi: false, installed: false };
+  }
+  const userAgent = navigator.userAgent;
+  const isIos = /iphone|ipad|ipod/i.test(userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  return {
+    platform: (isIos ? "ios" : /android/i.test(userAgent) ? "android" : "desktop") as InstallPlatform,
+    iosBrowser: (isIos && /safari/i.test(userAgent) && !/crios|fxios|edgios/i.test(userAgent) ? "safari" : "other") as "safari" | "other",
+    isXiaomi: /xiaomi|redmi|miui/i.test(userAgent),
+    installed: typeof window !== "undefined" && (window.matchMedia("(display-mode: standalone)").matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone)),
+  };
+}
+
 export function InstallAppButton({ compact = false }: { compact?: boolean }) {
+  const installContext = getInstallContext();
   const [installEvent, setInstallEvent] = useState<InstallPromptEvent | null>(null);
-  const [installed, setInstalled] = useState(false);
+  const [installed, setInstalled] = useState(installContext.installed);
   const [showHelp, setShowHelp] = useState(false);
-  const [platform, setPlatform] = useState<InstallPlatform>("desktop");
-  const [iosBrowser, setIosBrowser] = useState<"safari" | "other">("safari");
-  const [isXiaomi, setIsXiaomi] = useState(false);
+  const [platform] = useState<InstallPlatform>(installContext.platform);
+  const [iosBrowser] = useState<"safari" | "other">(installContext.iosBrowser);
+  const [isXiaomi] = useState(installContext.isXiaomi);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const userAgent = navigator.userAgent;
-    const isIos = /iphone|ipad|ipod/i.test(userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    setPlatform(isIos ? "ios" : /android/i.test(userAgent) ? "android" : "desktop");
-    setIsXiaomi(/xiaomi|redmi|miui/i.test(userAgent));
-    if (isIos) setIosBrowser(/safari/i.test(userAgent) && !/crios|fxios|edgios/i.test(userAgent) ? "safari" : "other");
-    const standalone = window.matchMedia("(display-mode: standalone)").matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
-    setInstalled(standalone);
     const onBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallEvent(event as InstallPromptEvent);

@@ -282,7 +282,7 @@ export function FloatingSupportChat() {
 
   useEffect(() => {
     let active = true;
-    void bootstrap(false).catch(() => {
+    void Promise.resolve().then(() => bootstrap(false)).catch(() => {
       if (active) setConnectionState("disconnected");
     });
     return () => { active = false; };
@@ -357,7 +357,7 @@ export function FloatingSupportChat() {
   useEffect(() => {
     if (!userId) return;
     hasRealtimeSubscriptionRef.current = false;
-    setConnectionState("connecting");
+    void Promise.resolve().then(() => setConnectionState("connecting"));
     const channel = supabase
       .channel(`support-inbox-${userId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, async (payload) => {
