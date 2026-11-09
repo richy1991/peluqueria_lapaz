@@ -61,7 +61,7 @@ export async function AdminPageContent({
     resolvedSection === "estadisticas" ? supabase.rpc("admin_marketing_analytics") : Promise.resolve({ data: null }),
     resolvedSection === "programa" ? supabase.from("loyalty_settings").select("*").eq("id",true).maybeSingle() : Promise.resolve({ data: null }),
     resolvedSection === "programa" ? supabase.from("rewards").select("*").order("points_cost") : Promise.resolve({ data: [] }),
-    resolvedSection === "programa" ? supabase.from("promotions").select("*").order("created_at",{ascending:false}) : Promise.resolve({ data: [] }),
+    resolvedSection === "programa" ? supabase.from("promotions").select("*,services(name)").order("created_at",{ascending:false}) : Promise.resolve({ data: [] }),
     resolvedSection === "programa" ? supabase.from("barber_expenses").select("*,barber_profiles(display_name)").order("created_at",{ascending:false}).limit(100) : Promise.resolve({ data: [] }),
     resolvedSection === "programa" ? supabase.from("payouts").select("*,barber_profiles(display_name)").order("created_at",{ascending:false}).limit(100) : Promise.resolve({ data: [] }),
   ]);

@@ -14,6 +14,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { FloatingSupportChat } from "@/components/floating-support-chat";
 import { DashboardToastHost } from "@/components/dashboard-toast";
+import { PanelExitGuard } from "@/components/panel-exit-guard";
 import { createClient } from "@/lib/supabase/client";
 
 type Preference = "system" | "light" | "dark";
@@ -200,6 +201,7 @@ export function PanelMobileScrim() {
 export function PanelMobileLogout() {
   const router = useRouter();
   async function logout() {
+    if (!window.confirm("¿Seguro que quieres salir de la aplicación? Puedes quedarte un poco más para continuar usando LEGEND CLUB.")) return;
     await createClient().auth.signOut();
     router.replace("/");
     router.refresh();
@@ -295,6 +297,7 @@ export function PanelExperience({ children, chatInHeader = false }: { children: 
     <MobileNavigationContext.Provider value={navigation}>
       <div className={`panel-theme ${chromeHidden && !mobileNavOpen ? "panel-mobile-chrome-hidden" : ""} ${mobileNavOpen ? "mobile-nav-open" : ""} ${chatInHeader ? "panel-chat-in-header" : ""}`} data-panel-theme={resolved} suppressHydrationWarning>
         {children}
+        <PanelExitGuard />
         <DashboardToastHost />
         <PanelViewportPortal><aside className="panel-floating-tools" aria-label="Atención al cliente"><FloatingSupportChat /></aside></PanelViewportPortal>
       </div>

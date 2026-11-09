@@ -11,8 +11,8 @@ import { getUserCapabilities } from "@/lib/user-capabilities";
 import { DEFAULT_BUSINESS_TIMEZONE } from "@/lib/business-hours";
 import { businessDayRange, zonedDateTimeToDate } from "@/lib/business-time";
 import { AppointmentStatusActions } from "./appointment-status-actions";
-import { ExpenseForm } from "./expense-form";
 import { PublicProfileManager } from "./public-profile-manager";
+import { InstallAppButton } from "@/components/install-app-button";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +22,7 @@ const sectionInfo: Record<BarberSection, { eyebrow: string; title: string; descr
   agenda: { eyebrow: "OPERACIÓN DIARIA", title: "Agenda del día", description: "Consulta tus citas asignadas y actualiza su estado." },
   productos: { eyebrow: "CATÁLOGO", title: "Productos", description: "Consulta el catálogo completo, revisa cada detalle y aparta productos para recogerlos en el local." },
   perfil: { eyebrow: "PRESENCIA PÚBLICA", title: "Mi perfil", description: "Mantén actualizada la información que ven los clientes." },
-  balance: { eyebrow: "CONTROL PERSONAL", title: "Balance económico", description: "Revisa comisiones, incentivos, gastos y liquidaciones." },
+  balance: { eyebrow: "CONTROL PERSONAL", title: "Balance económico", description: "Revisa tus comisiones, incentivos y liquidaciones." },
   trabajos: { eyebrow: "PORTAFOLIO", title: "Mis trabajos", description: "Publica trabajos autorizados o referencias con su fuente." },
 };
 
@@ -59,18 +59,18 @@ export async function BarberView({ section }: { section: BarberSection }) {
   const { data: businessSettings } = await supabase.from("business_settings").select("timezone").eq("id", true).maybeSingle();
   const businessTimezone = String(businessSettings?.timezone ?? DEFAULT_BUSINESS_TIMEZONE);
   const { date: workDate, start, end } = businessDayRange(new Date(), businessTimezone);
+  const weekEnd = new Date(end.getTime() + 6 * 24 * 60 * 60 * 1000);
   const monthStart = zonedDateTimeToDate(`${workDate.slice(0, 8)}01T00:00:00`, businessTimezone);
-  const [appointmentsResult, earnings, expenses, payouts, profileResult, galleryResult, servicesResult, productsResult, monthlyEarnings, commissionSettings, discounts, availableProducts] = await Promise.all([
+  const [appointmentsResult, weekAppointmentsResult, earnings, payouts, profileResult, galleryResult, servicesResult, productsResult, monthlyEarnings, discounts, availableProducts] = await Promise.all([
     supabase.from("appointments").select("id,service_id,starts_at,ends_at,status,service_name_snapshot,client_name_snapshot,notes,reference_image_path,profiles!appointments_client_id_fkey(full_name,phone,is_blacklisted)").eq("barber_id", capabilities.barber.id).gte("starts_at", start.toISOString()).lt("starts_at", end.toISOString()).order("starts_at"),
+    section === "agenda" ? supabase.from("appointments").select("id,starts_at,status,service_name_snapshot,client_name_snapshot,profiles!appointments_client_id_fkey(full_name,phone)").eq("barber_id", capabilities.barber.id).gte("starts_at", start.toISOString()).lt("starts_at", weekEnd.toISOString()).order("starts_at") : Promise.resolve({ data: [] }),
     section === "balance" ? supabase.from("barber_earnings").select("id,kind,amount,status,created_at,sale_items(name_snapshot,unit_price_snapshot,discount_amount,barber_discount_share)").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(50) : Promise.resolve({ data: [] }),
-    section === "balance" ? supabase.from("barber_expenses").select("id,concept,amount,status,created_at").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
     section === "balance" ? supabase.from("payouts").select("id,period_start,period_end,commission_amount,incentive_amount,deduction_amount,total_amount,status,paid_at").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
     ["perfil", "trabajos"].includes(section) ? supabase.from("barber_profiles").select("id,display_name,bio,specialties,photo_path").eq("id", capabilities.barber.id).single() : Promise.resolve({ data: null }),
     ["perfil", "trabajos"].includes(section) ? supabase.from("gallery_posts").select("id,title,status,source_type,created_at").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(12) : Promise.resolve({ data: [] }),
     section === "agenda" ? supabase.from("services").select("id,name,price").eq("status", "active").order("name") : Promise.resolve({ data: [] }),
     section === "agenda" ? supabase.from("products").select("id,name,price,stock").eq("status", "active").gt("stock", 0).order("name") : Promise.resolve({ data: [] }),
     section === "balance" ? supabase.from("barber_earnings").select("id,kind,base_amount,rate_percent,amount,status,created_at,sale_items(name_snapshot)").eq("barber_id", capabilities.barber.id).gte("created_at", monthStart.toISOString()).order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
-    section === "balance" ? supabase.from("loyalty_settings").select("product_sales_commission_percent").eq("id",true).maybeSingle() : Promise.resolve({ data: null }),
     section === "balance" ? supabase.from("discount_applications").select("id,name_snapshot,eligible_base,discount_amount,barber_discount_share,business_discount_share,created_at").eq("barber_id",capabilities.barber.id).gte("created_at",monthStart.toISOString()).order("created_at",{ascending:false}).limit(30) : Promise.resolve({ data: [] }),
     section === "productos" ? getPublicProducts() : Promise.resolve([]),
   ]);
@@ -81,7 +81,6 @@ export async function BarberView({ section }: { section: BarberSection }) {
   const monthProductEarnings=(monthlyEarnings.data??[]).filter(item=>item.kind==="product_incentive");
   const monthProductSales=monthProductEarnings.reduce((sum,item)=>sum+Number(item.base_amount),0);
   const monthProductCommission=monthProductEarnings.reduce((sum,item)=>sum+Number(item.amount),0);
-  const productCommissionRate=Number(commissionSettings.data?.product_sales_commission_percent??10);
   const info = sectionInfo[section];
   const replaceNavigation = section !== "agenda";
 
@@ -108,12 +107,13 @@ export async function BarberView({ section }: { section: BarberSection }) {
       <PanelMobileScrim />
       </PanelResponsiveSidebar>
       <section className="barber-content">
-        <section className="portal-hero dash-role-hero"><div><p className="eyebrow">{info.eyebrow}</p><h1>{info.title}</h1><p>{info.description}</p></div><div className="barber-pulse"><span><i />{active.length} citas activas</span>{section === "agenda" ? <Clock3 /> : section === "productos" ? <PackageOpen /> : section === "balance" ? <Banknote /> : section === "trabajos" ? <Images /> : <UserRoundPen />}</div></section>
+        <section className="portal-hero dash-role-hero"><div><p className="eyebrow">{info.eyebrow}</p><h1>{info.title}</h1><p>{info.description}</p><InstallAppButton compact /></div><div className="barber-pulse"><span><i />{active.length} citas activas</span>{section === "agenda" ? <Clock3 /> : section === "productos" ? <PackageOpen /> : section === "balance" ? <Banknote /> : section === "trabajos" ? <Images /> : <UserRoundPen />}</div></section>
         <div className="portal-grid dash-portal-grid">
           {section === "agenda" && <>
             <section className="portal-card"><div className="portal-title"><Activity /><h2>Resumen de hoy</h2></div><strong className="daily-appointment-count">{active.length}</strong><p>cita(s) pendientes o en proceso.</p></section>
             <section className="portal-card"><div className="portal-title"><Clock3 /><h2>Próxima cita</h2></div>{active[0] ? <div className="next-appointment"><strong>{active[0].service_name_snapshot}</strong><span>{new Intl.DateTimeFormat("es-BO", { timeStyle: "short", timeZone: businessTimezone }).format(new Date(active[0].starts_at))}</span></div> : <p className="portal-empty">No quedan citas pendientes hoy.</p>}</section>
             <section className="portal-card portal-wide"><div className="portal-title"><CalendarClock /><h2>Citas asignadas</h2></div><div className="portal-list agenda-list">{appointments.length ? appointments.map((item) => { const client = item.profiles as unknown as { full_name?: string; phone?: string; is_blacklisted?: boolean } | null; return <article key={item.id}><span className="agenda-time">{new Intl.DateTimeFormat("es-BO", { timeStyle: "short", timeZone: businessTimezone }).format(new Date(item.starts_at))}</span><div><strong>{item.service_name_snapshot}</strong><span>{client?.full_name ?? item.client_name_snapshot ?? "Cliente"} · {client?.phone ?? "Sin teléfono"} · {item.status === "pending_payment" ? "pendiente de cobro" : item.status}</span>{client?.is_blacklisted && <small className="portal-warning">Alerta de inasistencias</small>}</div><AppointmentStatusActions id={item.id} status={item.status} defaultServiceId={item.service_id ?? ""} services={servicesResult.data ?? []} products={productsResult.data ?? []} /></article>; }) : <p className="portal-empty">No hay citas asignadas para hoy.</p>}</div></section>
+            <section className="portal-card portal-wide"><div className="portal-title"><History /><h2>Agenda de los próximos 7 días</h2></div><div className="portal-list agenda-list">{(weekAppointmentsResult.data ?? []).length ? (weekAppointmentsResult.data ?? []).map(item => { const client = item.profiles as unknown as { full_name?: string } | null; return <article key={item.id}><span className="agenda-time">{new Intl.DateTimeFormat("es-BO", { weekday: "short", day: "numeric", month: "short", timeStyle: "short", timeZone: businessTimezone }).format(new Date(item.starts_at))}</span><div><strong>{item.service_name_snapshot}</strong><span>{client?.full_name ?? item.client_name_snapshot ?? "Cliente"} · {item.status}</span></div></article>; }) : <p className="portal-empty">No tienes citas esta semana.</p>}</div></section>
           </>}
 
           {section === "productos" && <section className="portal-card portal-wide barber-product-catalog"><div className="portal-title"><PackageOpen /><div><small>DISPONIBLES AHORA</small><h2>Catálogo de productos</h2></div></div><p>Selecciona un producto para ver sus fotos, presentación, existencias y precio. Puedes apartarlo durante 24 horas y pagarlo en el local.</p><ProductCatalog products={availableProducts} variant="catalog" /></section>}
@@ -123,12 +123,10 @@ export async function BarberView({ section }: { section: BarberSection }) {
           {section === "trabajos" && profileResult.data && <section className="portal-card portal-wide"><PublicProfileManager userId={user.id} profile={profileResult.data} gallery={galleryResult.data ?? []} view="gallery" timezone={businessTimezone} /></section>}
 
           {section === "balance" && <>
-            <section className="portal-card portal-wide barber-money-summary"><article><span>Comisiones pendientes</span><strong>Bs {pendingTotal.toFixed(2)}</strong><small>Antes de gastos aprobados</small></article><article><span>Productos vendidos</span><strong>Bs {monthProductSales.toFixed(2)}</strong><small>Este mes</small></article><article><span>Comisión de productos</span><strong>Bs {monthProductCommission.toFixed(2)}</strong><small>{productCommissionRate}% por cada 100 Bs</small></article></section>
-            <section className="portal-card"><div className="portal-title"><ReceiptText /><h2>Registrar insumo</h2></div><p>Solicita la revisión de gastos vinculados a tu trabajo.</p><ExpenseForm /></section>
+            <section className="portal-card portal-wide barber-money-summary"><article><span>Liquidación pendiente</span><strong>Bs {pendingTotal.toFixed(2)}</strong><small>Saldo por recibir</small></article><article><span>Productos vendidos</span><strong>Bs {monthProductSales.toFixed(2)}</strong><small>Este mes</small></article><article><span>Incentivo por productos</span><strong>Bs {monthProductCommission.toFixed(2)}</strong><small>Bs 5 por unidad vendida</small></article></section>
             <section className="portal-card portal-wide"><div className="portal-title"><Banknote /><h2>Comisiones económicas</h2></div><p>Este registro monetario es independiente de los puntos de fidelidad de clientes.</p><div className="portal-list">{earnings.data?.length ? earnings.data.map((item) => <article key={item.id}><div><strong>{(item.sale_items as unknown as { name_snapshot?: string } | null)?.name_snapshot ?? item.kind}</strong><span>{item.kind === "product_incentive" ? "Venta de producto" : "Servicio"} · {item.status} · {new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeZone: businessTimezone }).format(new Date(item.created_at))}</span></div><b>Bs {Number(item.amount).toFixed(2)}</b></article>) : <p className="portal-empty">Aún no existen comisiones registradas.</p>}</div></section>
             <section className="portal-card portal-wide"><div className="portal-title"><Sparkles /><h2>Descuentos compartidos</h2></div><p>Cada registro muestra cuánto asumiste tú y cuánto asumió el local.</p><div className="portal-list">{discounts.data?.length?discounts.data.map(item=><article key={item.id}><div><strong>{item.name_snapshot}</strong><span>Base Bs {Number(item.eligible_base).toFixed(2)} · descuento total Bs {Number(item.discount_amount).toFixed(2)} · {new Intl.DateTimeFormat("es-BO",{dateStyle:"medium",timeZone:businessTimezone}).format(new Date(item.created_at))}</span></div><b>Tú: Bs {Number(item.barber_discount_share).toFixed(2)} · Local: Bs {Number(item.business_discount_share).toFixed(2)}</b></article>):<p className="portal-empty">Este mes todavía no asumiste descuentos.</p>}</div></section>
-            <section className="portal-card"><div className="portal-title"><ReceiptText /><h2>Mis gastos</h2></div><p>Los aprobados se descuentan de tu siguiente liquidación.</p><div className="portal-list">{expenses.data?.length ? expenses.data.map((item) => <article key={item.id}><div><strong>{item.concept}</strong><span>{expenseStatus(item.status)}</span></div><b>- Bs {Number(item.amount).toFixed(2)}</b></article>) : <p className="portal-empty">No registraste gastos.</p>}</div></section>
-            <section className="portal-card"><div className="portal-title"><History /><h2>Liquidaciones</h2></div><div className="portal-list">{payouts.data?.length ? payouts.data.map((item) => <article key={item.id}><div><strong>{item.period_start}</strong><span>Servicios Bs {Number(item.commission_amount).toFixed(2)} · incentivo Bs {Number(item.incentive_amount).toFixed(2)} · gastos -Bs {Number(item.deduction_amount).toFixed(2)} · {item.status === "paid" ? "pagada" : "preparada"}</span></div><b>Bs {Number(item.total_amount).toFixed(2)}</b></article>) : <p className="portal-empty">Aún no existen liquidaciones.</p>}</div></section>
+            <section className="portal-card"><div className="portal-title"><History /><h2>Liquidaciones</h2></div><div className="portal-list">{payouts.data?.length ? payouts.data.map((item) => <article key={item.id}><div><strong>{item.period_start}</strong><span>Servicios Bs {Number(item.commission_amount).toFixed(2)} · incentivo Bs {Number(item.incentive_amount).toFixed(2)} · {item.status === "paid" ? "pagada" : "preparada"}</span></div><b>Bs {Number(item.total_amount).toFixed(2)}</b></article>) : <p className="portal-empty">Aún no existen liquidaciones.</p>}</div></section>
           </>}
         </div>
       </section>

@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Calculator, PackageCheck, PackageOpen, ReceiptText, Scissors } from "lucide-react";
+import { Calculator, History, PackageCheck, PackageOpen, ReceiptText, Scissors } from "lucide-react";
 import { PanelViewportPortal } from "@/components/panel-experience";
 
-export type CashierNavigationSection = "servicios" | "productos" | "reservas" | "movimientos" | "liquidaciones" | "gastos" | "historial";
+export type CashierNavigationSection = "servicios" | "productos" | "reservas" | "movimientos" | "liquidaciones" | "historial";
 
 const cashierQuickNavigation = [
   { id: "servicios", href: "/caja", label: "Cobrar servicios", icon: Scissors },
@@ -12,6 +12,7 @@ const cashierQuickNavigation = [
   { id: "reservas", href: "/caja/reservas", label: "Reservas", icon: PackageCheck },
   { id: "movimientos", href: "/caja/movimientos", label: "Libro diario", icon: ReceiptText },
   { id: "liquidaciones", href: "/caja/liquidaciones", label: "Liquidaciones", icon: Calculator },
+  { id: "historial", href: "/caja/historial", label: "Historial", icon: History },
 ] as const;
 
 export function CashierMobileNavigation({ section, reservationCount = 0 }: { section: CashierNavigationSection; reservationCount?: number }) {

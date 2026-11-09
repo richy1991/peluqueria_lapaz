@@ -435,7 +435,7 @@ export function AdminDashboard({
     startAction();
     const data = new FormData(form);
     const name = String(data.get("name") ?? "").trim();
-    const slug = String(data.get("slug") ?? "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+    const slug = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
     const supabase = createClient();
     const { data: insertedService, error: insertError } = await supabase
       .from("services")
@@ -667,6 +667,7 @@ export function AdminDashboard({
   }
 
   async function logout() {
+    if (!window.confirm("¿Seguro que quieres salir de la aplicación? Puedes quedarte un poco más para continuar usando LEGEND CLUB.")) return;
     await createClient().auth.signOut();
     router.replace("/");
     router.refresh();
@@ -818,7 +819,7 @@ export function AdminDashboard({
             <div className="admin-title"><Scissors /><div><p>CATÁLOGO</p><h1>Servicios</h1></div></div>
             <div className="dash-section-intro"><p>Administra el catálogo sin saturar la vista principal.</p><DashboardModal title="Crear servicio" description="Define precio, duración y tiempo de gracia." triggerLabel="Nuevo servicio" triggerIcon={<Scissors/>}>
             <form className="admin-form compact-form" onSubmit={addService} acceptCharset="UTF-8">
-              <label>Nombre<input name="name" required /></label><label>Identificador<input name="slug" required placeholder="corte-clasico" /></label>
+              <label className="wide">Nombre<input name="name" required /></label>
               <label className="wide">Descripción<input name="description" /></label><label>Categoría<input name="category" /></label>
               <label>Precio Bs<input name="price" type="number" min="0" step="0.5" required /></label><label>Duración (min)<input name="duration_minutes" type="number" min="5" required /></label><label>Gracia (min)<input name="grace_minutes" type="number" min="0" defaultValue="10" /></label>
               <button className="button button-dark wide" disabled={busy}>Agregar servicio</button>

@@ -1,5 +1,5 @@
-import { CashierPageView } from "../page";
+import { redirect } from "next/navigation";
 
 export default function CashierExpensesPage() {
-  return <CashierPageView section="gastos" />;
+  redirect("/caja/liquidaciones");
 }

@@ -16,6 +16,7 @@ import { getPublicData } from "@/lib/public-data";
 import { BusinessStatus } from "@/components/business-status";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardPath, getUserCapabilities } from "@/lib/user-capabilities";
+import { InstallAppButton } from "@/components/install-app-button";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               <Link className="button" href="/reservar">
                 Reservar una cita <ArrowRight size={18} />
               </Link>
+              <InstallAppButton />
               <Link className="text-link light-link" href="#servicios">Ver servicios</Link>
             </div>
           </div>

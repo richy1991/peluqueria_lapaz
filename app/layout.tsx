@@ -14,6 +14,7 @@ export const metadata: Metadata = {
     "Barbería LEGEND CLUB en La Paz. Tradición, calle y precisión. Conoce nuestros servicios y reserva tu cita.",
   applicationName: "Barbería LEGEND CLUB",
   manifest: "/manifest.webmanifest",
+  icons: { apple: "/brand/icon-192.png" },
   other: {
     google: "notranslate",
   },
