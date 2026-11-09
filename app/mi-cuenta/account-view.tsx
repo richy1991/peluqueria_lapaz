@@ -21,12 +21,11 @@ import {
   PanelViewportPortal,
 } from "@/components/panel-experience";
 
-export type ClientSection = "inicio" | "puntos" | "citas" | "productos" | "notificaciones" | "perfil";
+export type ClientSection = "inicio" | "puntos" | "productos" | "notificaciones" | "perfil";
 
 const sectionCopy: Record<ClientSection, { eyebrow: string; title: string; description: string }> = {
   inicio: { eyebrow: "MODO CLIENTE", title: "Inicio", description: "Tu actividad, beneficios y próximos pasos en un solo lugar." },
   puntos: { eyebrow: "FIDELIZACIÓN", title: "Puntos y recompensas", description: "Consulta tus puntos con cada peluquero, metas y canjes activos." },
-  citas: { eyebrow: "AGENDA PERSONAL", title: "Mis citas", description: "Revisa próximas atenciones y gestiona cambios pendientes." },
   productos: { eyebrow: "CATÁLOGO", title: "Mis productos", description: "Explora el catálogo disponible y aparta tus productos para recogerlos en el local." },
   notificaciones: { eyebrow: "CENTRO DE AVISOS", title: "Notificaciones", description: "Revisa novedades y decide qué comunicaciones quieres recibir." },
   perfil: { eyebrow: "CUENTA PERSONAL", title: "Mi perfil", description: "Consulta los datos asociados a tu cuenta LEGEND CLUB." },
@@ -45,7 +44,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
   const activeReservationCutoff = new Date().toISOString();
   const [profile, appointments, reservations, notifications, loyalty, transactions, preferences, availableProducts, businessSettings, businessHours, gallery] = await Promise.all([
     supabase.from("profiles").select("full_name,email,phone,avatar_url,status,no_show_count,is_blacklisted,is_blocked,referral_code").eq("id", user.id).single(),
-    ["inicio", "citas"].includes(section) ? supabase.from("appointments").select("id,starts_at,status,price_snapshot,service_name_snapshot,barber_name_snapshot,barber_profiles(display_name)").eq("client_id", user.id).order("starts_at", { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
+    section === "inicio" ? supabase.from("appointments").select("id,starts_at,status,price_snapshot,service_name_snapshot,barber_name_snapshot,barber_profiles(display_name)").eq("client_id", user.id).order("starts_at", { ascending: false }).limit(5) : Promise.resolve({ data: [] }),
     ["inicio", "productos"].includes(section) ? supabase.from("product_reservations").select("id,quantity,status,expires_at,products(name)").eq("client_id", user.id).eq("status", "reserved").gt("expires_at", activeReservationCutoff).order("created_at", { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
     supabase.from("notifications").select("id,title,body,read_at,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
     ["inicio", "puntos"].includes(section) ? supabase.from("customer_barber_loyalty_accounts").select("barber_id,balance,lifetime_earned,lifetime_redeemed,barber_profiles(display_name)").eq("user_id", user.id).order("balance", { ascending: false }) : Promise.resolve({ data: [] }),
@@ -73,23 +72,24 @@ export async function ClientAccountView({ section }: { section: ClientSection })
   const clientInitialStatus = resolveBusinessStatus(clientConfiguredStatus, clientBusinessHours, clientBusinessTimezone);
 
   return <PanelExperience chatInHeader><main className="portal-shell panel-client-shell">
-    <header className="portal-header">
-      <Brand linked={false} />
-      <BusinessStatus configuredStatus={clientConfiguredStatus} initialStatus={clientInitialStatus} statusMessage={String(businessSettings.data?.status_message ?? "")} timezone={clientBusinessTimezone} hours={clientBusinessHours} variant="client" />
-      <ClientMainNavigation section={section} replaceNavigation={replaceNavigation} variant="desktop" />
-      <ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={capabilities.isCashier} />
-      <div className="client-desktop-actions"><PanelThemeSelector compact /><Link className="portal-public-link" href="/sitio"><Globe2 /><span>Sitio público</span></Link></div>
-    </header>
-    <section className="portal-hero client-page-hero"><h1>{section === "inicio" ? `Hola, ${displayName}` : copy.title}</h1></section>
+    <section className="client-page-hero">
+      <div className="client-hero-shade" />
+      <div className="client-hero-top"><Brand linked={false} /><div className="client-hero-actions"><PanelThemeSelector compact /><ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={capabilities.isCashier} /></div></div>
+      <div className="client-hero-content"><BusinessStatus configuredStatus={clientConfiguredStatus} initialStatus={clientInitialStatus} statusMessage={String(businessSettings.data?.status_message ?? "")} timezone={clientBusinessTimezone} hours={clientBusinessHours} variant="client" /><p className="eyebrow">{copy.eyebrow}</p><h1>{section === "inicio" ? `Hola, ${displayName}` : copy.title}</h1><p>{section === "inicio" ? "Tu próxima visita, tus beneficios y tu estilo en un solo lugar." : copy.description}</p></div>
+      <Link className="client-hero-public-link" href="/sitio"><Globe2 /><span>Ver sitio público</span></Link>
+    </section>
 
     {section === "inicio" && <div className="portal-grid client-home-dashboard">
       <section className="portal-card portal-wide client-home-overview">
         <div className="client-home-heading"><div><small>MI CUENTA</small><h2>¿Qué necesitas hacer?</h2></div><Link href="/reservar?return=%2Fmi-cuenta">Reservar <Scissors /></Link></div>
         <div className="client-home-kpis">
           <Link href="/mi-cuenta/puntos"><Star /><span><strong>{maxBalance}</strong> puntos disponibles</span></Link>
-          <Link href="/mi-cuenta/citas"><CalendarDays /><span><strong>{activeAppointments.length}</strong> {activeAppointments.length === 1 ? "cita activa" : "citas activas"}</span></Link>
           <Link href="/mi-cuenta/productos"><PackageCheck /><span><strong>{activeReservations.length}</strong> {activeReservations.length === 1 ? "producto apartado" : "productos apartados"}</span></Link>
         </div>
+      </section>
+      <section className="portal-card portal-wide client-next-appointment">
+        <div className="portal-title"><CalendarDays /><div><small>MI PRÓXIMA VISITA</small><h2>{activeAppointments[0] ? "Cita confirmada" : "Aún no tienes una cita"}</h2></div></div>
+        {activeAppointments[0] ? (() => { const appointment = activeAppointments[0]; const barberName = (appointment.barber_profiles as unknown as { display_name?: string } | null)?.display_name ?? appointment.barber_name_snapshot; const canCancel = ["requested", "confirmed", "pending_client_confirmation"].includes(appointment.status); return <div className="client-appointment-summary"><div><strong>{appointment.service_name_snapshot}</strong><span>{new Intl.DateTimeFormat("es-BO", { dateStyle: "full", timeStyle: "short", timeZone: clientBusinessTimezone }).format(new Date(appointment.starts_at))}{barberName ? ` · ${barberName}` : ""}</span></div><b>Bs {appointment.price_snapshot}</b><div className="client-appointment-actions">{appointment.status === "pending_client_confirmation" && <ConfirmReassignmentButton id={appointment.id} />}{canCancel && <CancelAppointmentButton id={appointment.id} />}</div></div>; })() : <div className="client-empty-appointment"><p>Agenda tu próximo corte y lo verás aquí.</p><Link className="button button-dark" href="/reservar?return=%2Fmi-cuenta">Reservar cita <Scissors /></Link></div>}
       </section>
       <ClientWorkShowcase items={gallery as PublicGalleryItem[]} />
     </div>}
@@ -100,8 +100,6 @@ export async function ClientAccountView({ section }: { section: ClientSection })
       <section className="portal-card"><div className="portal-title"><PackageCheck /><h2>Agregar una visita</h2></div><ClaimVisitForm /></section>
       <section className="portal-card"><div className="portal-title"><Star /><h2>Historial de puntos</h2></div><div className="portal-list">{transactions.data?.length ? transactions.data.map(item => <article key={item.id}><div><strong>{item.reason}</strong><span>{(item.barber_profiles as unknown as { display_name?: string } | null)?.display_name ?? (item.barber_id_snapshot ? "Peluquero eliminado" : "Peluquero")} · {new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeZone: clientBusinessTimezone }).format(new Date(item.created_at))}</span></div><b className={item.points > 0 ? "points-positive" : "points-negative"}>{item.points > 0 ? "+" : ""}{item.points}</b></article>) : <p className="portal-empty">Aún no tienes movimientos.</p>}</div></section>
     </div>}
-
-    {section === "citas" && <div className="portal-grid client-section-grid"><section className="portal-card portal-wide"><div className="portal-title"><CalendarDays /><h2>Atenciones registradas</h2><Link href="/reservar?return=%2Fmi-cuenta%2Fcitas">Nueva reserva</Link></div><div className="portal-list">{appointments.data?.length ? appointments.data.map(item => { const canCancel = ["requested", "confirmed", "pending_client_confirmation"].includes(item.status); const barberName = (item.barber_profiles as unknown as { display_name?: string } | null)?.display_name ?? item.barber_name_snapshot; return <article key={item.id}><div><strong>{item.service_name_snapshot}</strong><span>{new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeStyle: "short", timeZone: clientBusinessTimezone }).format(new Date(item.starts_at))} · {item.status}{barberName ? ` · ${barberName}` : ""}</span></div><b>Bs {item.price_snapshot}</b>{item.status === "pending_client_confirmation" && <ConfirmReassignmentButton id={item.id} />}{canCancel && <CancelAppointmentButton id={item.id} />}</article>; }) : <p className="portal-empty">Aún no tienes citas registradas.</p>}</div></section></div>}
 
     {section === "productos" && <div className="portal-grid client-section-grid client-products-page">
       <section className="portal-card portal-wide client-reservations-card"><div className="portal-title"><PackageCheck /><h2>Mis productos apartados</h2></div><div className="portal-list">{reservations.data?.length ? reservations.data.map(item => <article key={item.id}><div><strong>{(item.products as unknown as { name?: string } | null)?.name ?? "Producto"}</strong><span>{item.quantity} unidad(es) · {item.status === "reserved" ? "apartado" : item.status}</span></div><b>Vence {new Intl.DateTimeFormat("es-BO", { dateStyle: "short", timeStyle: "short", timeZone: clientBusinessTimezone }).format(new Date(item.expires_at))}</b></article>) : <p className="portal-empty">No tienes productos apartados.</p>}</div></section>
@@ -129,7 +127,6 @@ const clientMainNavigation = [
   { id: "inicio", href: "/mi-cuenta", label: "Inicio", icon: Home },
   { id: "productos", href: "/mi-cuenta/productos", label: "Mis productos", icon: PackageCheck },
   { id: "puntos", href: "/mi-cuenta/puntos", label: "Mis puntos", icon: Star },
-  { id: "citas", href: "/mi-cuenta/citas", label: "Mis citas", icon: CalendarDays },
   { id: "perfil", href: "/mi-cuenta/perfil", label: "Mi perfil", icon: UserRound },
 ] as const;
 

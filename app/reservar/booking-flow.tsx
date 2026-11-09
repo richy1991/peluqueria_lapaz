@@ -251,7 +251,7 @@ export function BookingFlow({ services, barbers, timezone }: BookingFlowProps) {
             <div><span>Fecha</span><strong>{selectedDay?.day} {selectedDay?.number} · {time}</strong></div>
             <div><span>Total</span><strong>Bs {service?.price}</strong></div>
           </div>
-          <Link replace className="button button-dark" href="/mi-cuenta/citas">Ver mis citas</Link>
+          <Link replace className="button button-dark" href="/mi-cuenta">Ver mi cita</Link>
         </section>
       </main>
     );

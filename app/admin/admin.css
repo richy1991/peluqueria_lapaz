@@ -867,6 +867,63 @@
   .client-work-card{min-width:72vw;min-height:210px;scroll-snap-align:start}
 }
 
+/* Client hero: one immersive surface instead of a separate dashboard header. */
+.panel-theme .panel-client-shell .client-page-hero{
+  position:relative;
+  min-height:330px;
+  padding:22px max(20px,4vw) 54px;
+  overflow:hidden;
+  color:#fff;
+  background:
+    linear-gradient(180deg,rgba(7,11,19,.18),rgba(7,11,19,.94)),
+    url("/brand/legend-club-hero.webp") center/cover;
+  border-radius:0 0 34px 34px;
+}
+.panel-theme .panel-client-shell .client-hero-shade{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(120deg,rgba(7,11,19,.78),transparent 58%,rgba(139,92,246,.2));
+  pointer-events:none;
+}
+.client-hero-top,.client-hero-content,.client-hero-public-link{position:relative;z-index:1}
+.client-hero-top{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.client-hero-top .brand{color:#fff}
+.client-hero-actions{display:flex;align-items:center;gap:10px}
+.client-hero-content{max-width:680px;margin-top:54px}
+.client-hero-content h1{margin:8px 0 10px;font-size:clamp(34px,6vw,64px);letter-spacing:-.05em}
+.client-hero-content>p:last-child{max-width:490px;color:rgba(255,255,255,.78)}
+.client-hero-public-link{display:inline-flex;align-items:center;gap:8px;margin-top:22px;color:#d9faff;font-size:11px;font-weight:800}
+.client-hero-public-link svg{width:16px}
+.client-next-appointment{display:grid;gap:5px}
+.client-appointment-summary{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px}
+.client-appointment-summary>div:first-child{display:grid;gap:5px}
+.client-appointment-summary span{color:var(--dash-muted);font-size:11px}
+.client-appointment-summary>b{font-size:20px;color:var(--dash-cyan)}
+.client-appointment-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.client-empty-appointment{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.client-empty-appointment p{margin:0}
+.client-empty-appointment .button{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+@media(max-width:760px){
+  .panel-theme .panel-client-shell .client-page-hero{
+    min-height:380px;
+    padding:18px 16px 42px;
+    border-radius:0 0 30px 30px;
+    background:
+      linear-gradient(180deg,rgba(7,11,19,.18) 0%,rgba(7,11,19,.4) 34%,rgba(7,11,19,.96) 92%),
+      url("/brand/legend-club-hero.webp") 62% center/cover;
+  }
+  .client-hero-content{margin-top:108px}
+  .client-hero-content h1{font-size:42px}
+  .client-empty-appointment{display:grid;justify-items:start}
+  .client-appointment-summary{grid-template-columns:1fr}
+  .client-appointment-summary>b{grid-row:2}
+}
+.panel-theme[data-panel-theme="light"] .panel-client-shell .client-page-hero{
+  background:
+    linear-gradient(180deg,rgba(8,28,40,.12),rgba(8,28,40,.78)),
+    url("/brand/legend-club-hero.webp") center/cover;
+}
+
 /* Mobile product surface: cards, badges and actions inspired by modern component kits. */
 @media(max-width:760px){
   .panel-theme .panel-client-shell,
