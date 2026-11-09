@@ -7,7 +7,7 @@ import { ModeSwitcher } from "@/components/mode-switcher";
 import { ProductCatalog } from "@/components/product-catalog";
 import { createClient } from "@/lib/supabase/server";
 import { getUserCapabilities } from "@/lib/user-capabilities";
-import { getPublicProducts, type PublicProduct } from "@/lib/public-data";
+import { getPublicGallery, getPublicProducts, type PublicGalleryItem } from "@/lib/public-data";
 import { DEFAULT_BUSINESS_TIMEZONE, resolveBusinessStatus, type BusinessHour } from "@/lib/business-hours";
 import { CancelAppointmentButton, ConfirmReassignmentButton } from "./appointment-actions";
 import { ClaimVisitForm } from "./loyalty-actions";
@@ -18,15 +18,10 @@ import { ReferralCode } from "./referral-code";
 import {
   PanelExperience,
   PanelMobileLogout,
-  PanelMobileMenuButton,
-  PanelMobileScrim,
-  PanelMobileSidebarClose,
-  PanelResponsiveSidebar,
   PanelThemeSelector,
   PanelViewportPortal,
 } from "@/components/panel-experience";
 
-type Row = Record<string, unknown> & { id: string };
 export type ClientSection = "inicio" | "puntos" | "citas" | "productos" | "notificaciones" | "perfil";
 
 const sectionCopy: Record<ClientSection, { eyebrow: string; title: string; description: string }> = {
@@ -49,7 +44,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
 
   if (section === "inicio" || section === "puntos") await supabase.rpc("refresh_my_barber_loyalty");
   const activeReservationCutoff = new Date().toISOString();
-  const [profile, appointments, reservations, notifications, loyalty, transactions, preferences, availableProducts, businessSettings, businessHours, promotions] = await Promise.all([
+  const [profile, appointments, reservations, notifications, loyalty, transactions, preferences, availableProducts, businessSettings, businessHours, gallery] = await Promise.all([
     supabase.from("profiles").select("full_name,email,phone,avatar_url,status,no_show_count,is_blacklisted,is_blocked,referral_code").eq("id", user.id).single(),
     ["inicio", "citas"].includes(section) ? supabase.from("appointments").select("id,starts_at,status,price_snapshot,service_name_snapshot,barber_name_snapshot,barber_profiles(display_name)").eq("client_id", user.id).order("starts_at", { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
     ["inicio", "productos"].includes(section) ? supabase.from("product_reservations").select("id,quantity,status,expires_at,products(name)").eq("client_id", user.id).eq("status", "reserved").gt("expires_at", activeReservationCutoff).order("created_at", { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
@@ -57,10 +52,10 @@ export async function ClientAccountView({ section }: { section: ClientSection })
     ["inicio", "puntos"].includes(section) ? supabase.from("customer_barber_loyalty_accounts").select("barber_id,balance,lifetime_earned,lifetime_redeemed,barber_profiles(display_name)").eq("user_id", user.id).order("balance", { ascending: false }) : Promise.resolve({ data: [] }),
     section === "puntos" ? supabase.from("loyalty_transactions").select("id,points,reason,created_at,barber_id_snapshot,barber_profiles(display_name)").eq("user_id", user.id).or("barber_id.not.is.null,barber_id_snapshot.not.is.null").order("created_at", { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
     section === "notificaciones" ? supabase.from("notification_preferences").select("appointment_notifications,promotion_notifications,chat_notifications,system_notifications,muted_all").eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
-    getPublicProducts(section === "productos" ? undefined : 3),
+    section === "productos" ? getPublicProducts() : Promise.resolve([]),
     supabase.from("business_settings").select("business_status,status_message,timezone").eq("id", true).maybeSingle(),
     supabase.from("business_hours").select("*").order("weekday"),
-    supabase.from("promotions").select("id,name,description,code,discount_type,discount_value,starts_at,ends_at,services(name)").eq("active", true).or(`starts_at.is.null,starts_at.lte.${new Date().toISOString()}`).or(`ends_at.is.null,ends_at.gt.${new Date().toISOString()}`).order("created_at", { ascending: false }).limit(6),
+    section === "inicio" ? getPublicGallery() : Promise.resolve([]),
   ]);
 
   const person = profile.data;
@@ -68,7 +63,6 @@ export async function ClientAccountView({ section }: { section: ClientSection })
   const maxBalance = Math.max(0, ...barberBalances.map(item => Number(item.balance)));
   const activeAppointments = (appointments.data ?? []).filter(item => !["canceled", "completed", "no_show"].includes(item.status));
   const activeReservations = reservations.data ?? [];
-  const unreadNotifications = (notifications.data ?? []).filter(item => !item.read_at).length;
   const copy = sectionCopy[section];
   const displayName = String(person?.full_name ?? user.email?.split("@")[0] ?? "Cliente");
   const avatarStyle = person?.avatar_url ? { backgroundImage: `url(${JSON.stringify(person.avatar_url)})` } : undefined;
@@ -81,7 +75,6 @@ export async function ClientAccountView({ section }: { section: ClientSection })
 
   return <PanelExperience chatInHeader><main className="portal-shell panel-client-shell">
     <header className="portal-header">
-      <PanelMobileMenuButton />
       <Brand linked={false} />
       <BusinessStatus configuredStatus={clientConfiguredStatus} initialStatus={clientInitialStatus} statusMessage={String(businessSettings.data?.status_message ?? "")} timezone={clientBusinessTimezone} hours={clientBusinessHours} variant="client" />
       <ClientMainNavigation section={section} replaceNavigation={replaceNavigation} variant="desktop" />
@@ -99,6 +92,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
           <Link href="/mi-cuenta/productos"><PackageCheck /><span><strong>{activeReservations.length}</strong> {activeReservations.length === 1 ? "producto apartado" : "productos apartados"}</span></Link>
         </div>
       </section>
+      <ClientWorkShowcase items={gallery as PublicGalleryItem[]} />
     </div>}
 
     {section === "puntos" && <div className="portal-grid client-section-grid">
@@ -125,18 +119,10 @@ export async function ClientAccountView({ section }: { section: ClientSection })
       <div className="client-profile-identity"><div className={`client-profile-avatar ${person?.avatar_url ? "has-photo" : ""}`} style={avatarStyle}>{!person?.avatar_url && initials}</div><div><small>CLIENTE LEGEND</small><h2>{displayName}</h2><p>{person?.email}</p></div></div>
       <dl><div><dt>Correo</dt><dd>{person?.email}</dd></div><div><dt>Teléfono</dt><dd>{person?.phone ?? "Pendiente de registrar"}</dd></div><div><dt>Estado</dt><dd>{person?.status === "active" ? "Activo" : person?.status}</dd></div><div><dt>Inasistencias</dt><dd>{person?.no_show_count ?? 0}</dd></div></dl>
       {person?.is_blacklisted && <p className="portal-warning">La cuenta tiene una alerta por inasistencias.</p>}{person?.is_blocked && <p className="portal-error">Las nuevas reservas están bloqueadas. Contacta al negocio.</p>}
+      <div className="client-profile-actions"><PanelThemeSelector /><Link href="/sitio"><Globe2 /><span>Sitio público</span></Link><PanelMobileLogout /></div>
     </section></div>}
-    {section !== "productos" && <ClientPromoRail products={availableProducts} promotions={(promotions.data ?? []) as unknown as Row[]} replaceNavigation={replaceNavigation} />}
-  </main><PanelResponsiveSidebar variant="client">
-      <aside className="dash-sidebar client-mobile-sidebar" aria-label="Menú de mi cuenta">
-        <div className="dash-sidebar-head"><p>MI CUENTA</p><PanelMobileSidebarClose /></div>
-        <nav aria-label="Opciones adicionales">
-          <Link replace={replaceNavigation} className={section === "notificaciones" ? "active" : ""} href="/mi-cuenta/notificaciones"><Bell /><span>Notificaciones</span>{unreadNotifications > 0 && <b className="client-nav-badge">{unreadNotifications}</b>}</Link>
-        </nav>
-        <div className="dash-sidebar-foot"><PanelThemeSelector /><Link href="/sitio"><Globe2 /><span>Sitio público</span></Link><PanelMobileLogout /></div>
-      </aside>
-      <PanelMobileScrim />
-  </PanelResponsiveSidebar><PanelViewportPortal>
+  </main>
+  <PanelViewportPortal>
     <ClientMainNavigation section={section} replaceNavigation={replaceNavigation} variant="mobile" />
   </PanelViewportPortal></PanelExperience>;
 }
@@ -155,13 +141,11 @@ function ClientMainNavigation({ section, replaceNavigation, variant }: { section
   </nav>;
 }
 
-function ClientPromoRail({ products, promotions, replaceNavigation }: { products: PublicProduct[]; promotions: Row[]; replaceNavigation: boolean }) {
-  const featured = products.filter(product => product.image).slice(0, 3);
-  return <section className="client-promo-shell" aria-labelledby="client-promo-title">
-    {promotions.length > 0 && <div className="client-promo-grid">{promotions.map(promotion => <article key={String(promotion.id)} className="client-promo-card client-promo-fallback"><span>PROMOCIÓN ACTIVA</span><strong>{String(promotion.name)}</strong><small>{String(promotion.description ?? "") || `${promotion.discount_type === "percent" ? `${promotion.discount_value}%` : `Bs ${promotion.discount_value}`} de descuento · Código ${promotion.code}`}</small>{promotion.services !== null && promotion.services !== undefined && <small>Servicio: {String((promotion.services as Row).name)}</small>}<small>Vigencia: {promotion.starts_at ? new Intl.DateTimeFormat("es-BO", { dateStyle: "short" }).format(new Date(String(promotion.starts_at))) : "Desde hoy"} · {promotion.ends_at ? new Intl.DateTimeFormat("es-BO", { dateStyle: "short" }).format(new Date(String(promotion.ends_at))) : "sin fecha de cierre"}</small></article>)}</div>}
-    <div className="client-promo-heading"><div><small>SELECCIÓN LEGEND</small><h2 id="client-promo-title">Productos para tu estilo</h2></div><Link href="/mi-cuenta/productos" replace={replaceNavigation}>Ver catálogo</Link></div>
-    <div className="client-promo-grid">
-      {featured.length ? featured.map(product => <Link href="/mi-cuenta/productos" replace={replaceNavigation} key={product.id} className="client-promo-card" style={{ backgroundImage: `linear-gradient(180deg,transparent 35%,rgba(5,12,29,.9)),url(${JSON.stringify(product.image)})` }}><span>{product.category}</span><strong>{product.name}</strong><small>Bs {product.price}</small></Link>) : <Link href="/mi-cuenta/productos" replace={replaceNavigation} className="client-promo-card client-promo-fallback"><span>LEGEND CLUB</span><strong>Cuida tu estilo también en casa</strong><small>Explorar productos</small></Link>}
+function ClientWorkShowcase({ items }: { items: PublicGalleryItem[] }) {
+  return <section className="portal-card portal-wide client-work-showcase" aria-labelledby="client-work-title">
+    <div className="portal-title"><div><small>INSPIRACIÓN LEGEND</small><h2 id="client-work-title">Trabajos con firma propia</h2></div><Link href="/galeria">Ver galería</Link></div>
+    <div className="client-work-track">
+      {items.slice(0, 6).map((item, index) => <Link href="/galeria" className={`client-work-card client-work-card-${index + 1}`} key={item.id} style={{ backgroundImage: `linear-gradient(180deg,transparent 30%,rgba(5,12,29,.88)),url(${JSON.stringify(item.image)})` }}><span>{item.title}</span><strong>Ver trabajo</strong></Link>)}
     </div>
   </section>;
 }

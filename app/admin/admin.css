@@ -783,6 +783,90 @@
 .panel-theme[data-panel-theme="dark"] .team-role-section{background:rgba(15,29,52,.72)}.panel-theme[data-panel-theme="dark"] .team-role-section>header{background:#192c4a}.panel-theme[data-panel-theme="dark"] .inactive-team{background:#111e35}
 @media(max-width:760px){.team-intro{align-items:stretch}.team-create-actions{display:grid;grid-template-columns:1fr}.team-create-actions>.dash-action{width:100%}.team-role-section>header{align-items:flex-start}.inactive-team-content{grid-template-columns:1fr}.team-list{padding:0 10px}}
 
+/* Client workspace: a focused app shell without the secondary sidebar. */
+.panel-theme .panel-client-shell{
+  --client-bg:var(--dash-bg);
+  --client-surface:var(--dash-surface);
+  --client-card:var(--dash-card);
+  --client-text:var(--dash-text);
+  --client-muted:var(--dash-muted);
+  color:var(--client-text);
+  background:var(--client-bg);
+}
+.panel-theme .panel-client-shell .portal-header{
+  color:var(--client-text);
+  background:color-mix(in srgb,var(--client-surface) 94%,transparent);
+  border-bottom:1px solid var(--dash-line);
+}
+.panel-theme .panel-client-shell .portal-card{
+  color:var(--client-text);
+  border-color:var(--dash-line);
+  background:var(--client-card);
+}
+.panel-theme .panel-client-shell .portal-card p,
+.panel-theme .panel-client-shell .portal-card span,
+.panel-theme .panel-client-shell .portal-card small,
+.panel-theme .panel-client-shell .portal-card dt{
+  color:var(--client-muted);
+}
+.client-profile-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:24px;padding-top:18px;border-top:1px solid var(--dash-line)}
+.client-profile-actions>a,.client-profile-actions>button{display:flex;align-items:center;gap:8px;color:var(--dash-cyan);font-size:11px}
+.client-profile-actions .mobile-sidebar-logout{padding:0;border:0;background:transparent;cursor:pointer}
+.client-profile-actions .panel-theme-selector{margin-right:auto}
+.client-work-track{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;overflow:hidden}
+.client-work-card{min-height:220px;padding:18px;display:flex;flex-direction:column;justify-content:flex-end;gap:5px;color:#fff;border:1px solid var(--dash-line);border-radius:16px;background-position:center;background-size:cover;box-shadow:0 16px 30px rgba(0,0,0,.18);transition:transform .28s ease,box-shadow .28s ease}
+.client-work-card:hover{transform:translateY(-6px) scale(1.015);box-shadow:0 22px 40px rgba(0,0,0,.28)}
+.client-work-card span{color:#fff!important;font-size:12px;font-weight:800}
+.client-work-card strong{color:#d8f7ff;font-size:10px;text-transform:uppercase;letter-spacing:.12em}
+.client-work-card:nth-child(2){animation-delay:.08s}.client-work-card:nth-child(3){animation-delay:.16s}.client-work-card:nth-child(4){animation-delay:.24s}
+
+@media(max-width:760px){
+  .panel-theme[data-panel-theme="light"] .panel-client-shell,
+  .panel-theme[data-panel-theme="light"] .barber-portal{
+    --mobile-surface:#f7f9fc;
+    --mobile-line:rgba(30,55,90,.14);
+    color:#18263a;
+    background:
+      radial-gradient(circle at 92% 3%,rgba(124,92,246,.13),transparent 30%),
+      radial-gradient(circle at 5% 30%,rgba(6,182,212,.1),transparent 28%),
+      #f4f7fb;
+  }
+  .panel-theme[data-panel-theme="light"] .panel-client-shell .portal-header,
+  .panel-theme[data-panel-theme="light"] .barber-portal .dash-header{
+    color:#18263a;
+    background:rgba(247,249,252,.9);
+    border-bottom-color:rgba(30,55,90,.14);
+  }
+  .panel-theme[data-panel-theme="light"] .panel-client-shell .client-page-hero,
+  .panel-theme[data-panel-theme="light"] .barber-portal .dash-role-hero{
+    background:linear-gradient(135deg,#e7edff,#f7fbff);
+  }
+  .panel-theme[data-panel-theme="light"] .panel-client-shell .portal-card,
+  .panel-theme[data-panel-theme="light"] .barber-portal .portal-card{
+    color:#18263a;
+    border-color:rgba(30,55,90,.13);
+    background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(239,245,252,.98));
+    box-shadow:0 14px 34px rgba(51,78,112,.1);
+  }
+  .panel-theme[data-panel-theme="light"] .panel-client-shell .portal-card p,
+  .panel-theme[data-panel-theme="light"] .panel-client-shell .portal-card span,
+  .panel-theme[data-panel-theme="light"] .panel-client-shell .portal-card small,
+  .panel-theme[data-panel-theme="light"] .barber-portal .portal-card p,
+  .panel-theme[data-panel-theme="light"] .barber-portal .portal-card span,
+  .panel-theme[data-panel-theme="light"] .barber-portal .portal-card small{
+    color:#617089;
+  }
+  .panel-theme[data-panel-theme="light"] .panel-client-shell .portal-title h2,
+  .panel-theme[data-panel-theme="light"] .barber-portal .portal-title h2{color:#18263a}
+  .panel-theme[data-panel-theme="light"] .panel-client-shell .client-home-kpis>a{
+    color:#18263a;background:linear-gradient(145deg,#fff,#edf4ff);border-color:rgba(30,55,90,.13)
+  }
+  .client-profile-actions{gap:14px}
+  .client-profile-actions .panel-theme-selector{width:100%;margin-right:0}
+  .client-work-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:5px}
+  .client-work-card{min-width:72vw;min-height:210px;scroll-snap-align:start}
+}
+
 /* Mobile product surface: cards, badges and actions inspired by modern component kits. */
 @media(max-width:760px){
   .panel-theme .panel-client-shell,
