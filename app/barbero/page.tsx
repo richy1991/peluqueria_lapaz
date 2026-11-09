@@ -36,7 +36,7 @@ const barberMobileNavigation = [
 
 function BarberMobileNavigation({ section }: { section: BarberSection }) {
   const replaceNavigation = section !== "agenda";
-  return <PanelViewportPortal><nav className="panel-bottom-nav" aria-label="Accesos rápidos de peluquero">
+  return <PanelViewportPortal><nav className="panel-bottom-nav barber-bottom-nav" aria-label="Accesos rápidos de peluquero">
     {barberMobileNavigation.map(item => {
       const Icon = item.icon;
       const active = section === item.id;

@@ -1873,15 +1873,45 @@
   .panel-theme.panel-mobile-chrome-hidden>.panel-bottom-nav,
   .panel-theme.mobile-nav-open>.panel-bottom-nav{opacity:0;pointer-events:none;transform:translate3d(0,calc(100% + 22px + env(safe-area-inset-bottom)),0)}
   .panel-theme>.panel-bottom-nav>a{position:relative;min-width:0;display:grid;place-items:center;isolation:isolate;color:var(--dash-muted);text-decoration:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
-  .panel-theme>.panel-bottom-nav>a>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+  .panel-theme>.panel-bottom-nav>a>span{display:block;color:inherit;font-size:8px;font-weight:700;line-height:1.1;white-space:nowrap}
   .panel-theme>.panel-bottom-nav>a:focus-visible{outline:2px solid var(--dash-cyan);outline-offset:-5px;border-radius:13px}
   .panel-theme>.panel-bottom-nav>a::before{content:"";position:absolute;width:40px;height:40px;border-radius:13px;background:color-mix(in srgb,var(--dash-cyan) 13%,transparent);opacity:0;transform:scale(.5);transition:opacity .2s ease,transform .28s cubic-bezier(.2,1.35,.4,1)}
   .panel-theme>.panel-bottom-nav>a:active::before{opacity:.72;transform:scale(.88)}
   .panel-theme>.panel-bottom-nav>a.active::before{opacity:1;transform:scale(1)}
-  .panel-theme>.panel-bottom-nav svg{width:22px;height:22px;stroke-width:1.8;transition:transform .18s,color .18s}
+  .panel-theme>.panel-bottom-nav svg{width:21px;height:21px;stroke-width:1.8;transition:transform .18s,color .18s}
   .panel-theme>.panel-bottom-nav i{position:absolute;z-index:2;left:50%;bottom:5px;width:24px;height:3px;border-radius:999px;background:var(--dash-cyan);opacity:0;transform:translateX(-50%);transition:opacity .2s ease,transform .28s cubic-bezier(.2,1.35,.4,1)}
   .panel-theme>.panel-bottom-nav .panel-bottom-badge{position:absolute;z-index:3;top:6px;left:calc(50% + 5px);min-width:16px;height:16px;padding:0 4px;display:grid;place-items:center;color:#fff;border:2px solid var(--dash-card);border-radius:999px;background:#b72e4d;font-size:7px;line-height:1}
   .panel-theme>.panel-bottom-nav>a.active{color:var(--dash-cyan)}.panel-theme>.panel-bottom-nav>a.active svg{position:relative;z-index:1;stroke-width:2.5;animation:panelTabSelected .38s cubic-bezier(.2,1.45,.4,1)}.panel-theme>.panel-bottom-nav>a.active i{opacity:1}.panel-theme>.panel-bottom-nav>a:active svg{transform:scale(.82)}
+  .panel-theme>.panel-bottom-nav.client-bottom-nav,
+  .panel-theme>.panel-bottom-nav.barber-bottom-nav{
+    height:70px;
+    padding:5px 8px;
+    border-radius:24px;
+    box-shadow:0 16px 42px color-mix(in srgb,var(--chrome-shadow) 85%,transparent),inset 0 1px rgba(255,255,255,.32);
+  }
+  .panel-theme>.panel-bottom-nav.client-bottom-nav>a,
+  .panel-theme>.panel-bottom-nav.barber-bottom-nav>a{
+    gap:4px;
+    grid-template-rows:28px 1fr;
+    border-radius:17px;
+    transition:background .22s ease,color .22s ease,transform .18s ease;
+  }
+  .panel-theme>.panel-bottom-nav.client-bottom-nav>a.active,
+  .panel-theme>.panel-bottom-nav.barber-bottom-nav>a.active{
+    background:color-mix(in srgb,var(--dash-cyan) 12%,transparent);
+  }
+  .panel-theme>.panel-bottom-nav.client-bottom-nav>a::before,
+  .panel-theme>.panel-bottom-nav.barber-bottom-nav>a::before{
+    width:42px;height:42px;border-radius:15px;
+  }
+  .panel-theme>.panel-bottom-nav.client-bottom-nav>a:active,
+  .panel-theme>.panel-bottom-nav.barber-bottom-nav>a:active{
+    transform:scale(.94);
+  }
+  html[data-route-pending] .panel-theme>.panel-bottom-nav.client-bottom-nav,
+  html[data-route-pending] .panel-theme>.panel-bottom-nav.barber-bottom-nav{
+    box-shadow:0 10px 24px color-mix(in srgb,var(--chrome-shadow) 72%,transparent);
+  }
   .panel-theme.panel-chat-in-header>.panel-floating-tools{opacity:1;transition:transform .3s cubic-bezier(.2,.8,.2,1),opacity .22s ease;will-change:transform,opacity}
   .panel-theme.panel-chat-in-header>.panel-floating-tools .support-fab{color:var(--chrome-text);border-color:var(--chrome-line);background:var(--chrome-control-bg)}.panel-theme.panel-chat-in-header>.panel-floating-tools .support-fab:hover{background:var(--chrome-hover)}.panel-theme.panel-chat-in-header>.panel-floating-tools .support-fab>i{border-color:var(--chrome-accent)}
   .panel-theme.panel-mobile-chrome-hidden.panel-chat-in-header>.panel-floating-tools{opacity:0;pointer-events:none;transform:translate3d(0,-60px,0)}

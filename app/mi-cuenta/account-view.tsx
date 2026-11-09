@@ -136,7 +136,7 @@ const clientMainNavigation = [
 ] as const;
 
 function ClientMainNavigation({ section, replaceNavigation, variant }: { section: ClientSection; replaceNavigation: boolean; variant: "desktop" | "mobile" }) {
-  return <nav className={variant === "mobile" ? "panel-bottom-nav" : "client-desktop-nav"} aria-label={variant === "mobile" ? "Navegación principal" : "Páginas de mi cuenta"}>
+  return <nav className={variant === "mobile" ? "panel-bottom-nav client-bottom-nav" : "client-desktop-nav"} aria-label={variant === "mobile" ? "Navegación principal" : "Páginas de mi cuenta"}>
     {clientMainNavigation.map(item => { const Icon = item.icon; const active = section === item.id; return <Link key={item.id} href={item.href} replace={replaceNavigation} aria-label={item.label} aria-current={active ? "page" : undefined} className={active ? "active" : ""}><Icon /><span>{item.label}</span><i /></Link>; })}
   </nav>;
 }
