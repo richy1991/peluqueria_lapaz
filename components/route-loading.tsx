@@ -5,7 +5,7 @@ export function RouteLoading() {
     <div className="route-loading-glow" aria-hidden="true" />
     <div className="route-loading-logo-wrap">
       <div className="route-loading-logo">
-        <Image src="/brand/legend-club-emblem.webp" alt="" fill sizes="min(72vw, 360px)" priority />
+        <Image src="/brand/loading-logo.jpeg" alt="" fill sizes="min(72vw, 360px)" priority />
       </div>
       <span className="route-loading-ring route-loading-ring-one" aria-hidden="true" />
       <span className="route-loading-ring route-loading-ring-two" aria-hidden="true" />
