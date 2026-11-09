@@ -1,13 +1,19 @@
+import Image from "next/image";
+
 export function RouteLoading() {
-  return <main className="route-loading" aria-busy="true" aria-label="Cargando contenido">
-    <header className="route-loading-header"><span className="route-loading-mark" /><span className="route-loading-brand" /><span className="route-loading-action" /></header>
-    <section className="route-loading-hero"><span /><strong /><p /></section>
-    <section className="route-loading-grid">
-      <article><i /><b /><small /></article>
-      <article><i /><b /><small /></article>
-      <article className="wide"><i /><b /><b /><small /></article>
-      <article><i /><b /><small /></article>
-    </section>
-    <p className="route-loading-label">Cargando información…</p>
+  return <main className="route-loading" aria-busy="true" aria-label="Cargando LEGEND CLUB">
+    <div className="route-loading-glow" aria-hidden="true" />
+    <div className="route-loading-logo-wrap">
+      <div className="route-loading-logo">
+        <Image src="/brand/legend-club-emblem.webp" alt="" fill sizes="min(72vw, 360px)" priority />
+      </div>
+      <span className="route-loading-ring route-loading-ring-one" aria-hidden="true" />
+      <span className="route-loading-ring route-loading-ring-two" aria-hidden="true" />
+    </div>
+    <div className="route-loading-copy">
+      <strong>LEGEND CLUB</strong>
+      <span>Preparando tu experiencia</span>
+      <i aria-hidden="true"><b /></i>
+    </div>
   </main>;
 }
