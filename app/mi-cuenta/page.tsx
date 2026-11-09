@@ -1,4 +1,4 @@
-import { ClientAccountView } from "./account-view";
+import { ClientAccountView } from "@/modules/mobile/client";
 
 export const dynamic = "force-dynamic";
 

@@ -20,8 +20,7 @@ import {
   PanelThemeSelector,
   PanelViewportPortal,
 } from "@/components/panel-experience";
-
-export type ClientSection = "inicio" | "puntos" | "productos" | "notificaciones" | "perfil";
+import { CLIENT_NAVIGATION, type ClientSection } from "./contracts";
 
 const sectionCopy: Record<ClientSection, { eyebrow: string; title: string; description: string }> = {
   inicio: { eyebrow: "MODO CLIENTE", title: "Inicio", description: "Tu actividad, beneficios y próximos pasos en un solo lugar." },
@@ -123,16 +122,11 @@ export async function ClientAccountView({ section }: { section: ClientSection })
   </PanelViewportPortal></PanelExperience>;
 }
 
-const clientMainNavigation = [
-  { id: "inicio", href: "/mi-cuenta", label: "Inicio", icon: Home },
-  { id: "productos", href: "/mi-cuenta/productos", label: "Mis productos", icon: PackageCheck },
-  { id: "puntos", href: "/mi-cuenta/puntos", label: "Mis puntos", icon: Star },
-  { id: "perfil", href: "/mi-cuenta/perfil", label: "Mi perfil", icon: UserRound },
-] as const;
+const clientNavigationIcons = { inicio: Home, productos: PackageCheck, puntos: Star, perfil: UserRound } as const;
 
 function ClientMainNavigation({ section, replaceNavigation, variant }: { section: ClientSection; replaceNavigation: boolean; variant: "desktop" | "mobile" }) {
   return <nav className={variant === "mobile" ? "panel-bottom-nav client-bottom-nav" : "client-desktop-nav"} aria-label={variant === "mobile" ? "Navegación principal" : "Páginas de mi cuenta"}>
-    {clientMainNavigation.map(item => { const Icon = item.icon; const active = section === item.id; return <Link key={item.id} href={item.href} replace={replaceNavigation} aria-label={item.label} aria-current={active ? "page" : undefined} className={active ? "active" : ""}><Icon /><span>{item.label}</span><i /></Link>; })}
+    {CLIENT_NAVIGATION.map(item => { const Icon = clientNavigationIcons[item.id]; const active = section === item.id; return <Link key={item.id} href={item.href} replace={replaceNavigation} aria-label={item.label} aria-current={active ? "page" : undefined} className={active ? "active" : ""}><Icon /><span>{item.label}</span><i /></Link>; })}
   </nav>;
 }
 

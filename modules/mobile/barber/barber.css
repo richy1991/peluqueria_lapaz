@@ -1,0 +1,21 @@
+/* Mobile barber entry point. Shared dashboard rules remain the temporary web adapter. */
+.barber-portal {
+  --barber-mobile-accent: var(--dash-cyan);
+  --barber-mobile-surface: var(--dash-card);
+}
+
+@media (max-width: 760px) {
+  .barber-portal .barber-content {
+    min-width: 0;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+
+  .barber-portal .dash-portal-grid {
+    width: calc(100% - 24px);
+    gap: 10px;
+  }
+
+  .barber-portal .portal-card {
+    border-radius: 14px;
+  }
+}
