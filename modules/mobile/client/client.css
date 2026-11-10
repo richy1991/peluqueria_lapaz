@@ -9,6 +9,7 @@
   --client-text: #111827;
   --client-muted: #64748b;
   --client-line: #e2e8f0;
+  --app-theme-color: #111827;
   color: var(--client-text);
   background: var(--client-bg);
 }

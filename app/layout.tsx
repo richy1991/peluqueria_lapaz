@@ -18,11 +18,16 @@ export const metadata: Metadata = {
   other: {
     google: "notranslate",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "LEGEND CLUB",
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#17110f",
-  colorScheme: "light",
+  themeColor: "#111827",
+  colorScheme: "light dark",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,

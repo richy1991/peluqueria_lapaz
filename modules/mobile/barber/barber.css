@@ -1,5 +1,6 @@
 /* Mobile barber entry point. Shared dashboard rules remain the temporary web adapter. */
 .barber-portal {
+  --app-theme-color: #111827;
   --barber-mobile-accent: var(--dash-cyan);
   --barber-mobile-surface: var(--dash-card);
 }
