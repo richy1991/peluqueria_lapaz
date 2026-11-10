@@ -914,3 +914,105 @@
     overflow-wrap: anywhere;
   }
 }
+
+/* La imagen del hero continúa por detrás del área segura superior cuando el sistema la hace translúcida. */
+html:has(.panel-client-shell),
+body:has(.panel-client-shell) {
+  background-color: #0D0D0D;
+  background-image: linear-gradient(rgba(13,13,13,.78),rgba(13,13,13,.78)),url("/brand/legend-club-salon-header.jpg");
+  background-position: center top,center top;
+  background-repeat: no-repeat;
+  background-size: cover,100% auto;
+}
+
+/* El selector de apariencia ocupa su propia fila para no comprimir ni superponer sus opciones. */
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-theme-row {
+  min-height: 0;
+  padding: 15px 0;
+  align-items: stretch;
+  flex-direction: column;
+  justify-content: center;
+  gap: 11px;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-theme-row .client-profile-action-label {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-theme-row .panel-theme-selector.compact {
+  width: 100%;
+  margin: 0;
+  flex: 0 0 auto;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-theme-row .panel-theme-selector.compact > .panel-theme-options {
+  width: 100%;
+  padding: 4px;
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 5px;
+  border-radius: 12px;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-theme-row .panel-theme-selector.compact > .panel-theme-options button {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  height: auto;
+  padding: 7px 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 650;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-theme-row .panel-theme-selector.compact > .panel-theme-options button span {
+  display: inline !important;
+  color: inherit;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-theme-row .panel-theme-selector.compact > .panel-theme-options button svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+}
+
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .product-cart-bar,
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .catalog-cart-list > article {
+  color: var(--lc-text);
+  border-color: var(--lc-border);
+  background: var(--lc-card);
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .product-cart-bar > div > svg,
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .catalog-cart-heading > svg { color: var(--lc-accent); }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .product-cart-bar small,
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .catalog-cart-item-copy > small,
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .catalog-cart-total > span,
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .catalog-cart-note { color: var(--lc-muted); }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .product-cart-bar > button,
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .catalog-cart-continue,
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .catalog-cart-quantity button {
+  color: var(--lc-text);
+  border-color: var(--lc-border);
+  background: var(--lc-surface);
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .button-cart-add,
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .catalog-cart-reserve {
+  color: var(--lc-primary) !important;
+  border-color: var(--lc-accent) !important;
+  background: var(--lc-accent) !important;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .catalog-cart-line-total,
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .catalog-cart-total > strong { color: var(--lc-accent); }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .catalog-cart-total { border-color: var(--lc-border); }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .catalog-cart-remove { color: var(--lc-muted); }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .catalog-cart-empty > p { color: var(--lc-muted); }
+
+@media (max-width: 760px) {
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-page-hero {
+    background-position: center top;
+    background-size: 100% auto;
+  }
+}

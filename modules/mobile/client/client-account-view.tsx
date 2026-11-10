@@ -138,7 +138,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
       <section className="portal-card portal-wide client-profile-card client-profile-help-card">
         <div className="client-profile-section-heading"><h2>Preferencias y ayuda</h2></div>
         <div className="client-profile-actions">
-          <div className="client-profile-action-row"><div><Palette /><span>Apariencia</span></div><PanelThemeSelector compact /></div>
+          <div className="client-profile-action-row client-profile-theme-row"><div className="client-profile-action-label"><Palette /><span>Apariencia</span></div><PanelThemeSelector compact /></div>
           <Link href="/sitio"><Globe2 /><span>Sitio público</span><ChevronRight /></Link>
           <PanelMobileLogout />
         </div>

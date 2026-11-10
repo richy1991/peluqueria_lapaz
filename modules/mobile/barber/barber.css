@@ -172,7 +172,7 @@
 
 @media (max-width: 760px) {
   .panel-theme .barber-portal .barber-content { padding: 0 0 calc(104px + env(safe-area-inset-bottom)); }
-  .panel-theme .barber-portal .dash-role-hero { min-height: 205px; padding: 28px 20px 42px; }
+  .panel-theme .barber-portal .dash-role-hero { min-height: 205px; padding: max(env(safe-area-inset-top),28px) 20px 42px; }
   .panel-theme .barber-portal .dash-role-hero h1 { font-size: 34px; }
   .panel-theme .barber-portal .dash-portal-grid { width: calc(100% - 24px); margin-top: -22px; gap: 12px; }
   .panel-theme .barber-portal .portal-card { padding: 17px; border-radius: 16px; }
@@ -216,3 +216,11 @@
 }
 .panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero::after { display: none; }
 .panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero > * { position: relative; z-index: 1; }
+html:has(.barber-portal),
+body:has(.barber-portal) {
+  background-color: #0D0D0D;
+  background-image: linear-gradient(rgba(13,13,13,.78),rgba(13,13,13,.78)),url("/brand/legend-club-salon-header.jpg");
+  background-position: center top,center top;
+  background-repeat: no-repeat;
+  background-size: cover,100% auto;
+}
