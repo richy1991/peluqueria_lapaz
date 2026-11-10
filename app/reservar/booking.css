@@ -357,3 +357,93 @@
 @media (prefers-reduced-motion: reduce) {
   .booking-shell .booking-panel, .booking-shell .booking-spinner { animation: none; }
 }
+
+/* Legend Club premium visual system for the complete booking journey. */
+.booking-shell {
+  --booking-primary: #0D0D0D;
+  --booking-secondary: #1A1A1A;
+  --booking-accent: #D4A853;
+  --booking-accent-dark: #B8860B;
+  --booking-surface: #F5F5F5;
+  --booking-card: #FFFFFF;
+  --booking-text: #1A1A1A;
+  --booking-muted: #6B7280;
+  --booking-success: #10B981;
+  --booking-danger: #EF4444;
+  --booking-border: #E5E7EB;
+  color: var(--booking-text);
+  background: var(--booking-surface);
+  font-family: Inter, Poppins, ui-sans-serif, system-ui, sans-serif;
+}
+.booking-shell .booking-topbar { color: #FFFFFF; border: 0; background: linear-gradient(105deg,#0D0D0D,#1A1A1A); }
+.booking-shell .booking-topbar .brand, .booking-shell .booking-topbar .brand strong { color: #D4A853; }
+.booking-shell .close-booking { color: #D1D5DB; border-color: rgba(255,255,255,.18); border-radius: 12px; }
+.booking-shell .booking-aside { color: #FFFFFF; background: linear-gradient(145deg,#0D0D0D,#1A1A1A); }
+.booking-shell .booking-aside .eyebrow, .booking-shell .booking-aside h1 em { color: #D4A853; }
+.booking-shell .booking-aside h1 { color: #FFFFFF; font: 750 clamp(42px,4.2vw,60px)/.99 Inter,Poppins,ui-sans-serif,system-ui,sans-serif; }
+.booking-shell .booking-steps li { color: #9CA3AF; }
+.booking-shell .booking-steps li.active { color: #FFFFFF; }
+.booking-shell .booking-steps li.active > span, .booking-shell .booking-steps li.done > span { color: #0D0D0D; border-color: #D4A853; background: #D4A853; box-shadow: none; }
+.booking-shell .booking-steps li.done { color: #D1D5DB; }
+.booking-shell .booking-steps li:not(:last-child)::after { background: rgba(255,255,255,.16); }
+.booking-shell .booking-steps small, .booking-shell .booking-help span { color: #9CA3AF; }
+.booking-shell .booking-help { color: #D4A853; border-color: rgba(255,255,255,.15); }
+.booking-shell .booking-help strong { color: #FFFFFF; }
+.booking-shell .booking-main { background: #F5F5F5; }
+.booking-shell .back-button { color: #6B7280; }
+.booking-shell .back-button:hover { color: #B8860B; }
+.booking-shell .booking-panel { color: #1A1A1A; border: 1px solid #E5E7EB; border-radius: 24px; background: #FFFFFF; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+.booking-shell .panel-heading > span { color: #B8860B; border-color: rgba(212,168,83,.3); border-radius: 14px; background: rgba(212,168,83,.12); }
+.booking-shell .panel-heading p, .booking-shell .choice-card > div:first-child > span, .booking-shell .date-strip-heading > div, .booking-shell .schedule-hours-title, .booking-shell .time-shift > div:first-child { color: #B8860B; }
+.booking-shell .panel-heading h2, .booking-shell .choice-card h3, .booking-shell .choice-price strong, .booking-shell .date-strip-heading strong, .booking-shell .schedule-hours-title strong, .booking-shell .schedule-shifts b, .booking-shell .time-shift > div:first-child p { color: #1A1A1A; }
+.booking-shell .panel-copy, .booking-shell .choice-card p, .booking-shell .choice-price span, .booking-shell .date-strip-heading > span, .booking-shell .date-strip button > span, .booking-shell .date-strip button > small, .booking-shell .schedule-shifts small, .booking-shell .schedule-break-note { color: #6B7280; }
+.booking-shell .booking-selection-summary { color: #B8860B; border-color: #E5E7EB; background: #F5F5F5; }
+.booking-shell .booking-selection-summary strong { color: #1A1A1A; }
+.booking-shell .booking-selection-summary span { color: #6B7280; }
+.booking-shell .choice-card, .booking-shell .barber-choice, .booking-shell .date-strip button, .booking-shell .time-grid button { color: #1A1A1A; border-color: #E5E7EB; border-radius: 14px; background: #FFFFFF; }
+.booking-shell .choice-card:hover, .booking-shell .barber-choice:hover, .booking-shell .date-strip button:hover, .booking-shell .time-grid button:hover { border-color: #D4A853; box-shadow: 0 6px 18px rgba(0,0,0,.07); }
+.booking-shell .choice-price svg, .booking-shell .any-icon { color: #B8860B; }
+.booking-shell .barber-choice strong { color: #1A1A1A; }
+.booking-shell .barber-choice small { color: #6B7280; }
+.booking-shell .barber-choice.selected { border: 2px solid #D4A853; box-shadow: 0 0 0 3px rgba(212,168,83,.15); }
+.booking-shell .barber-choice.selected i { color: #0D0D0D; border-color: #D4A853; background: #D4A853; }
+.booking-shell .barber-choice i { color: #6B7280; border-color: #E5E7EB; }
+.booking-shell .any-choice, .booking-shell .schedule-hours-card, .booking-shell .empty-times { background: #F5F5F5; }
+.booking-shell .any-icon { border-color: rgba(212,168,83,.25); background: rgba(212,168,83,.13); }
+.booking-shell .button { color: #0D0D0D; border-color: #D4A853; border-radius: 12px; background: #D4A853; box-shadow: 0 4px 14px rgba(212,168,83,.35); font-weight: 700; }
+.booking-shell .button:hover:not(:disabled) { color: #0D0D0D; border-color: #B8860B; background: #B8860B; box-shadow: 0 7px 18px rgba(212,168,83,.32); transform: translateY(-1px); }
+.booking-shell .button:active:not(:disabled) { transform: scale(.97); }
+.booking-shell .button:disabled { color: #6B7280; border-color: #E5E7EB; background: #F5F5F5; box-shadow: none; opacity: 1; }
+.booking-shell .date-strip button > strong { color: #1A1A1A; }
+.booking-shell .date-strip button.selected, .booking-shell .time-grid button.selected { color: #0D0D0D; border-color: #D4A853; background: #D4A853; box-shadow: 0 4px 14px rgba(212,168,83,.25); }
+.booking-shell .date-strip button.selected :is(span,strong,small) { color: #0D0D0D; }
+.booking-shell .schedule-hours-card, .booking-shell .schedule-shifts > span { border-color: #E5E7EB; border-radius: 12px; }
+.booking-shell .schedule-shifts > span { color: #B8860B; background: #FFFFFF; }
+.booking-shell .empty-times { color: #6B7280; border-color: #E5E7EB; }
+.booking-shell .empty-times strong { color: #1A1A1A; }
+.booking-shell .empty-times.schedule-closed { color: #EF4444; border-color: rgba(239,68,68,.28); background: rgba(239,68,68,.06); }
+.booking-shell .booking-spinner { border-color: rgba(212,168,83,.22); border-top-color: #B8860B; }
+.booking-shell .booking-error { color: #EF4444; border-color: rgba(239,68,68,.2); border-left-color: #EF4444; background: rgba(239,68,68,.06); }
+.booking-shell .booking-summary, .booking-shell .ticket { border-color: #E5E7EB; background: #E5E7EB; }
+.booking-shell .booking-summary > div, .booking-shell .ticket > div { background: #FFFFFF; }
+.booking-shell .booking-summary span, .booking-shell .ticket span { color: #6B7280; }
+.booking-shell .booking-summary strong, .booking-shell .ticket strong { color: #1A1A1A; }
+.booking-shell .login-box, .booking-shell .contact-form { color: #1A1A1A; border-color: #E5E7EB; background: #F5F5F5; }
+.booking-shell .login-box h3, .booking-shell .contact-form > label:not(.check-label) { color: #1A1A1A; }
+.booking-shell .login-box p, .booking-shell .login-box > small, .booking-shell .signed-user small, .booking-shell .check-label { color: #6B7280; }
+.booking-shell .google-button, .booking-shell .contact-form input[type="tel"] { color: #1A1A1A; border-color: #E5E7EB; background: #FFFFFF; }
+.booking-shell .contact-form input:focus { border-color: #B8860B; outline-color: rgba(212,168,83,.24); }
+.booking-shell .check-label input { accent-color: #B8860B; }
+.booking-shell.success-shell, .booking-loading { background: #F5F5F5; }
+.booking-shell .success-card { border-color: #E5E7EB; background: #FFFFFF; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+.booking-shell .success-icon { color: #0D0D0D; background: #D4A853; }
+.booking-shell .success-card h1 { color: #1A1A1A; }
+.booking-shell .success-copy, .booking-loading { color: #6B7280; }
+.booking-shell .demo-badge { color: #D4A853; border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.06); }
+
+@media (max-width: 800px) {
+  .booking-shell .booking-aside { padding: 12px 14px; }
+  .booking-shell .booking-main { padding: 55px 14px 28px; }
+  .booking-shell .booking-panel { padding: 21px 17px; border-radius: 20px; }
+  .booking-shell .booking-steps li.active > span, .booking-shell .booking-steps li.done > span { color: #0D0D0D; }
+}

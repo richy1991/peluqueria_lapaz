@@ -444,3 +444,80 @@
   color: #FFFFFF;
   background: linear-gradient(135deg,#0D0D0D,#1A1A1A);
 }
+
+/* The bottom navigation is rendered in a portal beside the page shell. */
+.panel-theme {
+  --lc-primary: #0D0D0D;
+  --lc-secondary: #1A1A1A;
+  --lc-accent: #D4A853;
+  --lc-accent-dark: #B8860B;
+  --lc-surface: #F5F5F5;
+  --lc-card: #FFFFFF;
+  --lc-text: #1A1A1A;
+  --lc-muted: #6B7280;
+  --lc-success: #10B981;
+  --lc-danger: #EF4444;
+  --lc-border: #E5E7EB;
+}
+.panel-theme .panel-client-shell .client-section-grid > .portal-card {
+  align-self: start;
+}
+.panel-theme .panel-client-shell .barber-loyalty-grid { grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 12px; }
+.panel-theme .panel-client-shell .barber-loyalty-grid article {
+  min-height: 145px; padding: 18px; align-content: center; gap: 5px;
+  border: 1px solid var(--lc-border); border-radius: 14px;
+  background: linear-gradient(145deg,#FFFFFF,#F5F5F5);
+}
+.panel-theme .panel-client-shell .barber-loyalty-grid article > span { color: var(--lc-muted); font-size: 12px; }
+.panel-theme .panel-client-shell .barber-loyalty-grid article > strong { color: var(--lc-accent-dark); font: 750 40px/1 Inter,Poppins,ui-sans-serif,system-ui,sans-serif; letter-spacing: -.04em; }
+.panel-theme .panel-client-shell .barber-loyalty-grid article > small { color: var(--lc-muted); font-size: 11px; }
+.panel-theme .panel-client-shell .referral-share {
+  min-height: 156px; padding: 16px; align-items: center; gap: 18px;
+  border: 1px solid var(--lc-border); border-radius: 14px; background: var(--lc-surface);
+}
+.panel-theme .panel-client-shell .referral-share > svg { width: 116px; height: 116px; flex: 0 0 auto; padding: 9px; border: 1px solid var(--lc-border); border-radius: 10px; background: #FFFFFF; }
+.panel-theme .panel-client-shell .referral-share > div { min-width: 0; justify-items: start; gap: 10px; }
+.panel-theme .panel-client-shell .referral-share .referral-code { min-width: 0; min-height: 42px; padding: 0 12px; color: var(--lc-text) !important; border: 1px dashed var(--lc-accent-dark); border-radius: 8px; background: #FFFFFF; font: 750 14px/1 Inter,Poppins,ui-sans-serif,system-ui,sans-serif; letter-spacing: .12em; }
+.panel-theme .panel-client-shell .portal-inline-form { gap: 10px; }
+.panel-theme .panel-client-shell .portal-inline-form input {
+  min-height: 46px; padding: 0 13px; color: var(--lc-text) !important;
+  border: 1px solid var(--lc-border) !important; border-radius: 8px;
+  background: #FFFFFF !important; box-shadow: none !important;
+}
+.panel-theme .panel-client-shell .portal-inline-form input::placeholder { color: var(--lc-muted) !important; opacity: 1; }
+.panel-theme .panel-client-shell :is(.portal-inline-form,.reward-action,.referral-share) button {
+  min-height: 44px; padding: 0 16px; color: var(--lc-primary) !important;
+  border: 1px solid var(--lc-accent) !important; border-radius: 12px;
+  background: var(--lc-accent) !important; box-shadow: 0 4px 14px rgba(212,168,83,.35);
+  font-size: 12px; font-weight: 700;
+}
+.panel-theme .panel-client-shell :is(.portal-inline-form,.reward-action,.referral-share) button:hover:not(:disabled) { background: var(--lc-accent-dark) !important; }
+.panel-theme .panel-client-shell :is(.portal-inline-form,.reward-action,.referral-share) button:disabled { color: var(--lc-muted) !important; border-color: var(--lc-border) !important; background: var(--lc-surface) !important; box-shadow: none; opacity: 1; }
+.panel-theme .panel-client-shell .portal-list article { min-height: 54px; padding-block: 12px; }
+.panel-theme .panel-client-shell .portal-empty { padding: 16px; border: 1px dashed var(--lc-border); border-radius: 12px; background: var(--lc-surface); text-align: center; }
+.panel-theme > .panel-bottom-nav.client-bottom-nav { border-color: rgba(255,255,255,.14); background: rgba(13,13,13,.96); }
+.panel-theme > .panel-bottom-nav.client-bottom-nav > a { color: #9CA3AF; }
+.panel-theme > .panel-bottom-nav.client-bottom-nav > a.active { color: #D4A853; }
+.panel-theme > .panel-bottom-nav.client-bottom-nav > a.active::before { background: #D4A853; }
+
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell { background: #F5F5F5; color: #1A1A1A; }
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .portal-card {
+  color: #1A1A1A; border-color: #E5E7EB; background: #FFFFFF; box-shadow: 0 2px 12px rgba(0,0,0,.08);
+}
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .portal-card :is(h2,strong,dd) { color: #1A1A1A; }
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .portal-card :is(p,span,small,dt) { color: #6B7280; }
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .portal-inline-form input {
+  color: #1A1A1A !important; border-color: #E5E7EB !important; background: #FFFFFF !important;
+}
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .portal-inline-form input::placeholder { color: #6B7280 !important; }
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .client-page-hero { color: #FFFFFF; background: linear-gradient(135deg,#0D0D0D,#1A1A1A); }
+
+@media (max-width: 760px) {
+  .panel-theme .panel-client-shell .barber-loyalty-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+  .panel-theme .panel-client-shell .barber-loyalty-grid article { min-height: 118px; padding: 13px; }
+  .panel-theme .panel-client-shell .barber-loyalty-grid article > strong { font-size: 34px; }
+  .panel-theme .panel-client-shell .referral-share { padding: 12px; gap: 12px; }
+  .panel-theme .panel-client-shell .referral-share > svg { width: 92px; height: 92px; padding: 7px; }
+  .panel-theme .panel-client-shell .referral-share .referral-code { min-height: 38px; padding-inline: 8px; font-size: 12px; }
+  .panel-theme > .panel-bottom-nav.client-bottom-nav { position: fixed !important; }
+}

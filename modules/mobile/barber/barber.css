@@ -47,6 +47,20 @@
   background: var(--lc-surface);
   font-family: Inter, Poppins, ui-sans-serif, system-ui, sans-serif;
 }
+.panel-theme {
+  --lc-primary: #0D0D0D;
+  --lc-secondary: #1A1A1A;
+  --lc-accent: #D4A853;
+  --lc-accent-dark: #B8860B;
+  --lc-surface: #F5F5F5;
+  --lc-card: #FFFFFF;
+  --lc-text: #1A1A1A;
+  --lc-muted: #6B7280;
+  --lc-success: #10B981;
+  --lc-danger: #EF4444;
+  --lc-border: #E5E7EB;
+}
+.panel-theme.panel-theme[data-panel-theme="dark"] .barber-portal { color: #1A1A1A; background: #F5F5F5; }
 .panel-theme .barber-portal .dash-header,
 .panel-theme[data-panel-theme] .barber-portal .dash-header {
   color: #FFFFFF;
@@ -83,6 +97,12 @@
 }
 .panel-theme .barber-portal .status-actions button:first-child { border-color: var(--lc-accent); background: var(--lc-accent); }
 .panel-theme .barber-portal :is(input,select,textarea) { color: var(--lc-text); border-color: var(--lc-border); border-radius: 8px; background: #FFFFFF; }
+.panel-theme.panel-theme[data-panel-theme="dark"] .barber-portal .portal-card {
+  color: #1A1A1A; border-color: #E5E7EB; background: #FFFFFF; box-shadow: 0 2px 12px rgba(0,0,0,.08);
+}
+.panel-theme.panel-theme[data-panel-theme="dark"] .barber-portal .portal-card :is(h2,strong,b) { color: #1A1A1A; }
+.panel-theme.panel-theme[data-panel-theme="dark"] .barber-portal .portal-card :is(p,span,small) { color: #6B7280; }
+.panel-theme.panel-theme[data-panel-theme="dark"] .barber-portal .portal-card .agenda-time { color: #B8860B !important; }
 
 @media (max-width: 760px) {
   .panel-theme .barber-portal .barber-content { padding: 0 0 calc(104px + env(safe-area-inset-bottom)); }
@@ -102,4 +122,8 @@
   .panel-theme > .panel-bottom-nav.barber-bottom-nav > a.active::before { top: 0; width: 20px; height: 2px; border-radius: 99px; background: var(--lc-accent); opacity: 1; }
   .panel-theme > .panel-bottom-nav.barber-bottom-nav > a::before { background: transparent; }
   .panel-theme > .panel-bottom-nav.barber-bottom-nav > a > span { font-size: 8px; }
+  .panel-theme > .panel-bottom-nav.barber-bottom-nav { position: fixed !important; border-color: rgba(255,255,255,.14); background: rgba(13,13,13,.96); }
+  .panel-theme > .panel-bottom-nav.barber-bottom-nav > a { color: #9CA3AF; }
+  .panel-theme > .panel-bottom-nav.barber-bottom-nav > a.active { color: #D4A853; }
+  .panel-theme > .panel-bottom-nav.barber-bottom-nav > a.active::before { background: #D4A853; }
 }
