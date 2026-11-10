@@ -2152,3 +2152,117 @@
 }
 .panel-theme[data-panel-theme="light"] :is(input, textarea)::placeholder { color: var(--dash-muted) !important; opacity: 1; }
 .panel-theme[data-panel-theme="dark"] :is(input, textarea)::placeholder { color: var(--dash-muted) !important; opacity: 1; }
+
+/* Support chat uses the same black and amber palette as the client and barber apps. */
+.panel-theme {
+  --lc-primary: #0D0D0D;
+  --lc-secondary: #1A1A1A;
+  --lc-accent: #D4A853;
+  --lc-accent-dark: #B8860B;
+  --lc-surface: #F5F5F5;
+  --lc-card: #FFFFFF;
+  --lc-text: #1A1A1A;
+  --lc-muted: #6B7280;
+  --lc-success: #10B981;
+  --lc-danger: #EF4444;
+  --lc-border: #E5E7EB;
+}
+.panel-theme[data-panel-theme] .support-window {
+  color: var(--lc-text) !important;
+  border-color: var(--lc-border) !important;
+  background: var(--lc-card) !important;
+  box-shadow: 0 24px 70px rgba(0,0,0,.28) !important;
+}
+.panel-theme[data-panel-theme] .support-window > header {
+  color: #FFFFFF !important;
+  border-bottom: 1px solid rgba(212,168,83,.28) !important;
+  background: linear-gradient(120deg,var(--lc-primary),var(--lc-secondary)) !important;
+}
+.panel-theme[data-panel-theme] .support-window > header span i { background: var(--lc-success) !important; }
+.panel-theme[data-panel-theme] .support-window > header > button { color: var(--lc-accent) !important; }
+.panel-theme[data-panel-theme] .support-search svg,
+.panel-theme[data-panel-theme] .support-layout > aside > small,
+.panel-theme[data-panel-theme] .support-layout > aside button small { color: var(--lc-muted) !important; }
+.panel-theme[data-panel-theme] .support-layout > aside,
+.panel-theme[data-panel-theme] .support-contact,
+.panel-theme[data-panel-theme] .support-compose { border-color: var(--lc-border) !important; }
+.panel-theme[data-panel-theme] .support-layout > aside { background: var(--lc-surface) !important; }
+.panel-theme[data-panel-theme] .support-search { background: #FFFFFF !important; }
+.panel-theme[data-panel-theme] .support-search input { color: var(--lc-text) !important; }
+.panel-theme[data-panel-theme] .support-layout > aside > button { color: var(--lc-text) !important; }
+.panel-theme[data-panel-theme] .support-layout > aside > button.active {
+  background: rgba(212,168,83,.16) !important;
+  box-shadow: inset 3px 0 var(--lc-accent) !important;
+}
+.panel-theme[data-panel-theme] .support-layout > aside > button > span,
+.panel-theme[data-panel-theme] .support-contact-avatar { color: #0D0D0D !important; background: linear-gradient(145deg,var(--lc-accent),var(--lc-accent-dark)) !important; }
+.panel-theme[data-panel-theme] .support-thread {
+  background-color: var(--lc-surface) !important;
+  background-image: radial-gradient(rgba(26,26,26,.08) .75px,transparent .75px) !important;
+}
+.panel-theme[data-panel-theme] .support-contact { background: #FFFFFF !important; }
+.panel-theme[data-panel-theme] .support-contact strong,
+.panel-theme[data-panel-theme] .support-messages article { color: var(--lc-text) !important; }
+.panel-theme[data-panel-theme] .support-contact > div span,
+.panel-theme[data-panel-theme] .support-messages time { color: var(--lc-muted) !important; }
+.panel-theme[data-panel-theme] .support-messages article { background: #FFFFFF !important; }
+.panel-theme[data-panel-theme] .support-messages article.mine { color: #0D0D0D !important; background: var(--lc-accent) !important; }
+.panel-theme[data-panel-theme] .support-messages small,
+.panel-theme[data-panel-theme] .support-messages article time svg { color: var(--lc-accent-dark) !important; }
+.panel-theme[data-panel-theme] .support-contact-unread { color: #0D0D0D !important; background: var(--lc-accent) !important; box-shadow: none !important; }
+.panel-theme[data-panel-theme] .support-contact .is-typing { color: var(--lc-accent-dark) !important; }
+.panel-theme[data-panel-theme] .support-empty,
+.panel-theme[data-panel-theme] .support-loading { color: var(--lc-muted) !important; }
+.panel-theme[data-panel-theme] .support-empty svg,
+.panel-theme[data-panel-theme] .support-loading svg { color: var(--lc-accent-dark) !important; }
+.panel-theme[data-panel-theme] .support-compose { background: #FFFFFF !important; }
+.panel-theme[data-panel-theme] .support-compose textarea { color: var(--lc-text) !important; border-color: var(--lc-border) !important; background: var(--lc-surface) !important; }
+.panel-theme[data-panel-theme] .support-compose textarea::placeholder { color: var(--lc-muted) !important; }
+.panel-theme[data-panel-theme] .support-compose .support-attach { color: var(--lc-accent-dark) !important; }
+.panel-theme[data-panel-theme] .support-compose .support-send { color: #0D0D0D !important; background: var(--lc-accent) !important; box-shadow: 0 4px 14px rgba(212,168,83,.35) !important; }
+.panel-theme[data-panel-theme] .support-error { color: var(--lc-danger) !important; background: var(--lc-card) !important; }
+.panel-theme .support-fab {
+  color: #0D0D0D !important;
+  border: 1px solid rgba(212,168,83,.38) !important;
+  background: linear-gradient(145deg,var(--lc-accent),var(--lc-accent-dark)) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.24),0 4px 14px rgba(212,168,83,.25) !important;
+}
+.panel-theme .support-fab i { border-color: var(--lc-accent-dark) !important; background: var(--lc-success) !important; }
+.panel-theme.panel-chat-in-header > .panel-floating-tools .support-fab { color: var(--lc-accent) !important; background: rgba(13,13,13,.58) !important; }
+.panel-theme[data-panel-theme="dark"] .support-window {
+  color: #F5F5F5 !important;
+  border-color: rgba(229,231,235,.16) !important;
+  background: var(--lc-secondary) !important;
+}
+.panel-theme[data-panel-theme="dark"] .support-layout > aside,
+.panel-theme[data-panel-theme="dark"] .support-search,
+.panel-theme[data-panel-theme="dark"] .support-contact,
+.panel-theme[data-panel-theme="dark"] .support-compose { background: var(--lc-secondary) !important; }
+.panel-theme[data-panel-theme="dark"] .support-search input,
+.panel-theme[data-panel-theme="dark"] .support-layout > aside > button,
+.panel-theme[data-panel-theme="dark"] .support-contact strong,
+.panel-theme[data-panel-theme="dark"] .support-messages article { color: #F5F5F5 !important; }
+.panel-theme[data-panel-theme="dark"] .support-search svg,
+.panel-theme[data-panel-theme="dark"] .support-layout > aside > small,
+.panel-theme[data-panel-theme="dark"] .support-layout > aside button small { color: var(--lc-muted) !important; }
+.panel-theme[data-panel-theme="dark"] .support-search { border: 1px solid rgba(229,231,235,.16); }
+.panel-theme[data-panel-theme="dark"] .support-thread { background-color: var(--lc-primary) !important; background-image: radial-gradient(rgba(229,231,235,.07) .75px,transparent .75px) !important; }
+.panel-theme[data-panel-theme="dark"] .support-contact,
+.panel-theme[data-panel-theme="dark"] .support-compose,
+.panel-theme[data-panel-theme="dark"] .support-layout > aside { border-color: rgba(229,231,235,.14) !important; }
+.panel-theme[data-panel-theme="dark"] .support-messages article { border: 1px solid rgba(229,231,235,.14); background: var(--lc-secondary) !important; }
+.panel-theme[data-panel-theme="dark"] .support-messages article.mine { color: #0D0D0D !important; background: var(--lc-accent) !important; }
+.panel-theme[data-panel-theme="dark"] .support-layout > aside > button.active { background: rgba(212,168,83,.16) !important; box-shadow: inset 3px 0 var(--lc-accent) !important; }
+.panel-theme[data-panel-theme="dark"] .support-messages small,
+.panel-theme[data-panel-theme="dark"] .support-messages article time svg { color: var(--lc-accent) !important; }
+.panel-theme[data-panel-theme="dark"] .support-contact-unread { color: #0D0D0D !important; background: var(--lc-accent) !important; }
+.panel-theme[data-panel-theme="dark"] .support-contact .is-typing,
+.panel-theme[data-panel-theme="dark"] .support-empty svg,
+.panel-theme[data-panel-theme="dark"] .support-loading svg { color: var(--lc-accent) !important; }
+.panel-theme[data-panel-theme="dark"] .support-empty,
+.panel-theme[data-panel-theme="dark"] .support-loading { color: var(--lc-muted) !important; }
+.panel-theme[data-panel-theme="dark"] .support-contact > div span,
+.panel-theme[data-panel-theme="dark"] .support-messages time { color: var(--lc-muted) !important; }
+.panel-theme[data-panel-theme="dark"] .support-compose textarea { color: #F5F5F5 !important; border-color: rgba(229,231,235,.18) !important; background: var(--lc-primary) !important; }
+.panel-theme[data-panel-theme="dark"] .support-compose textarea::placeholder { color: var(--lc-muted) !important; }
+.panel-theme[data-panel-theme="dark"] .support-error { color: var(--lc-danger) !important; background: var(--lc-secondary) !important; }

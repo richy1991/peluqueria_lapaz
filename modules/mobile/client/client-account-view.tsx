@@ -123,7 +123,6 @@ export async function ClientAccountView({ section }: { section: ClientSection })
         <div className={`client-profile-avatar ${person?.avatar_url ? "has-photo" : ""}`} style={avatarStyle}>{!person?.avatar_url && initials}</div>
         <span className="client-profile-role"><UserRound /> Cliente</span>
         <h2>{displayName}</h2>
-        <p>{person?.email}{person?.phone ? ` · ${person.phone}` : ""}</p>
       </section>
       <section className="portal-card portal-wide client-profile-card">
         <div className="client-profile-section-heading"><h2>Tu cuenta</h2><span>Datos de tu perfil</span></div>

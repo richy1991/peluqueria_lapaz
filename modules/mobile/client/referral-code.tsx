@@ -10,5 +10,5 @@ export function ReferralCode({code}:{code:string}){
     if(navigator.share){await navigator.share({title:"LEGEND CLUB",text});return;}
     await navigator.clipboard.writeText(text);setCopied(true);
   }
-  return <div className="referral-share"><QRCode value={code} size={112}/><div><strong className="referral-code">{code}</strong><button onClick={share}>{copied?"Copiado":"Compartir código"}</button></div></div>;
+  return <div className="referral-share"><QRCode value={code} size={112} bgColor="#FFFFFF" fgColor="#0D0D0D"/><div><strong className="referral-code">{code}</strong><button onClick={share}>{copied?"Copiado":"Compartir código"}</button></div></div>;
 }

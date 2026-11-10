@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { MarketingTracker } from "@/components/marketing-tracker";
 import { PwaRegistration } from "@/components/pwa-registration";
 import { RouteNavigationIndicator } from "@/components/route-navigation-indicator";
+import { SystemTypographyScope } from "@/components/system-typography-scope";
 
 export const metadata: Metadata = {
   title: {
@@ -38,7 +39,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es-BO" translate="no">
-      <body lang="es-BO" translate="no">{children}<RouteNavigationIndicator/><PwaRegistration/><Suspense><MarketingTracker/></Suspense></body>
+      <body lang="es-BO" translate="no"><SystemTypographyScope/>{children}<RouteNavigationIndicator/><PwaRegistration/><Suspense><MarketingTracker/></Suspense></body>
     </html>
   );
 }
