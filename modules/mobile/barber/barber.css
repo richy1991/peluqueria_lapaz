@@ -20,3 +20,86 @@
     border-radius: 14px;
   }
 }
+
+/* Shared Legend Club premium tokens and surfaces for the barber workspace. */
+.panel-theme .barber-portal {
+  --lc-primary: #0D0D0D;
+  --lc-secondary: #1A1A1A;
+  --lc-accent: #D4A853;
+  --lc-accent-dark: #B8860B;
+  --lc-surface: #F5F5F5;
+  --lc-card: #FFFFFF;
+  --lc-text: #1A1A1A;
+  --lc-muted: #6B7280;
+  --lc-success: #10B981;
+  --lc-danger: #EF4444;
+  --lc-border: #E5E7EB;
+  --dash-bg: var(--lc-surface);
+  --dash-surface: var(--lc-card);
+  --dash-card: var(--lc-card);
+  --dash-card-2: var(--lc-surface);
+  --dash-line: var(--lc-border);
+  --dash-cyan: var(--lc-accent-dark);
+  --dash-copper: var(--lc-accent-dark);
+  --dash-text: var(--lc-text);
+  --dash-muted: var(--lc-muted);
+  color: var(--lc-text);
+  background: var(--lc-surface);
+  font-family: Inter, Poppins, ui-sans-serif, system-ui, sans-serif;
+}
+.panel-theme .barber-portal .dash-header,
+.panel-theme[data-panel-theme] .barber-portal .dash-header {
+  color: #FFFFFF;
+  background: linear-gradient(105deg,var(--lc-primary),var(--lc-secondary));
+}
+.panel-theme .barber-portal .dash-brand .brand strong { color: var(--lc-accent); }
+.panel-theme .barber-portal .dash-role-hero,
+.panel-theme[data-panel-theme] .barber-portal .dash-role-hero {
+  min-height: 238px;
+  padding: 40px clamp(18px,5vw,64px);
+  color: #FFFFFF;
+  background: linear-gradient(135deg,var(--lc-primary),var(--lc-secondary));
+}
+.panel-theme .barber-portal .dash-role-hero::after { border-color: rgba(212,168,83,.14); box-shadow: 0 0 0 35px rgba(212,168,83,.025),0 0 0 70px rgba(212,168,83,.015); }
+.panel-theme .barber-portal .dash-role-hero h1 { color: #FFFFFF; font: 750 clamp(34px,5vw,58px)/1 Inter,Poppins,ui-sans-serif,system-ui,sans-serif; letter-spacing: -.04em; }
+.panel-theme .barber-portal .dash-role-hero .eyebrow { color: var(--lc-accent); }
+.panel-theme .barber-portal .dash-role-hero p:not(.eyebrow) { color: #9CA3AF; }
+.panel-theme .barber-portal .barber-pulse { color: var(--lc-accent); }
+.panel-theme .barber-portal .dash-portal-grid { gap: 16px; }
+.panel-theme .barber-portal .portal-card {
+  color: var(--lc-text); border: 1px solid var(--lc-border); border-radius: 16px;
+  background: var(--lc-card); box-shadow: 0 2px 12px rgba(0,0,0,.08); animation: none;
+}
+.panel-theme .barber-portal .portal-title h2,
+.panel-theme .barber-portal .portal-card :is(strong,b) { color: var(--lc-text); }
+.panel-theme .barber-portal .portal-title svg,
+.panel-theme .barber-portal .agenda-time,
+.panel-theme .barber-portal .daily-appointment-count { color: var(--lc-accent-dark) !important; text-shadow: none; }
+.panel-theme .barber-portal .portal-list article { border-color: var(--lc-border); }
+.panel-theme .barber-portal .portal-list span,
+.panel-theme .barber-portal .portal-card p { color: var(--lc-muted); }
+.panel-theme .barber-portal .status-actions button {
+  color: var(--lc-text); border: 1px solid var(--lc-border); border-radius: 8px; background: var(--lc-surface);
+}
+.panel-theme .barber-portal .status-actions button:first-child { border-color: var(--lc-accent); background: var(--lc-accent); }
+.panel-theme .barber-portal :is(input,select,textarea) { color: var(--lc-text); border-color: var(--lc-border); border-radius: 8px; background: #FFFFFF; }
+
+@media (max-width: 760px) {
+  .panel-theme .barber-portal .barber-content { padding: 0 0 calc(104px + env(safe-area-inset-bottom)); }
+  .panel-theme .barber-portal .dash-role-hero { min-height: 205px; padding: 28px 20px 42px; }
+  .panel-theme .barber-portal .dash-role-hero h1 { font-size: 34px; }
+  .panel-theme .barber-portal .dash-portal-grid { width: calc(100% - 24px); margin-top: -22px; gap: 12px; }
+  .panel-theme .barber-portal .portal-card { padding: 17px; border-radius: 16px; }
+  .panel-theme > .panel-bottom-nav.barber-bottom-nav {
+    position: fixed !important; z-index: 80; left: 50%; right: auto; bottom: max(10px, env(safe-area-inset-bottom));
+    width: min(520px, calc(100vw - 20px)); height: 68px; margin: 0; padding: 6px 4px;
+    grid-template-columns: repeat(5,minmax(0,1fr)); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 20px 20px 0 0; background: rgba(13,13,13,.94); box-shadow: 0 -2px 10px rgba(0,0,0,.05);
+    transform: translateX(-50%); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  }
+  .panel-theme > .panel-bottom-nav.barber-bottom-nav > a { color: #6B7280; }
+  .panel-theme > .panel-bottom-nav.barber-bottom-nav > a.active { color: var(--lc-accent); }
+  .panel-theme > .panel-bottom-nav.barber-bottom-nav > a.active::before { top: 0; width: 20px; height: 2px; border-radius: 99px; background: var(--lc-accent); opacity: 1; }
+  .panel-theme > .panel-bottom-nav.barber-bottom-nav > a::before { background: transparent; }
+  .panel-theme > .panel-bottom-nav.barber-bottom-nav > a > span { font-size: 8px; }
+}

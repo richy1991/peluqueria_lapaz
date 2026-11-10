@@ -277,6 +277,96 @@
   }
 }
 
+/* Legend Club premium client system. Kept local to the customer module. */
+.panel-theme .panel-client-shell {
+  --lc-primary: #0D0D0D;
+  --lc-secondary: #1A1A1A;
+  --lc-accent: #D4A853;
+  --lc-accent-dark: #B8860B;
+  --lc-surface: #F5F5F5;
+  --lc-card: #FFFFFF;
+  --lc-text: #1A1A1A;
+  --lc-muted: #6B7280;
+  --lc-success: #10B981;
+  --lc-danger: #EF4444;
+  --lc-border: #E5E7EB;
+  --client-accent: var(--lc-accent);
+  --client-accent-strong: var(--lc-accent-dark);
+  --client-bg: var(--lc-surface);
+  --client-card: var(--lc-card);
+  --client-card-muted: var(--lc-surface);
+  --client-text: var(--lc-text);
+  --client-muted: var(--lc-muted);
+  --client-line: var(--lc-border);
+  color: var(--lc-text);
+  background: var(--lc-surface);
+  font-family: Inter, Poppins, ui-sans-serif, system-ui, sans-serif;
+}
+.panel-theme[data-panel-theme="dark"] .panel-client-shell { color-scheme: light; }
+.panel-theme .panel-client-shell .client-page-hero,
+.panel-theme[data-panel-theme] .panel-client-shell .client-page-hero {
+  position: relative;
+  min-height: 250px;
+  padding: 22px max(20px, calc((100vw - 1120px) / 2)) 34px;
+  color: #FFFFFF;
+  border-radius: 0 0 24px 24px;
+  background: linear-gradient(135deg, var(--lc-primary), var(--lc-secondary));
+}
+.panel-theme .panel-client-shell .client-hero-content h1 { color: #FFFFFF; font-weight: 750; letter-spacing: -.04em; }
+.panel-theme .panel-client-shell .client-hero-content > p:last-child { color: #9CA3AF; font-size: 14px; }
+.panel-theme .panel-client-shell .client-hero-public-link { color: var(--lc-accent); font-size: 12px; }
+.panel-theme .panel-client-shell .client-hero-brand .brand strong { color: var(--lc-accent); }
+.panel-theme .panel-client-shell .client-business-status { color: var(--lc-success); border: 1px solid rgba(16,185,129,.28); border-radius: 999px; background: rgba(16,185,129,.12); }
+.panel-theme .panel-client-shell .portal-grid { width: min(1120px, calc(100% - 32px)); gap: 16px; }
+.panel-theme .panel-client-shell .portal-card {
+  padding: 20px;
+  color: var(--lc-text);
+  border: 1px solid var(--lc-border);
+  border-radius: 16px;
+  background: var(--lc-card);
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+}
+.panel-theme .panel-client-shell .portal-card :is(p, span, small, dt) { color: var(--lc-muted); }
+.panel-theme .panel-client-shell .portal-card :is(h2, strong, dd) { color: var(--lc-text); }
+.panel-theme .panel-client-shell .portal-title > svg,
+.panel-theme .panel-client-shell .client-work-showcase .portal-title > div small,
+.panel-theme .panel-client-shell .client-appointment-summary > b { color: var(--lc-accent-dark); }
+.panel-theme .panel-client-shell .portal-title h2 { font: 700 19px/1.25 Inter, Poppins, ui-sans-serif, system-ui, sans-serif; letter-spacing: -.025em; }
+.panel-theme .panel-client-shell .client-empty-appointment .button,
+.panel-theme .panel-client-shell .client-profile-actions > a {
+  color: var(--lc-primary); border: 1px solid var(--lc-accent); border-radius: 12px;
+  background: var(--lc-accent); box-shadow: 0 4px 14px rgba(212,168,83,.35); font-weight: 650;
+}
+.panel-theme .panel-client-shell .client-empty-appointment .button:hover { background: var(--lc-accent-dark); transform: translateY(-1px); }
+.panel-theme .panel-client-shell .client-work-card { border-radius: 16px; }
+.panel-theme .panel-client-shell .client-profile-avatar:not(.has-photo) { color: #FFFFFF; background: linear-gradient(135deg,var(--lc-accent),var(--lc-accent-dark)); }
+.panel-theme .panel-client-shell .portal-list article,
+.panel-theme .panel-client-shell .client-profile-card dl > div { border-color: var(--lc-border); }
+.panel-theme .panel-client-shell :is(input, select, textarea) { border-color: var(--lc-border); border-radius: 8px; background: #FFFFFF; }
+.panel-theme .panel-client-shell .points-positive { color: var(--lc-success); }
+.panel-theme .panel-client-shell .points-negative,
+.panel-theme .panel-client-shell .portal-error { color: var(--lc-danger); }
+
+@media (max-width: 760px) {
+  .panel-theme .panel-client-shell .client-page-hero,
+  .panel-theme[data-panel-theme] .panel-client-shell .client-page-hero { min-height: 205px; padding: 16px 16px 26px; }
+  .panel-theme .panel-client-shell .client-hero-content { margin-top: 26px; }
+  .panel-theme .panel-client-shell .client-hero-content h1 { font-size: 31px; }
+  .panel-theme .panel-client-shell .portal-grid { width: calc(100% - 24px); margin-top: 14px; gap: 12px; padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+  .panel-theme .panel-client-shell .portal-card { padding: 17px; border-radius: 16px; }
+  .panel-theme > .panel-bottom-nav.client-bottom-nav {
+    position: fixed !important; z-index: 80; left: 50%; right: auto; bottom: max(10px, env(safe-area-inset-bottom));
+    width: min(430px, calc(100vw - 24px)); height: 68px; margin: 0; padding: 7px 8px;
+    grid-template-columns: repeat(4,minmax(0,1fr)); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 20px 20px 0 0; background: rgba(13,13,13,.94); box-shadow: 0 -2px 10px rgba(0,0,0,.05);
+    transform: translateX(-50%); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  }
+  .panel-theme > .panel-bottom-nav.client-bottom-nav > a { color: #6B7280; }
+  .panel-theme > .panel-bottom-nav.client-bottom-nav > a.active { color: var(--lc-accent); }
+  .panel-theme > .panel-bottom-nav.client-bottom-nav > a.active::before { top: 0; width: 20px; height: 2px; border-radius: 99px; background: var(--lc-accent); opacity: 1; }
+  .panel-theme > .panel-bottom-nav.client-bottom-nav > a::before { background: transparent; }
+}
+
 /* The client hero shares the same warm palette in both mobile and desktop layouts. */
 .panel-theme.panel-theme[data-panel-theme="light"] .panel-client-shell .client-page-hero {
   color: #fffaf5;
@@ -336,4 +426,21 @@
   }
   .panel-theme .panel-client-shell .client-hero-actions { flex: 0 0 auto; }
   .panel-theme .panel-client-shell .client-hero-content { margin-top: 27px; }
+}
+
+/* Keep the premium palette when the account theme selector is set to dark. */
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell {
+  --client-accent: #D4A853;
+  --client-accent-strong: #B8860B;
+  --client-bg: #F5F5F5;
+  --client-card: #FFFFFF;
+  --client-card-muted: #F5F5F5;
+  --client-text: #1A1A1A;
+  --client-muted: #6B7280;
+  --client-line: #E5E7EB;
+}
+.panel-theme.panel-theme[data-panel-theme="light"] .panel-client-shell .client-page-hero,
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .client-page-hero {
+  color: #FFFFFF;
+  background: linear-gradient(135deg,#0D0D0D,#1A1A1A);
 }
