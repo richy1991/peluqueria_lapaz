@@ -11,7 +11,11 @@
   --client-line: #e2e8f0;
   --app-theme-color: #111827;
   color: var(--client-text);
-  background: var(--client-bg);
+}
+
+/* Este portal solo contiene controles flotantes; su viewport no debe tapar la página. */
+.panel-theme.panel-viewport-layer {
+  background: transparent;
 }
 
 .panel-theme[data-panel-theme="dark"] .panel-client-shell,
@@ -24,6 +28,10 @@
   --client-text: #f8fafc;
   --client-muted: #94a3b8;
   --client-line: #263244;
+}
+
+.panel-theme.panel-viewport-layer[data-panel-theme] {
+  background: transparent;
 }
 
 .panel-theme .panel-client-shell .client-page-hero,
