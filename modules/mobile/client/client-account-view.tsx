@@ -40,11 +40,12 @@ export async function ClientAccountView({ section }: { section: ClientSection })
   if (capabilities.barber) redirect("/barbero");
 
   if (section === "inicio" || section === "puntos") await supabase.rpc("refresh_my_barber_loyalty");
-  const activeReservationCutoff = new Date().toISOString();
+  const requestTime = new Date().toISOString();
+  const activeReservationCutoff = requestTime;
   const [profile, appointments, reservations, notifications, loyalty, transactions, preferences, availableProducts, businessSettings, businessHours, gallery] = await Promise.all([
     supabase.from("profiles").select("full_name,email,phone,avatar_url,status,no_show_count,is_blacklisted,is_blocked,referral_code").eq("id", user.id).single(),
-    section === "inicio" ? supabase.from("appointments").select("id,starts_at,status,price_snapshot,service_name_snapshot,barber_name_snapshot,barber_profiles(display_name)").eq("client_id", user.id).order("starts_at", { ascending: false }).limit(5) : Promise.resolve({ data: [] }),
-    ["inicio", "productos"].includes(section) ? supabase.from("product_reservations").select("id,quantity,status,expires_at,products(name)").eq("client_id", user.id).eq("status", "reserved").gt("expires_at", activeReservationCutoff).order("created_at", { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
+    section === "inicio" ? supabase.from("appointments").select("id,starts_at,status,price_snapshot,service_name_snapshot,barber_name_snapshot,barber_profiles!appointments_barber_id_fkey(display_name)").eq("client_id", user.id).gte("starts_at", requestTime).in("status", ["requested", "confirmed", "in_progress", "pending_payment", "pending_client_confirmation", "needs_reschedule"]).order("starts_at", { ascending: true }).limit(1) : Promise.resolve({ data: [] }),
+    section === "productos" ? supabase.from("product_reservations").select("id,quantity,status,expires_at,products(name)").eq("client_id", user.id).eq("status", "reserved").gt("expires_at", activeReservationCutoff).order("created_at", { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
     supabase.from("notifications").select("id,title,body,read_at,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
     ["inicio", "puntos"].includes(section) ? supabase.from("customer_barber_loyalty_accounts").select("barber_id,balance,lifetime_earned,lifetime_redeemed,barber_profiles(display_name)").eq("user_id", user.id).order("balance", { ascending: false }) : Promise.resolve({ data: [] }),
     section === "puntos" ? supabase.from("loyalty_transactions").select("id,points,reason,created_at,barber_id_snapshot,barber_profiles(display_name)").eq("user_id", user.id).or("barber_id.not.is.null,barber_id_snapshot.not.is.null").order("created_at", { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
@@ -57,9 +58,16 @@ export async function ClientAccountView({ section }: { section: ClientSection })
 
   const person = profile.data;
   const barberBalances = (loyalty.data ?? []).map(item => ({ barberId: item.barber_id, barberName: (item.barber_profiles as unknown as { display_name?: string } | null)?.display_name ?? "Peluquero", balance: item.balance, lifetimeEarned: item.lifetime_earned }));
-  const maxBalance = Math.max(0, ...barberBalances.map(item => Number(item.balance)));
   const activeAppointments = (appointments.data ?? []).filter(item => !["canceled", "completed", "no_show"].includes(item.status));
-  const activeReservations = reservations.data ?? [];
+  const nextAppointment = activeAppointments[0];
+  const appointmentHeadings: Record<string, string> = {
+    requested: "Solicitud de cita enviada",
+    pending_client_confirmation: "Confirma el cambio de horario",
+    pending_payment: "Cita pendiente de pago",
+    in_progress: "Cita en curso",
+    needs_reschedule: "Tu cita requiere reprogramación",
+  };
+  const nextAppointmentTitle = nextAppointment ? appointmentHeadings[nextAppointment.status] ?? "Cita confirmada" : "Aún no tienes una cita";
   const copy = sectionCopy[section];
   const displayName = String(person?.full_name ?? user.email?.split("@")[0] ?? "Cliente");
   const avatarStyle = person?.avatar_url ? { backgroundImage: `url(${JSON.stringify(person.avatar_url)})` } : undefined;
@@ -73,22 +81,15 @@ export async function ClientAccountView({ section }: { section: ClientSection })
   return <PanelExperience chatInHeader><main className="portal-shell panel-client-shell">
     <section className="client-page-hero">
       <div className="client-hero-shade" />
-      <div className="client-hero-top"><Brand linked={false} /><div className="client-hero-actions"><PanelThemeSelector compact /><ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={capabilities.isCashier} /></div></div>
-      <div className="client-hero-content"><BusinessStatus configuredStatus={clientConfiguredStatus} initialStatus={clientInitialStatus} statusMessage={String(businessSettings.data?.status_message ?? "")} timezone={clientBusinessTimezone} hours={clientBusinessHours} variant="client" /><p className="eyebrow">{copy.eyebrow}</p><h1>{section === "inicio" ? `Hola, ${displayName}` : copy.title}</h1><p>{section === "inicio" ? "Tu próxima visita, tus beneficios y tu estilo en un solo lugar." : copy.description}</p></div>
+      <div className="client-hero-top"><div className="client-hero-brand"><Brand linked={false} /><BusinessStatus configuredStatus={clientConfiguredStatus} initialStatus={clientInitialStatus} statusMessage={String(businessSettings.data?.status_message ?? "")} timezone={clientBusinessTimezone} hours={clientBusinessHours} variant="client" /></div><div className="client-hero-actions"><ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={capabilities.isCashier} /></div></div>
+      <div className="client-hero-content"><p className="eyebrow">{copy.eyebrow}</p><h1>{section === "inicio" ? `Hola, ${displayName}` : copy.title}</h1><p>{section === "inicio" ? "Tu próxima visita, tus beneficios y tu estilo en un solo lugar." : copy.description}</p></div>
       <Link className="client-hero-public-link" href="/sitio"><Globe2 /><span>Ver sitio público</span></Link>
     </section>
 
     {section === "inicio" && <div className="portal-grid client-home-dashboard">
-      <section className="portal-card portal-wide client-home-overview">
-        <div className="client-home-heading"><div><small>MI CUENTA</small><h2>¿Qué necesitas hacer?</h2></div><Link href="/reservar?return=%2Fmi-cuenta">Reservar <Scissors /></Link></div>
-        <div className="client-home-kpis">
-          <Link href="/mi-cuenta/puntos"><Star /><span><strong>{maxBalance}</strong> puntos disponibles</span></Link>
-          <Link href="/mi-cuenta/productos"><PackageCheck /><span><strong>{activeReservations.length}</strong> {activeReservations.length === 1 ? "producto apartado" : "productos apartados"}</span></Link>
-        </div>
-      </section>
       <section className="portal-card portal-wide client-next-appointment">
-        <div className="portal-title"><CalendarDays /><div><small>MI PRÓXIMA VISITA</small><h2>{activeAppointments[0] ? "Cita confirmada" : "Aún no tienes una cita"}</h2></div></div>
-        {activeAppointments[0] ? (() => { const appointment = activeAppointments[0]; const barberName = (appointment.barber_profiles as unknown as { display_name?: string } | null)?.display_name ?? appointment.barber_name_snapshot; const canCancel = ["requested", "confirmed", "pending_client_confirmation"].includes(appointment.status); return <div className="client-appointment-summary"><div><strong>{appointment.service_name_snapshot}</strong><span>{new Intl.DateTimeFormat("es-BO", { dateStyle: "full", timeStyle: "short", timeZone: clientBusinessTimezone }).format(new Date(appointment.starts_at))}{barberName ? ` · ${barberName}` : ""}</span></div><b>Bs {appointment.price_snapshot}</b><div className="client-appointment-actions">{appointment.status === "pending_client_confirmation" && <ConfirmReassignmentButton id={appointment.id} />}{canCancel && <CancelAppointmentButton id={appointment.id} />}</div></div>; })() : <div className="client-empty-appointment"><p>Agenda tu próximo corte y lo verás aquí.</p><Link className="button button-dark" href="/reservar?return=%2Fmi-cuenta">Reservar cita <Scissors /></Link></div>}
+        <div className="portal-title"><CalendarDays /><div><small>MI PRÓXIMA VISITA</small><h2>{nextAppointmentTitle}</h2></div></div>
+        {nextAppointment ? (() => { const appointment = nextAppointment; const barberName = (appointment.barber_profiles as unknown as { display_name?: string } | null)?.display_name ?? appointment.barber_name_snapshot; const canCancel = ["requested", "confirmed", "pending_client_confirmation"].includes(appointment.status); return <div className="client-appointment-summary"><div><strong>{appointment.service_name_snapshot}</strong><span>{new Intl.DateTimeFormat("es-BO", { dateStyle: "full", timeStyle: "short", timeZone: clientBusinessTimezone }).format(new Date(appointment.starts_at))}{barberName ? ` · ${barberName}` : ""}</span></div><b>Bs {appointment.price_snapshot}</b><div className="client-appointment-actions">{appointment.status === "pending_client_confirmation" && <ConfirmReassignmentButton id={appointment.id} />}{canCancel && <CancelAppointmentButton id={appointment.id} />}</div></div>; })() : <div className="client-empty-appointment"><p>Agenda tu próximo corte y lo verás aquí.</p><Link className="button button-dark" href="/reservar?return=%2Fmi-cuenta">Reservar cita <Scissors /></Link></div>}
       </section>
       <ClientWorkShowcase items={gallery as PublicGalleryItem[]} />
     </div>}

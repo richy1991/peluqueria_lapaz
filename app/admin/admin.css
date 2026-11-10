@@ -2134,3 +2134,21 @@
 .panel-theme :is(.admin-title>svg,.admin-title p,.analytics-insights svg,.analytics-card header p,.analytics-date-grid b,.cashier-open>svg){color:var(--dash-copper)}
 .panel-theme .admin-list button{color:var(--dash-cyan);border-color:color-mix(in srgb,var(--dash-cyan) 36%,var(--dash-line))}
 .panel-theme .cashier-status b{color:var(--chrome-accent)}
+
+/* Keep editable fields readable in either panel theme, including older form components. */
+.panel-theme[data-panel-theme="light"] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea) {
+  color: var(--dash-text) !important;
+  border-color: var(--dash-line) !important;
+  background-color: var(--dash-card) !important;
+  color-scheme: light;
+  caret-color: var(--dash-cyan);
+}
+.panel-theme[data-panel-theme="dark"] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea) {
+  color: var(--dash-text) !important;
+  border-color: var(--dash-line) !important;
+  background-color: var(--dash-card-2) !important;
+  color-scheme: dark;
+  caret-color: var(--dash-cyan);
+}
+.panel-theme[data-panel-theme="light"] :is(input, textarea)::placeholder { color: var(--dash-muted) !important; opacity: 1; }
+.panel-theme[data-panel-theme="dark"] :is(input, textarea)::placeholder { color: var(--dash-muted) !important; opacity: 1; }

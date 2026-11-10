@@ -237,12 +237,12 @@
     width: 46px;
     height: 28px;
     border-radius: 999px;
-    background: #dbeafe;
+    background: color-mix(in srgb, var(--client-accent) 12%, var(--client-card));
     opacity: 0;
     transform: translateX(-50%);
     transition: opacity .15s ease;
   }
-  .panel-theme[data-panel-theme="dark"] > .panel-bottom-nav.client-bottom-nav > a::before { background: #1e3a5f; }
+  .panel-theme[data-panel-theme="dark"] > .panel-bottom-nav.client-bottom-nav > a::before { background: color-mix(in srgb, var(--client-accent) 22%, var(--client-card)); }
   .panel-theme > .panel-bottom-nav.client-bottom-nav > a.active {
     color: var(--client-accent);
     background: transparent;
@@ -275,4 +275,65 @@
     pointer-events: none;
     transform: translate(-50%, calc(100% + 24px));
   }
+}
+
+/* The client hero shares the same warm palette in both mobile and desktop layouts. */
+.panel-theme.panel-theme[data-panel-theme="light"] .panel-client-shell .client-page-hero {
+  color: #fffaf5;
+  background: linear-gradient(125deg, #63303a 0%, #814350 58%, #9b6464 100%);
+}
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .client-page-hero {
+  color: #fffaf5;
+  background: linear-gradient(125deg, #21191a 0%, #382529 62%, #191715 100%);
+}
+.panel-theme .panel-client-shell .client-hero-top {
+  align-items: center;
+  gap: 10px;
+}
+.panel-theme .panel-client-shell .client-hero-brand {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.panel-theme .panel-client-shell .client-hero-brand .brand {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.panel-theme .panel-client-shell .client-hero-brand .brand > span:last-child { min-width: 0; }
+.panel-theme.panel-theme .panel-client-shell .client-business-status {
+  position: static !important;
+  inset: auto !important;
+  min-height: 28px;
+  transform: none !important;
+  box-shadow: none;
+}
+.panel-theme .panel-client-shell .portal-card::before { display: none; }
+
+@media (max-width: 760px) {
+  .panel-theme .panel-client-shell .client-hero-brand { gap: 8px; }
+  .panel-theme .panel-client-shell .client-hero-brand .brand { gap: 7px; }
+  .panel-theme .panel-client-shell .client-hero-brand .brand-mark {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-width: 1px;
+    box-shadow: 0 0 0 2px #f7f3e8;
+  }
+  .panel-theme .panel-client-shell .client-hero-brand .brand strong {
+    font-size: 12px;
+    letter-spacing: .08em;
+  }
+  .panel-theme .panel-client-shell .client-hero-brand .brand small {
+    margin-top: 4px;
+    font-size: 5px;
+  }
+  .panel-theme.panel-theme .panel-client-shell .client-business-status {
+    min-height: 24px;
+    padding: 4px 7px;
+    font-size: 6px;
+  }
+  .panel-theme .panel-client-shell .client-hero-actions { flex: 0 0 auto; }
+  .panel-theme .panel-client-shell .client-hero-content { margin-top: 27px; }
 }
