@@ -1,6 +1,6 @@
 import type { MobileNavigationItem } from "../shared/contracts";
 
-export type ClientSection = "inicio" | "puntos" | "productos" | "notificaciones" | "perfil";
+export type ClientSection = "inicio" | "puntos" | "productos" | "galeria" | "notificaciones" | "perfil";
 
 export const CLIENT_NAVIGATION = [
   { id: "inicio", href: "/mi-cuenta", label: "Inicio" },

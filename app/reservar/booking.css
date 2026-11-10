@@ -417,6 +417,8 @@
 .booking-shell .date-strip button > strong { color: #1A1A1A; }
 .booking-shell .date-strip button.selected, .booking-shell .time-grid button.selected { color: #0D0D0D; border-color: #D4A853; background: #D4A853; box-shadow: 0 4px 14px rgba(212,168,83,.25); }
 .booking-shell .date-strip button.selected :is(span,strong,small) { color: #0D0D0D; }
+.booking-shell .date-strip button.reserved:disabled { color: #6B7280; border-color: #E5E7EB; background: #F5F5F5; box-shadow: none; cursor: not-allowed; opacity: .72; transform: none; }
+.booking-shell .date-strip button.reserved:disabled :is(span,strong,small) { color: #6B7280; }
 .booking-shell .schedule-hours-card, .booking-shell .schedule-shifts > span { border-color: #E5E7EB; border-radius: 12px; }
 .booking-shell .schedule-shifts > span { color: #B8860B; background: #FFFFFF; }
 .booking-shell .empty-times { color: #6B7280; border-color: #E5E7EB; }

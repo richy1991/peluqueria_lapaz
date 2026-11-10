@@ -38,6 +38,46 @@ function BarberMobileNavigation({ section }: { section: BarberSection }) {
   </nav></PanelViewportPortal>;
 }
 
+function groupAppointmentsByBusinessDay<T extends { starts_at: string }>(appointments: T[], timezone: string) {
+  const groups = new Map<string, T[]>();
+  const keyFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  for (const appointment of appointments) {
+    const parts = keyFormatter.formatToParts(new Date(appointment.starts_at));
+    const part = (type: Intl.DateTimeFormatPartTypes) => parts.find(item => item.type === type)?.value ?? "";
+    const key = `${part("year")}-${part("month")}-${part("day")}`;
+    const dayAppointments = groups.get(key) ?? [];
+    dayAppointments.push(appointment);
+    groups.set(key, dayAppointments);
+  }
+
+  return [...groups.entries()].map(([key, dayAppointments]) => ({
+    key,
+    label: new Intl.DateTimeFormat("es-BO", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      timeZone: timezone,
+    }).format(new Date(dayAppointments[0].starts_at)),
+    appointments: dayAppointments,
+  }));
+}
+
+function appointmentStatusLabel(status: string) {
+  return ({
+    requested: "Solicitada",
+    confirmed: "Confirmada",
+    in_progress: "En atención",
+    pending_payment: "Pendiente de pago",
+    pending_client_confirmation: "Cambio pendiente de confirmar",
+  } as Record<string, string>)[status] ?? status;
+}
+
 export async function BarberView({ section }: { section: BarberSection }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -53,8 +93,8 @@ export async function BarberView({ section }: { section: BarberSection }) {
   const weekEnd = new Date(end.getTime() + 6 * 24 * 60 * 60 * 1000);
   const monthStart = zonedDateTimeToDate(`${workDate.slice(0, 8)}01T00:00:00`, businessTimezone);
   const [appointmentsResult, weekAppointmentsResult, earnings, payouts, profileResult, galleryResult, servicesResult, productsResult, monthlyEarnings, discounts, availableProducts] = await Promise.all([
-    supabase.from("appointments").select("id,service_id,starts_at,ends_at,status,service_name_snapshot,client_name_snapshot,notes,reference_image_path,profiles!appointments_client_id_fkey(full_name,phone,is_blacklisted)").eq("barber_id", capabilities.barber.id).gte("starts_at", start.toISOString()).lt("starts_at", end.toISOString()).order("starts_at"),
-    section === "agenda" ? supabase.from("appointments").select("id,starts_at,status,service_name_snapshot,client_name_snapshot,profiles!appointments_client_id_fkey(full_name,phone)").eq("barber_id", capabilities.barber.id).gte("starts_at", requestTime).lt("starts_at", weekEnd.toISOString()).order("starts_at") : Promise.resolve({ data: [] }),
+    supabase.from("appointments").select("id,service_id,starts_at,ends_at,status,service_name_snapshot,client_name_snapshot,notes,reference_image_path").eq("barber_id", capabilities.barber.id).gte("starts_at", start.toISOString()).lt("starts_at", end.toISOString()).order("starts_at"),
+    section === "agenda" ? supabase.from("appointments").select("id,starts_at,status,service_name_snapshot,client_name_snapshot").eq("barber_id", capabilities.barber.id).gte("starts_at", requestTime).lt("starts_at", weekEnd.toISOString()).order("starts_at") : Promise.resolve({ data: [] }),
     section === "balance" ? supabase.from("barber_earnings").select("id,kind,amount,status,created_at,sale_items(name_snapshot,unit_price_snapshot,discount_amount,barber_discount_share)").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(50) : Promise.resolve({ data: [] }),
     section === "balance" ? supabase.from("payouts").select("id,period_start,period_end,commission_amount,incentive_amount,deduction_amount,total_amount,status,paid_at").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
     ["perfil", "trabajos"].includes(section) ? supabase.from("barber_profiles").select("id,display_name,bio,specialties,photo_path").eq("id", capabilities.barber.id).single() : Promise.resolve({ data: null }),
@@ -67,8 +107,17 @@ export async function BarberView({ section }: { section: BarberSection }) {
   ]);
 
   const appointments = appointmentsResult.data ?? [];
-  const active = appointments.filter((item) => !["canceled", "completed", "no_show"].includes(item.status));
-  const nextAppointment = (weekAppointmentsResult.data ?? []).find((item) => !["canceled", "completed", "no_show", "needs_reschedule"].includes(item.status));
+  const weekAppointmentsResultData = weekAppointmentsResult.data ?? [];
+  const appointmentIds = [...new Set([...appointments, ...weekAppointmentsResultData].map(item => item.id))];
+  const appointmentClientsResult = section === "agenda" && appointmentIds.length
+    ? await supabase.rpc("get_barber_appointment_clients", { target_appointment_ids: appointmentIds })
+    : { data: [] };
+  const appointmentClientRows = (appointmentClientsResult.data ?? []) as Array<{ appointment_id: string; full_name: string | null; phone: string | null; is_blacklisted: boolean }>;
+  const clientByAppointmentId = new Map(appointmentClientRows.map(item => [item.appointment_id, item] as const));
+  const active = appointments.filter((item) => !["canceled", "completed", "no_show", "needs_reschedule"].includes(item.status));
+  const weekAppointments = weekAppointmentsResultData.filter(item => !["canceled", "completed", "no_show", "needs_reschedule"].includes(item.status));
+  const weekAppointmentGroups = groupAppointmentsByBusinessDay(weekAppointments, businessTimezone);
+  const nextAppointment = weekAppointments.find(item => new Date(item.starts_at).getTime() >= now.getTime());
   const pendingTotal = (earnings.data ?? []).filter((item) => ["pending", "approved"].includes(item.status)).reduce((sum, item) => sum + Number(item.amount), 0);
   const monthProductEarnings=(monthlyEarnings.data??[]).filter(item=>item.kind==="product_incentive");
   const monthProductSales=monthProductEarnings.reduce((sum,item)=>sum+Number(item.base_amount),0);
@@ -104,8 +153,8 @@ export async function BarberView({ section }: { section: BarberSection }) {
           {section === "agenda" && <>
             <section className="portal-card"><div className="portal-title"><Activity /><h2>Resumen de hoy</h2></div><strong className="daily-appointment-count">{active.length}</strong><p>cita(s) pendientes o en proceso.</p></section>
             <section className="portal-card"><div className="portal-title"><Clock3 /><h2>Próxima cita</h2></div>{nextAppointment ? <div className="next-appointment"><strong>{nextAppointment.service_name_snapshot}</strong><span>{new Intl.DateTimeFormat("es-BO", { weekday: "short", day: "numeric", month: "short", timeStyle: "short", timeZone: businessTimezone }).format(new Date(nextAppointment.starts_at))}</span></div> : <p className="portal-empty">No tienes citas próximas en los siguientes 7 días.</p>}</section>
-            <section className="portal-card portal-wide"><div className="portal-title"><CalendarClock /><h2>Citas asignadas</h2></div><div className="portal-list agenda-list">{appointments.length ? appointments.map((item) => { const client = item.profiles as unknown as { full_name?: string; phone?: string; is_blacklisted?: boolean } | null; return <article key={item.id}><span className="agenda-time">{new Intl.DateTimeFormat("es-BO", { timeStyle: "short", timeZone: businessTimezone }).format(new Date(item.starts_at))}</span><div><strong>{item.service_name_snapshot}</strong><span>{client?.full_name ?? item.client_name_snapshot ?? "Cliente"} · {client?.phone ?? "Sin teléfono"} · {item.status === "pending_payment" ? "pendiente de cobro" : item.status}</span>{client?.is_blacklisted && <small className="portal-warning">Alerta de inasistencias</small>}</div><AppointmentStatusActions id={item.id} status={item.status} defaultServiceId={item.service_id ?? ""} services={servicesResult.data ?? []} products={productsResult.data ?? []} /></article>; }) : <p className="portal-empty">No hay citas asignadas para hoy.</p>}</div></section>
-            <section className="portal-card portal-wide"><div className="portal-title"><History /><h2>Agenda de los próximos 7 días</h2></div><div className="portal-list agenda-list">{(weekAppointmentsResult.data ?? []).length ? (weekAppointmentsResult.data ?? []).map(item => { const client = item.profiles as unknown as { full_name?: string } | null; return <article key={item.id}><span className="agenda-time">{new Intl.DateTimeFormat("es-BO", { weekday: "short", day: "numeric", month: "short", timeStyle: "short", timeZone: businessTimezone }).format(new Date(item.starts_at))}</span><div><strong>{item.service_name_snapshot}</strong><span>{client?.full_name ?? item.client_name_snapshot ?? "Cliente"} · {item.status}</span></div></article>; }) : <p className="portal-empty">No tienes citas próximas esta semana.</p>}</div></section>
+            <section className="portal-card portal-wide"><div className="portal-title"><CalendarClock /><div><small>HOY</small><h2>Cola de clientes</h2></div></div><div className="portal-list agenda-list">{active.length ? active.map((item) => { const client = clientByAppointmentId.get(item.id); return <article key={item.id}><span className="agenda-time">{new Intl.DateTimeFormat("es-BO", { timeStyle: "short", timeZone: businessTimezone }).format(new Date(item.starts_at))}</span><div><strong>{client?.full_name ?? item.client_name_snapshot ?? "Cliente"}</strong><span>{item.service_name_snapshot} · {appointmentStatusLabel(item.status)}</span>{client?.phone && <small>{client.phone}</small>}{client?.is_blacklisted && <small className="portal-warning">Alerta de inasistencias</small>}</div><AppointmentStatusActions id={item.id} status={item.status} defaultServiceId={item.service_id ?? ""} services={servicesResult.data ?? []} products={productsResult.data ?? []} /></article>; }) : <p className="portal-empty">No hay citas activas para hoy.</p>}</div></section>
+            <section className="portal-card portal-wide"><div className="portal-title"><History /><div><small>PRÓXIMOS 7 DÍAS</small><h2>Agenda semanal</h2></div></div>{weekAppointmentGroups.length ? <div className="agenda-week">{weekAppointmentGroups.map(group => <section className="agenda-day-group" key={group.key}><header className="agenda-day-heading"><h3>{group.label}</h3><span>{group.appointments.length} {group.appointments.length === 1 ? "cita" : "citas"}</span></header><div className="portal-list agenda-list agenda-day-list">{group.appointments.map(item => { const client = clientByAppointmentId.get(item.id); return <article key={item.id}><span className="agenda-time">{new Intl.DateTimeFormat("es-BO", { timeStyle: "short", timeZone: businessTimezone }).format(new Date(item.starts_at))}</span><div><strong>{client?.full_name ?? item.client_name_snapshot ?? "Cliente"}</strong><span>{item.service_name_snapshot} · {appointmentStatusLabel(item.status)}</span>{client?.phone && <small>{client.phone}</small>}</div></article>; })}</div></section>)}</div> : <p className="portal-empty">No tienes citas próximas esta semana.</p>}</section>
           </>}
 
           {section === "productos" && <section className="portal-card portal-wide barber-product-catalog"><div className="portal-title"><PackageOpen /><div><small>DISPONIBLES AHORA</small><h2>Catálogo de productos</h2></div></div><p>Selecciona un producto para ver sus fotos, presentación, existencias y precio. Puedes apartarlo durante 24 horas y pagarlo en el local.</p><ProductCatalog products={availableProducts} variant="catalog" /></section>}

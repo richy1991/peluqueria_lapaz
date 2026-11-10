@@ -298,11 +298,27 @@
   --client-text: var(--lc-text);
   --client-muted: var(--lc-muted);
   --client-line: var(--lc-border);
+  --app-theme-color: var(--lc-surface);
+  --dash-bg: var(--lc-surface);
+  --dash-surface: var(--lc-card);
+  --dash-card: var(--lc-card);
+  --dash-card-2: var(--lc-surface);
+  --dash-line: var(--lc-border);
+  --dash-text: var(--lc-text);
+  --dash-muted: var(--lc-muted);
+  --dash-cyan: var(--lc-accent-dark);
+  --dash-copper: var(--lc-accent-dark);
+  --ink: var(--lc-text);
+  --muted-ink: var(--lc-muted);
+  --white: var(--lc-card);
+  --paper-deep: var(--lc-surface);
+  --line: var(--lc-border);
+  --copper: var(--lc-accent-dark);
   color: var(--lc-text);
   background: var(--lc-surface);
+  color-scheme: light;
   font-family: Inter, Poppins, ui-sans-serif, system-ui, sans-serif;
 }
-.panel-theme[data-panel-theme="dark"] .panel-client-shell { color-scheme: light; }
 .panel-theme .panel-client-shell .client-page-hero,
 .panel-theme[data-panel-theme] .panel-client-shell .client-page-hero {
   position: relative;
@@ -370,11 +386,11 @@
 /* The client hero shares the same warm palette in both mobile and desktop layouts. */
 .panel-theme.panel-theme[data-panel-theme="light"] .panel-client-shell .client-page-hero {
   color: #fffaf5;
-  background: linear-gradient(125deg, #63303a 0%, #814350 58%, #9b6464 100%);
+  background: linear-gradient(135deg, var(--lc-primary), var(--lc-secondary));
 }
 .panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .client-page-hero {
-  color: #fffaf5;
-  background: linear-gradient(125deg, #21191a 0%, #382529 62%, #191715 100%);
+  color: #FFFFFF;
+  background: linear-gradient(135deg, var(--lc-primary), var(--lc-secondary));
 }
 .panel-theme .panel-client-shell .client-hero-top {
   align-items: center;
@@ -428,16 +444,25 @@
   .panel-theme .panel-client-shell .client-hero-content { margin-top: 27px; }
 }
 
-/* Keep the premium palette when the account theme selector is set to dark. */
+/* Dark mode uses the same brand accents with dark page and card surfaces. */
 .panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell {
+  --lc-primary: #0D0D0D;
+  --lc-secondary: #1A1A1A;
+  --lc-surface: #0D0D0D;
+  --lc-card: #1A1A1A;
+  --lc-text: #F5F5F5;
+  --lc-muted: #9CA3AF;
+  --lc-border: rgba(229,231,235,.16);
   --client-accent: #D4A853;
   --client-accent-strong: #B8860B;
-  --client-bg: #F5F5F5;
-  --client-card: #FFFFFF;
-  --client-card-muted: #F5F5F5;
-  --client-text: #1A1A1A;
-  --client-muted: #6B7280;
-  --client-line: #E5E7EB;
+  --client-bg: var(--lc-surface);
+  --client-card: var(--lc-card);
+  --client-card-muted: #1A1A1A;
+  --client-text: var(--lc-text);
+  --client-muted: var(--lc-muted);
+  --client-line: var(--lc-border);
+  --app-theme-color: #0D0D0D;
+  color-scheme: dark;
 }
 .panel-theme.panel-theme[data-panel-theme="light"] .panel-client-shell .client-page-hero,
 .panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .client-page-hero {
@@ -500,17 +525,88 @@
 .panel-theme > .panel-bottom-nav.client-bottom-nav > a.active { color: #D4A853; }
 .panel-theme > .panel-bottom-nav.client-bottom-nav > a.active::before { background: #D4A853; }
 
-.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell { background: #F5F5F5; color: #1A1A1A; }
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell { background: var(--client-bg); color: var(--client-text); }
 .panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .portal-card {
-  color: #1A1A1A; border-color: #E5E7EB; background: #FFFFFF; box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  color: var(--client-text); border-color: var(--client-line); background: var(--client-card); box-shadow: 0 2px 12px rgba(0,0,0,.24);
 }
-.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .portal-card :is(h2,strong,dd) { color: #1A1A1A; }
-.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .portal-card :is(p,span,small,dt) { color: #6B7280; }
-.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .portal-inline-form input {
-  color: #1A1A1A !important; border-color: #E5E7EB !important; background: #FFFFFF !important;
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .portal-card :is(h2,strong,b,dd) { color: var(--client-text); }
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .portal-card :is(p,span,small,dt) { color: var(--client-muted); }
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .portal-card .client-work-card :is(span,strong) { color: #FFFFFF; }
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .barber-loyalty-grid article { border-color: var(--client-line); background: linear-gradient(145deg,var(--client-card),var(--client-bg)); }
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .referral-share { border-color: var(--client-line); background: var(--client-bg); }
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .referral-share > svg { border-color: var(--client-line); background: var(--client-card); }
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .referral-share .referral-code { color: var(--client-text) !important; background: var(--client-card); }
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell :is(input,select,textarea) { color: var(--client-text); border-color: var(--client-line); background: var(--client-card); color-scheme: dark; }
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .portal-empty { border-color: var(--client-line); background: var(--client-bg); }
+
+/* Keep the light client surfaces above the legacy dashboard theme selectors. */
+.panel-theme.panel-theme[data-panel-theme="light"] .panel-client-shell {
+  --lc-surface: #F5F5F5;
+  --lc-card: #FFFFFF;
+  --lc-text: #1A1A1A;
+  --lc-muted: #6B7280;
+  --lc-border: #E5E7EB;
+  --client-bg: var(--lc-surface);
+  --client-card: var(--lc-card);
+  --client-card-muted: var(--lc-surface);
+  --client-text: var(--lc-text);
+  --client-muted: var(--lc-muted);
+  --client-line: var(--lc-border);
+  --app-theme-color: var(--lc-surface);
+  color: var(--client-text);
+  color-scheme: light;
+  background: var(--client-bg);
 }
-.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .portal-inline-form input::placeholder { color: #6B7280 !important; }
-.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .client-page-hero { color: #FFFFFF; background: linear-gradient(135deg,#0D0D0D,#1A1A1A); }
+.panel-theme.panel-theme[data-panel-theme="light"] .panel-client-shell .portal-card {
+  color: var(--client-text);
+  border-color: var(--client-line);
+  background: var(--client-card);
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+}
+.panel-theme.panel-theme[data-panel-theme="light"] .panel-client-shell .portal-card :is(h2,strong,b,dd) { color: var(--client-text); }
+.panel-theme.panel-theme[data-panel-theme="light"] .panel-client-shell .portal-card :is(p,span,small,dt) { color: var(--client-muted); }
+.panel-theme.panel-theme[data-panel-theme="light"] .panel-client-shell .portal-card .client-work-card :is(span,strong) { color: #FFFFFF; }
+.panel-theme.panel-theme[data-panel-theme="light"] .panel-client-shell :is(input,select,textarea) { color: var(--client-text); border-color: var(--client-line); background: var(--client-card); color-scheme: light; }
+
+.panel-theme .panel-client-shell .product-grid { grid-template-columns: repeat(auto-fit,minmax(145px,1fr)); gap: 14px; }
+.panel-theme .panel-client-shell .product-card { padding: 11px; color: var(--client-text); border: 1px solid var(--client-line); border-radius: 14px; background: var(--client-card); box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+.panel-theme .panel-client-shell .product-card:hover { transform: translateY(-2px); box-shadow: 0 7px 18px rgba(0,0,0,.12); }
+.panel-theme .panel-client-shell .product-card > .button { display: inline-flex; color: #0D0D0D; border-color: #D4A853; background: #D4A853; }
+.panel-theme .panel-client-shell .product-card > .button:hover { background: #B8860B; transform: none; }
+.panel-theme .panel-client-shell .product-photo { height: auto; aspect-ratio: 1 / 1.1; margin-bottom: 12px; border-radius: 10px; background-color: var(--client-bg); }
+.panel-theme .panel-client-shell .product-card h3 { color: var(--client-text); font: 700 15px/1.25 Inter,Poppins,ui-sans-serif,system-ui,sans-serif; }
+.panel-theme .panel-client-shell .product-card > p { min-height: 0; color: var(--client-muted); font-size: 11px; }
+.panel-theme .panel-client-shell .product-meta strong { color: var(--lc-accent-dark); font: 750 16px/1.2 Inter,Poppins,ui-sans-serif,system-ui,sans-serif; }
+.panel-theme .panel-client-shell .product-meta > span { color: var(--client-muted); }
+.panel-theme .panel-client-shell .product-placeholder { color: var(--lc-accent-dark); background: var(--client-bg); }
+.panel-theme .panel-client-shell .catalog-empty { color: var(--client-muted); border-color: var(--client-line); border-radius: 12px; }
+.panel-theme .panel-client-shell .catalog-modal > article { color: var(--client-text); background: var(--client-card); }
+.panel-theme .panel-client-shell .catalog-modal-copy h2 { color: var(--client-text); font: 750 25px/1.15 Inter,Poppins,ui-sans-serif,system-ui,sans-serif; }
+.panel-theme .panel-client-shell .catalog-modal-copy > p { color: var(--client-muted); }
+.panel-theme .panel-client-shell .catalog-modal-copy dl > div { border-color: var(--client-line); }
+.panel-theme .panel-client-shell .catalog-modal-copy dt { color: var(--client-muted); }
+.panel-theme .panel-client-shell .catalog-modal-copy dd { color: var(--client-text); }
+.panel-theme .panel-client-shell .catalog-modal-copy > .button { color: #0D0D0D; border-color: #D4A853; background: #D4A853; }
+.panel-theme .panel-client-shell .catalog-message { color: #047857; border: 1px solid rgba(16,185,129,.2); border-radius: 10px; background: rgba(16,185,129,.1); }
+.panel-theme .panel-client-shell .catalog-error { color: #B91C1C; border: 1px solid rgba(239,68,68,.2); border-radius: 10px; background: rgba(239,68,68,.08); }
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .catalog-message { color: #6EE7B7; background: rgba(16,185,129,.12); }
+.panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell .catalog-error { color: #FCA5A5; background: rgba(239,68,68,.12); }
+.panel-theme .panel-client-shell .public-gallery-grid { grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 12px; }
+.panel-theme .panel-client-shell .public-gallery-grid > button { min-width: 0; padding: 8px; color: var(--client-text); border: 1px solid var(--client-line); border-radius: 14px; background: var(--client-card-muted); box-shadow: 0 2px 12px rgba(0,0,0,.07); text-align: left; }
+.panel-theme .panel-client-shell .public-gallery-grid > button > span:first-child { min-height: 0; aspect-ratio: 4 / 5; border-radius: 9px; }
+.panel-theme .panel-client-shell .public-gallery-grid h2 { margin: 10px 3px 3px; color: var(--client-text); font: 700 14px/1.25 Inter,Poppins,ui-sans-serif,system-ui,sans-serif; }
+.panel-theme .panel-client-shell .public-gallery-grid p,
+.panel-theme .panel-client-shell .public-gallery-grid small { margin: 5px 3px 0; color: var(--client-muted); font-size: 10px; }
+
+@media (max-width: 760px) {
+  .panel-theme .panel-client-shell .product-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+  .panel-theme .panel-client-shell .product-card > .tag { display: inline-flex; }
+  .panel-theme .panel-client-shell .product-card > p { display: block; }
+  .panel-theme .panel-client-shell .product-meta > span { display: inline; }
+  .panel-theme .panel-client-shell .product-card > .button { display: inline-flex; }
+  .panel-theme .panel-client-shell .public-gallery-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+  .panel-theme .panel-client-shell .public-gallery-grid > button { padding: 6px; }
+}
 
 @media (max-width: 760px) {
   .panel-theme .panel-client-shell .barber-loyalty-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
@@ -520,4 +616,241 @@
   .panel-theme .panel-client-shell .referral-share > svg { width: 92px; height: 92px; padding: 7px; }
   .panel-theme .panel-client-shell .referral-share .referral-code { min-height: 38px; padding-inline: 8px; font-size: 12px; }
   .panel-theme > .panel-bottom-nav.client-bottom-nav { position: fixed !important; }
+}
+
+/* Use the public cover image in the app header, with a dark veil for legible text. */
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-page-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 250px;
+  padding-top: max(env(safe-area-inset-top), 22px);
+  border-radius: 0 0 24px 24px;
+  background-color: var(--lc-primary);
+  background-position: center 46%;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-page-hero::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg,rgba(13,13,13,.72) 0%,rgba(13,13,13,.68) 42%,rgba(13,13,13,.91) 100%);
+  content: "";
+  pointer-events: none;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-hero-top,
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-hero-content,
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-hero-public-link { position: relative; z-index: 1; }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-hero-content { margin-top: 28px; }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-hero-shade { display: none; }
+
+/* Profile follows a compact identity header and grouped account rows. */
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-page {
+  grid-template-columns: minmax(0,1fr);
+  gap: 13px;
+  padding-top: 12px;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-overview {
+  position: relative;
+  z-index: 2;
+  grid-column: 1 / -1;
+  margin-top: -62px;
+  padding: 0 8px 13px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-overview .client-profile-avatar {
+  width: 112px;
+  height: 112px;
+  flex: 0 0 112px;
+  border: 5px solid var(--lc-surface);
+  border-radius: 50%;
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 10px 28px rgba(0,0,0,.18);
+  font-size: 31px;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-role {
+  min-height: 29px;
+  margin-top: 12px;
+  padding: 5px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--lc-accent-dark);
+  border: 1px solid color-mix(in srgb,var(--lc-accent) 25%,var(--lc-border));
+  border-radius: 999px;
+  background: color-mix(in srgb,var(--lc-accent) 11%,var(--lc-card));
+  font-size: 11px;
+  font-weight: 700;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-role svg { width: 14px; height: 14px; }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-overview h2 {
+  max-width: 100%;
+  margin: 10px 0 3px;
+  color: var(--lc-text);
+  font-size: clamp(21px,5.5vw,28px);
+  font-weight: 750;
+  letter-spacing: -.035em;
+  overflow-wrap: anywhere;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-overview > p {
+  max-width: 100%;
+  margin: 0;
+  color: var(--lc-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-card {
+  padding: 19px;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-section-heading {
+  margin-bottom: 7px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-section-heading h2 {
+  margin: 0;
+  color: var(--lc-text);
+  font-size: 19px;
+  font-weight: 750;
+  letter-spacing: -.025em;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-section-heading > span {
+  color: var(--lc-muted);
+  font-size: 10px;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-card dl {
+  margin: 0;
+  display: grid;
+  gap: 0;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-card dl > div {
+  min-width: 0;
+  padding: 15px 0;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(0,1.2fr);
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--lc-border);
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-card dl > div:last-child { border-bottom: 0; }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-card dt {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--lc-muted);
+  font-size: 12px;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-card dt svg { width: 17px; height: 17px; flex: 0 0 17px; color: var(--lc-accent-dark); }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-card dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--lc-text);
+  font-size: 12px;
+  font-weight: 650;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-status {
+  padding: 5px 10px;
+  color: var(--lc-muted) !important;
+  border: 1px solid var(--lc-border);
+  border-radius: 999px;
+  background: var(--lc-surface);
+  font-size: 11px;
+  font-weight: 700;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-status.is-active {
+  color: var(--lc-success) !important;
+  border-color: rgba(16,185,129,.2);
+  background: rgba(16,185,129,.1);
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-actions {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+  border: 0;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-actions > a,
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-actions > .mobile-sidebar-logout,
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-action-row {
+  width: 100%;
+  min-height: 58px;
+  padding: 8px 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--lc-text);
+  border: 0;
+  border-bottom: 1px solid var(--lc-border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  text-decoration: none;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-actions > :last-child { border-bottom: 0; }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-actions > a > svg:first-child,
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-action-row > div > svg { width: 18px; height: 18px; flex: 0 0 18px; color: var(--lc-accent-dark); }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-actions > a > span,
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-action-row > div > span { margin-right: auto; color: var(--lc-text); font-size: 13px; font-weight: 600; }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-actions > a > svg:last-child { width: 17px; height: 17px; color: var(--lc-muted); }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-actions > .mobile-sidebar-logout { justify-content: flex-start; color: var(--lc-danger); font: inherit; cursor: pointer; }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-actions > .mobile-sidebar-logout svg { width: 18px; height: 18px; color: var(--lc-danger); }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-actions > .mobile-sidebar-logout span { color: var(--lc-danger); font-size: 13px; font-weight: 600; }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-action-row > .panel-theme-selector.compact { flex: 0 0 auto; }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-action-row .panel-theme-selector.compact > summary {
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0;
+  justify-content: center;
+  color: var(--lc-text);
+  border: 1px solid var(--lc-border);
+  border-radius: 10px;
+  background: var(--lc-surface);
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-action-row .panel-theme-selector.compact > summary > svg { color: var(--lc-accent-dark); }
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-action-row .panel-theme-selector.compact > .panel-theme-options {
+  border-color: var(--lc-border);
+  background: var(--lc-card);
+  box-shadow: 0 12px 28px rgba(0,0,0,.18);
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-action-row .panel-theme-selector.compact > .panel-theme-options button {
+  color: var(--lc-text);
+  border-color: var(--lc-border);
+  background: var(--lc-surface);
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-action-row .panel-theme-selector.compact > .panel-theme-options button.active {
+  color: var(--lc-primary);
+  border-color: var(--lc-accent);
+  background: var(--lc-accent);
+  box-shadow: 0 4px 12px rgba(212,168,83,.22);
+}
+
+@media (max-width: 760px) {
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-page-hero {
+    min-height: 300px;
+    padding-top: max(env(safe-area-inset-top), 16px);
+    padding-right: max(env(safe-area-inset-right),16px);
+    padding-left: max(env(safe-area-inset-left),16px);
+    padding-bottom: 28px;
+    background-position: 58% center;
+  }
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-hero-content { margin-top: 28px; }
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-page { width: calc(100% - 24px); gap: 11px; }
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-overview { margin-top: -66px; padding-bottom: 12px; }
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-overview .client-profile-avatar { width: 108px; height: 108px; flex-basis: 108px; }
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-card { padding: 17px; }
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-card dl > div { padding: 14px 0; grid-template-columns: minmax(0,1fr) minmax(0,1.25fr); gap: 8px; }
 }

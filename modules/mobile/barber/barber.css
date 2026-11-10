@@ -34,6 +34,7 @@
   --lc-success: #10B981;
   --lc-danger: #EF4444;
   --lc-border: #E5E7EB;
+  --app-theme-color: var(--lc-surface);
   --dash-bg: var(--lc-surface);
   --dash-surface: var(--lc-card);
   --dash-card: var(--lc-card);
@@ -46,6 +47,24 @@
   color: var(--lc-text);
   background: var(--lc-surface);
   font-family: Inter, Poppins, ui-sans-serif, system-ui, sans-serif;
+}
+.panel-theme[data-panel-theme="dark"] .barber-portal {
+  --lc-surface: #0D0D0D;
+  --lc-card: #1A1A1A;
+  --lc-text: #F5F5F5;
+  --lc-muted: #9CA3AF;
+  --lc-border: rgba(229,231,235,.16);
+  --dash-bg: var(--lc-surface);
+  --dash-surface: var(--lc-card);
+  --dash-card: var(--lc-card);
+  --dash-card-2: #1A1A1A;
+  --dash-line: var(--lc-border);
+  --dash-text: var(--lc-text);
+  --dash-muted: var(--lc-muted);
+  --app-theme-color: #0D0D0D;
+  color: var(--lc-text);
+  color-scheme: dark;
+  background: var(--lc-surface);
 }
 .panel-theme {
   --lc-primary: #0D0D0D;
@@ -60,7 +79,6 @@
   --lc-danger: #EF4444;
   --lc-border: #E5E7EB;
 }
-.panel-theme.panel-theme[data-panel-theme="dark"] .barber-portal { color: #1A1A1A; background: #F5F5F5; }
 .panel-theme .barber-portal .dash-header,
 .panel-theme[data-panel-theme] .barber-portal .dash-header {
   color: #FFFFFF;
@@ -96,13 +114,63 @@
   color: var(--lc-text); border: 1px solid var(--lc-border); border-radius: 8px; background: var(--lc-surface);
 }
 .panel-theme .barber-portal .status-actions button:first-child { border-color: var(--lc-accent); background: var(--lc-accent); }
-.panel-theme .barber-portal :is(input,select,textarea) { color: var(--lc-text); border-color: var(--lc-border); border-radius: 8px; background: #FFFFFF; }
-.panel-theme.panel-theme[data-panel-theme="dark"] .barber-portal .portal-card {
-  color: #1A1A1A; border-color: #E5E7EB; background: #FFFFFF; box-shadow: 0 2px 12px rgba(0,0,0,.08);
+.panel-theme .barber-portal :is(input,select,textarea) { color: var(--lc-text); border-color: var(--lc-border); border-radius: 8px; background: var(--lc-card); }
+.panel-theme .barber-portal .barber-product-catalog .product-grid { grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 12px; }
+.panel-theme .barber-portal .barber-product-catalog .product-card { color: var(--lc-text); border-color: var(--lc-border); border-radius: 14px; background: var(--lc-card); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+.panel-theme .barber-portal .barber-product-catalog .product-card > .button { display: inline-flex; color: var(--lc-primary); border-color: var(--lc-accent); background: var(--lc-accent); }
+.panel-theme .barber-portal .barber-product-catalog .product-card > .button:hover { background: var(--lc-accent-dark); }
+.panel-theme .barber-portal .barber-product-catalog .product-card h3 { color: var(--lc-text); font: 700 15px/1.25 Inter,Poppins,ui-sans-serif,system-ui,sans-serif; }
+.panel-theme .barber-portal .barber-product-catalog .product-card > p,
+.panel-theme .barber-portal .barber-product-catalog .product-meta > span { color: var(--lc-muted); }
+.panel-theme .barber-portal .barber-product-catalog .product-meta strong { color: var(--lc-accent-dark); }
+.panel-theme .barber-portal .catalog-modal > article { color: var(--lc-text); background: var(--lc-card); }
+.panel-theme .barber-portal .catalog-modal-copy > p,
+.panel-theme .barber-portal .catalog-modal-copy dt { color: var(--lc-muted); }
+.panel-theme .barber-portal .catalog-modal-copy dd { color: var(--lc-text); }
+.panel-theme .barber-portal .catalog-modal-copy dl > div { border-color: var(--lc-border); }
+.panel-theme .barber-portal .catalog-modal-copy > .button { color: var(--lc-primary); border-color: var(--lc-accent); background: var(--lc-accent); }
+.panel-theme .barber-portal .agenda-week { display: grid; gap: 18px; }
+.panel-theme .barber-portal .agenda-day-group { overflow: hidden; border: 1px solid var(--lc-border); border-radius: 14px; background: var(--lc-card); }
+.panel-theme .barber-portal .agenda-day-heading {
+  min-height: 48px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border-bottom: 1px solid var(--lc-border); background: var(--lc-surface);
 }
-.panel-theme.panel-theme[data-panel-theme="dark"] .barber-portal .portal-card :is(h2,strong,b) { color: #1A1A1A; }
-.panel-theme.panel-theme[data-panel-theme="dark"] .barber-portal .portal-card :is(p,span,small) { color: #6B7280; }
-.panel-theme.panel-theme[data-panel-theme="dark"] .barber-portal .portal-card .agenda-time { color: #B8860B !important; }
+.panel-theme .barber-portal .agenda-day-heading h3 { margin: 0; color: var(--lc-text); font: 700 13px/1.3 Inter,Poppins,ui-sans-serif,system-ui,sans-serif; text-transform: capitalize; }
+.panel-theme .barber-portal .agenda-day-heading span { color: var(--lc-muted); font-size: 10px; font-weight: 650; white-space: nowrap; }
+.panel-theme .barber-portal .agenda-day-list { padding: 0 14px; }
+.panel-theme .barber-portal .agenda-day-list article { padding: 12px 0; }
+.panel-theme .barber-portal .agenda-day-list article > div { display: grid; gap: 3px; }
+.panel-theme .barber-portal .agenda-day-list article > div > strong { color: var(--lc-text); font-size: 12px; }
+.panel-theme .barber-portal .agenda-day-list article > div > span,
+.panel-theme .barber-portal .agenda-day-list article > div > small { color: var(--lc-muted); font-size: 10px; }
+.panel-theme .barber-portal .portal-title > div > small { color: var(--lc-accent-dark); font-size: 8px; font-weight: 800; letter-spacing: .13em; }
+
+/* Win against legacy panel rules so both appearances use the Legend tokens. */
+.panel-theme.panel-theme[data-panel-theme] .barber-portal {
+  color: var(--lc-text);
+  background: var(--lc-surface);
+}
+.panel-theme.panel-theme[data-panel-theme] .barber-portal .portal-card {
+  color: var(--lc-text);
+  border-color: var(--lc-border);
+  background: var(--lc-card);
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+}
+.panel-theme.panel-theme[data-panel-theme] .barber-portal .portal-card :is(h2,strong,b,dd) { color: var(--lc-text); }
+.panel-theme.panel-theme[data-panel-theme] .barber-portal .portal-card :is(p,span,small,dt) { color: var(--lc-muted); }
+.panel-theme.panel-theme[data-panel-theme] .barber-portal .portal-card .agenda-time,
+.panel-theme.panel-theme[data-panel-theme] .barber-portal .portal-card .daily-appointment-count { color: var(--lc-accent-dark) !important; }
+.panel-theme.panel-theme[data-panel-theme] .barber-portal :is(input,select,textarea) {
+  color: var(--lc-text);
+  border-color: var(--lc-border);
+  background: var(--lc-card);
+  color-scheme: inherit;
+}
+.panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero {
+  color: #FFFFFF;
+  background: linear-gradient(135deg,var(--lc-primary),var(--lc-secondary));
+}
+.panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero h1 { color: #FFFFFF; }
 
 @media (max-width: 760px) {
   .panel-theme .barber-portal .barber-content { padding: 0 0 calc(104px + env(safe-area-inset-bottom)); }
@@ -110,6 +178,14 @@
   .panel-theme .barber-portal .dash-role-hero h1 { font-size: 34px; }
   .panel-theme .barber-portal .dash-portal-grid { width: calc(100% - 24px); margin-top: -22px; gap: 12px; }
   .panel-theme .barber-portal .portal-card { padding: 17px; border-radius: 16px; }
+  .panel-theme .barber-portal .agenda-week { gap: 12px; }
+  .panel-theme .barber-portal .agenda-day-heading { min-height: 44px; padding: 9px 11px; }
+  .panel-theme .barber-portal .agenda-day-list { padding-inline: 11px; }
+  .panel-theme .barber-portal .barber-product-catalog .product-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+  .panel-theme .barber-portal .barber-product-catalog .product-card > .tag { display: inline-flex; }
+  .panel-theme .barber-portal .barber-product-catalog .product-card > p { display: block; }
+  .panel-theme .barber-portal .barber-product-catalog .product-meta > span { display: inline; }
+  .panel-theme .barber-portal .barber-product-catalog .product-card > .button { display: inline-flex; }
   .panel-theme > .panel-bottom-nav.barber-bottom-nav {
     position: fixed !important; z-index: 80; left: 50%; right: auto; bottom: max(10px, env(safe-area-inset-bottom));
     width: min(520px, calc(100vw - 20px)); height: 68px; margin: 0; padding: 6px 4px;

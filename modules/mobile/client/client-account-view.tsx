@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bell, CalendarDays, Gift, Globe2, Home, PackageCheck, Scissors, Star, UserRound } from "lucide-react";
+import { BadgeCheck, Bell, CalendarDays, ChevronRight, CircleAlert, Gift, Globe2, Home, Images, Mail, PackageCheck, Palette, Phone, Scissors, Star, UserRound } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { BusinessStatus } from "@/components/business-status";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { ProductCatalog } from "@/components/product-catalog";
+import { GalleryCatalog } from "@/components/gallery-catalog";
 import { createClient } from "@/lib/supabase/server";
 import { getUserCapabilities } from "@/lib/user-capabilities";
 import { getPublicGallery, getPublicProducts, type PublicGalleryItem } from "@/lib/public-data";
+import { publicMediaUrl } from "@/lib/public-media";
 import { DEFAULT_BUSINESS_TIMEZONE, resolveBusinessStatus, type BusinessHour } from "@/lib/business-hours";
 import { CancelAppointmentButton, ConfirmReassignmentButton } from "./appointment-actions";
 import { ClaimVisitForm } from "./loyalty-actions";
@@ -28,6 +30,7 @@ const sectionCopy: Record<ClientSection, { eyebrow: string; title: string; descr
   productos: { eyebrow: "CATÁLOGO", title: "Mis productos", description: "Explora el catálogo disponible y aparta tus productos para recogerlos en el local." },
   notificaciones: { eyebrow: "CENTRO DE AVISOS", title: "Notificaciones", description: "Revisa novedades y decide qué comunicaciones quieres recibir." },
   perfil: { eyebrow: "CUENTA PERSONAL", title: "Mi perfil", description: "Consulta los datos asociados a tu cuenta LEGEND CLUB." },
+  galeria: { eyebrow: "INSPIRACIÓN LEGEND", title: "Galería de trabajos", description: "Explora los cortes y estilos publicados por nuestro equipo." },
 };
 
 export async function ClientAccountView({ section }: { section: ClientSection }) {
@@ -51,9 +54,9 @@ export async function ClientAccountView({ section }: { section: ClientSection })
     section === "puntos" ? supabase.from("loyalty_transactions").select("id,points,reason,created_at,barber_id_snapshot,barber_profiles(display_name)").eq("user_id", user.id).or("barber_id.not.is.null,barber_id_snapshot.not.is.null").order("created_at", { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
     section === "notificaciones" ? supabase.from("notification_preferences").select("appointment_notifications,promotion_notifications,chat_notifications,system_notifications,muted_all").eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
     section === "productos" ? getPublicProducts() : Promise.resolve([]),
-    supabase.from("business_settings").select("business_status,status_message,timezone").eq("id", true).maybeSingle(),
+    supabase.from("business_settings").select("business_status,status_message,timezone,cover_path").eq("id", true).maybeSingle(),
     supabase.from("business_hours").select("*").order("weekday"),
-    section === "inicio" ? getPublicGallery() : Promise.resolve([]),
+    section === "inicio" || section === "galeria" ? getPublicGallery() : Promise.resolve([]),
   ]);
 
   const person = profile.data;
@@ -75,11 +78,12 @@ export async function ClientAccountView({ section }: { section: ClientSection })
   const replaceNavigation = section !== "inicio";
   const clientBusinessHours = (businessHours.data ?? []) as BusinessHour[];
   const clientBusinessTimezone = String(businessSettings.data?.timezone ?? DEFAULT_BUSINESS_TIMEZONE);
+  const clientHeroImage = publicMediaUrl(businessSettings.data?.cover_path) ?? "/brand/legend-club-hero.webp";
   const clientConfiguredStatus = String(businessSettings.data?.business_status ?? "open");
   const clientInitialStatus = resolveBusinessStatus(clientConfiguredStatus, clientBusinessHours, clientBusinessTimezone);
 
   return <PanelExperience chatInHeader><main className="portal-shell panel-client-shell">
-    <section className="client-page-hero">
+    <section className="client-page-hero" style={{ backgroundImage: `url(${JSON.stringify(clientHeroImage)})` }}>
       <div className="client-hero-shade" />
       <div className="client-hero-top"><div className="client-hero-brand"><Brand linked={false} /><BusinessStatus configuredStatus={clientConfiguredStatus} initialStatus={clientInitialStatus} statusMessage={String(businessSettings.data?.status_message ?? "")} timezone={clientBusinessTimezone} hours={clientBusinessHours} variant="client" /></div><div className="client-hero-actions"><ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={capabilities.isCashier} /></div></div>
       <div className="client-hero-content"><p className="eyebrow">{copy.eyebrow}</p><h1>{section === "inicio" ? `Hola, ${displayName}` : copy.title}</h1><p>{section === "inicio" ? "Tu próxima visita, tus beneficios y tu estilo en un solo lugar." : copy.description}</p></div>
@@ -89,9 +93,13 @@ export async function ClientAccountView({ section }: { section: ClientSection })
     {section === "inicio" && <div className="portal-grid client-home-dashboard">
       <section className="portal-card portal-wide client-next-appointment">
         <div className="portal-title"><CalendarDays /><div><small>MI PRÓXIMA VISITA</small><h2>{nextAppointmentTitle}</h2></div></div>
-        {nextAppointment ? (() => { const appointment = nextAppointment; const barberName = (appointment.barber_profiles as unknown as { display_name?: string } | null)?.display_name ?? appointment.barber_name_snapshot; const canCancel = ["requested", "confirmed", "pending_client_confirmation"].includes(appointment.status); return <div className="client-appointment-summary"><div><strong>{appointment.service_name_snapshot}</strong><span>{new Intl.DateTimeFormat("es-BO", { dateStyle: "full", timeStyle: "short", timeZone: clientBusinessTimezone }).format(new Date(appointment.starts_at))}{barberName ? ` · ${barberName}` : ""}</span></div><b>Bs {appointment.price_snapshot}</b><div className="client-appointment-actions">{appointment.status === "pending_client_confirmation" && <ConfirmReassignmentButton id={appointment.id} />}{canCancel && <CancelAppointmentButton id={appointment.id} />}</div></div>; })() : <div className="client-empty-appointment"><p>Agenda tu próximo corte y lo verás aquí.</p><Link className="button button-dark" href="/reservar?return=%2Fmi-cuenta">Reservar cita <Scissors /></Link></div>}
+        {nextAppointment ? (() => { const appointment = nextAppointment; const barberName = (appointment.barber_profiles as unknown as { display_name?: string } | null)?.display_name ?? appointment.barber_name_snapshot; const canCancel = ["requested", "confirmed", "pending_client_confirmation"].includes(appointment.status); return <div className="client-appointment-summary"><div><strong>{appointment.service_name_snapshot}</strong><span>{new Intl.DateTimeFormat("es-BO", { dateStyle: "full", timeStyle: "short", timeZone: clientBusinessTimezone }).format(new Date(appointment.starts_at))}</span><span>{barberName ? `Peluquero: ${barberName}` : "Peluquero por asignar"}</span></div><b>Bs {appointment.price_snapshot}</b><div className="client-appointment-actions">{appointment.status === "pending_client_confirmation" && <ConfirmReassignmentButton id={appointment.id} />}{canCancel && <CancelAppointmentButton id={appointment.id} />}</div></div>; })() : <div className="client-empty-appointment"><p>Agenda tu próximo corte y lo verás aquí.</p><Link className="button button-dark" href="/reservar?return=%2Fmi-cuenta">Reservar cita <Scissors /></Link></div>}
       </section>
       <ClientWorkShowcase items={gallery as PublicGalleryItem[]} />
+    </div>}
+
+    {section === "galeria" && <div className="portal-grid client-section-grid client-gallery-page">
+      <section className="portal-card portal-wide"><div className="portal-title"><Images /><div><small>PORTAFOLIO DEL EQUIPO</small><h2>Trabajos Legend</h2></div></div><GalleryCatalog items={gallery as PublicGalleryItem[]} /></section>
     </div>}
 
     {section === "puntos" && <div className="portal-grid client-section-grid">
@@ -111,12 +119,32 @@ export async function ClientAccountView({ section }: { section: ClientSection })
       <section className="portal-card portal-wide"><div className="portal-title"><Bell /><h2>Preferencias</h2></div><PreferencesForm userId={user.id} current={preferences.data} /><PushNotificationSetup userId={user.id} /></section>
     </div>}
 
-    {section === "perfil" && <div className="portal-grid client-section-grid"><section className="portal-card portal-wide client-profile-card">
-      <div className="client-profile-identity"><div className={`client-profile-avatar ${person?.avatar_url ? "has-photo" : ""}`} style={avatarStyle}>{!person?.avatar_url && initials}</div><div><small>CLIENTE LEGEND</small><h2>{displayName}</h2><p>{person?.email}</p></div></div>
-      <dl><div><dt>Correo</dt><dd>{person?.email}</dd></div><div><dt>Teléfono</dt><dd>{person?.phone ?? "Pendiente de registrar"}</dd></div><div><dt>Estado</dt><dd>{person?.status === "active" ? "Activo" : person?.status}</dd></div><div><dt>Inasistencias</dt><dd>{person?.no_show_count ?? 0}</dd></div></dl>
-      {person?.is_blacklisted && <p className="portal-warning">La cuenta tiene una alerta por inasistencias.</p>}{person?.is_blocked && <p className="portal-error">Las nuevas reservas están bloqueadas. Contacta al negocio.</p>}
-      <div className="client-profile-actions"><PanelThemeSelector /><Link href="/sitio"><Globe2 /><span>Sitio público</span></Link><PanelMobileLogout /></div>
-    </section></div>}
+    {section === "perfil" && <div className="portal-grid client-section-grid client-profile-page">
+      <section className="client-profile-overview portal-wide" aria-label="Resumen del perfil">
+        <div className={`client-profile-avatar ${person?.avatar_url ? "has-photo" : ""}`} style={avatarStyle}>{!person?.avatar_url && initials}</div>
+        <span className="client-profile-role"><UserRound /> Cliente</span>
+        <h2>{displayName}</h2>
+        <p>{person?.email}{person?.phone ? ` · ${person.phone}` : ""}</p>
+      </section>
+      <section className="portal-card portal-wide client-profile-card">
+        <div className="client-profile-section-heading"><h2>Tu cuenta</h2><span>Datos de tu perfil</span></div>
+        <dl>
+          <div><dt><Mail />Correo</dt><dd>{person?.email ?? "Pendiente de registrar"}</dd></div>
+          <div><dt><Phone />Teléfono</dt><dd>{person?.phone ?? "Pendiente de registrar"}</dd></div>
+          <div><dt><BadgeCheck />Estado</dt><dd><span className={`client-profile-status ${person?.status === "active" ? "is-active" : ""}`}>{person?.status === "active" ? "Activo" : person?.status ?? "Pendiente"}</span></dd></div>
+          <div><dt><CircleAlert />Inasistencias</dt><dd>{person?.no_show_count ?? 0}</dd></div>
+        </dl>
+        {person?.is_blacklisted && <p className="portal-warning">La cuenta tiene una alerta por inasistencias.</p>}{person?.is_blocked && <p className="portal-error">Las nuevas reservas están bloqueadas. Contacta al negocio.</p>}
+      </section>
+      <section className="portal-card portal-wide client-profile-card client-profile-help-card">
+        <div className="client-profile-section-heading"><h2>Preferencias y ayuda</h2></div>
+        <div className="client-profile-actions">
+          <div className="client-profile-action-row"><div><Palette /><span>Apariencia</span></div><PanelThemeSelector compact /></div>
+          <Link href="/sitio"><Globe2 /><span>Sitio público</span><ChevronRight /></Link>
+          <PanelMobileLogout />
+        </div>
+      </section>
+    </div>}
   </main>
   <PanelViewportPortal>
     <ClientMainNavigation section={section} replaceNavigation={replaceNavigation} variant="mobile" />
@@ -133,9 +161,9 @@ function ClientMainNavigation({ section, replaceNavigation, variant }: { section
 
 function ClientWorkShowcase({ items }: { items: PublicGalleryItem[] }) {
   return <section className="portal-card portal-wide client-work-showcase" aria-labelledby="client-work-title">
-    <div className="portal-title"><div><small>INSPIRACIÓN LEGEND</small><h2 id="client-work-title">Trabajos con firma propia</h2></div><Link href="/galeria">Ver galería</Link></div>
+    <div className="portal-title"><div><small>INSPIRACIÓN LEGEND</small><h2 id="client-work-title">Trabajos con firma propia</h2></div><Link href="/mi-cuenta/galeria">Ver galería</Link></div>
     <div className="client-work-track">
-      {items.slice(0, 6).map((item, index) => <Link href="/galeria" className={`client-work-card client-work-card-${index + 1}`} key={item.id} style={{ backgroundImage: `linear-gradient(180deg,transparent 30%,rgba(5,12,29,.88)),url(${JSON.stringify(item.image)})` }}><span>{item.title}</span><strong>Ver trabajo</strong></Link>)}
+      {items.slice(0, 6).map((item, index) => <Link href="/mi-cuenta/galeria" className={`client-work-card client-work-card-${index + 1}`} key={item.id} style={{ backgroundImage: `linear-gradient(180deg,transparent 30%,rgba(5,12,29,.88)),url(${JSON.stringify(item.image)})` }}><span>{item.title}</span><strong>Ver trabajo</strong></Link>)}
     </div>
   </section>;
 }

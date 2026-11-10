@@ -68,6 +68,7 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
   const [step, setStep] = useState(initialService ? 2 : 1);
   const [serviceId, setServiceId] = useState(initialService);
   const [barberId, setBarberId] = useState(initialBarber);
+  const [reservedDayKeys, setReservedDayKeys] = useState<string[]>([]);
   const [day, setDay] = useState("");
   const [time, setTime] = useState("");
   const [signedIn, setSignedIn] = useState(false);
@@ -115,6 +116,22 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
         setSignedUser({ name, email: user.email ?? "", initials });
         setSignedIn(true);
 
+        const firstDay = days[0]?.id;
+        const lastDay = days[days.length - 1]?.id;
+        if (firstDay && lastDay) {
+          const nextDay = new Date(`${lastDay}T00:00:00.000Z`);
+          nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+          const endDay = nextDay.toISOString().slice(0, 10);
+          const { data: appointments } = await supabase
+            .from("appointments")
+            .select("starts_at")
+            .eq("client_id", user.id)
+            .neq("status", "canceled")
+            .gte("starts_at", zonedDateTimeToDate(`${firstDay}T00:00:00`, timezone).toISOString())
+            .lt("starts_at", zonedDateTimeToDate(`${endDay}T00:00:00`, timezone).toISOString());
+          setReservedDayKeys([...new Set((appointments ?? []).map(item => businessDateKey(new Date(item.starts_at), timezone)))]);
+        }
+
         const { data: profile } = await supabase
           .from("profiles")
           .select("phone")
@@ -143,7 +160,16 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
     }
 
     void restoreSession();
-  }, [params]);
+  }, [days, params, timezone]);
+
+  useEffect(() => {
+    if (!day || !reservedDayKeys.includes(day)) return;
+    setDay("");
+    setTime("");
+    setAvailableTimes([]);
+    setStep(3);
+    setBookingError("Ya tienes una cita para esta fecha. Solo puedes reservar una por día.");
+  }, [day, reservedDayKeys]);
 
   useEffect(() => {
     if (!day || !serviceId) return;
@@ -406,15 +432,16 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
           {step === 3 && (
             <Card className="booking-panel">
               <div className="panel-heading"><span><Clock3 /></span><div><p>PASO 3 DE 4</p><h2>Fecha y hora</h2></div></div>
-              <p className="panel-copy">Elige un día y verás los espacios que caben dentro del horario del local y del profesional.</p>
+              <p className="panel-copy">Elige un día y verás los espacios disponibles. Solo puedes reservar una cita por día.</p>
               <div className="booking-selection-summary"><Scissors size={15} /><strong>{service?.name}</strong><span>{service?.duration} min</span><i /><span>{barber?.name ?? "Primero disponible"}</span></div>
               <div className="date-strip-heading"><div><CalendarDays size={17} /><strong>Próximos días</strong></div><span>Hora local · {timezone.split("/").at(-1)?.replaceAll("_", " ") ?? timezone}</span></div>
               <div className="date-strip">
-                {days.map((item) => (
-                  <Button variant="unstyled" aria-pressed={day === item.id} className={day === item.id ? "selected" : ""} key={item.id} onClick={() => { setDay(item.id); setTime(""); setBookingError(""); }}>
-                    <span>{item.day}</span><strong>{item.number}</strong><small>{item.month}</small>
+                {days.map((item) => {
+                  const alreadyBooked = reservedDayKeys.includes(item.id);
+                  return <Button variant="unstyled" disabled={alreadyBooked} aria-pressed={day === item.id} aria-label={`${item.day} ${item.number} ${alreadyBooked ? "ya tienes una cita" : item.month}`} className={`${day === item.id ? "selected" : ""}${alreadyBooked ? " reserved" : ""}`} key={item.id} onClick={() => { setDay(item.id); setTime(""); setBookingError(""); }}>
+                    <span>{item.day}</span><strong>{item.number}</strong><small>{alreadyBooked ? "Con cita" : item.month}</small>
                   </Button>
-                ))}
+                })}
               </div>
               {day && selectedBusinessDay?.active && <div className="schedule-hours-card">
                 <div className="schedule-hours-title"><Clock3 size={16} /><strong>Horario del local</strong><span>{selectedDay?.day} {selectedDay?.number} {selectedDay?.month}</span></div>
