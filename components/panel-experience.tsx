@@ -158,8 +158,8 @@ export function PanelExperience({ children, chatInHeader = false }: { children: 
   const [, resolved] = value.split(":") as [Preference, "light" | "dark"];
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const mobileViewport = useSyncExternalStore(subscribeToMobileViewport, mobileViewportSnapshot, () => false);
-  const { scrollDirection, scrollY } = useScrollDirection(10, mobileViewport && !mobileNavOpen);
-  const chromeHidden = mobileViewport && !mobileNavOpen && scrollY > 32 && scrollDirection === "down";
+  const { scrollDirection, scrollY } = useScrollDirection(16, mobileViewport && !mobileNavOpen);
+  const chromeHidden = mobileViewport && !mobileNavOpen && scrollY > 96 && scrollDirection === "down";
   const headerScrollY = mobileViewport ? scrollY : 0;
   const headerProgress = Math.min(1, Math.max(0, headerScrollY / 200));
   const headerStyle = {

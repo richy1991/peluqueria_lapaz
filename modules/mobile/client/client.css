@@ -1055,7 +1055,12 @@ body:has(.panel-client-shell) {
 
   /* Keep the centered client navigation animated when it leaves the viewport. */
   .panel-theme > .panel-bottom-nav.panel-animated-bottom-nav.client-bottom-nav {
-    transition: transform .3s cubic-bezier(.2,.8,.2,1),opacity .22s ease;
+    background: var(--client-card) !important;
+    transition: transform 480ms cubic-bezier(.22,1,.36,1),opacity 360ms ease;
+  }
+  .panel-theme > .panel-bottom-nav.panel-animated-bottom-nav.client-bottom-nav > a::before {
+    display: none !important;
+    content: none !important;
   }
   .panel-theme.panel-mobile-chrome-hidden > .panel-bottom-nav.client-bottom-nav,
   .panel-theme.mobile-nav-open > .panel-bottom-nav.client-bottom-nav,
@@ -1078,3 +1083,56 @@ body:has(.panel-client-shell) {
     will-change: auto;
   }
 }
+
+.panel-theme .panel-client-shell .catalog-reservations {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--lc-border);
+}
+.panel-theme .panel-client-shell .catalog-reservations-heading,
+.panel-theme .panel-client-shell .catalog-reservations-heading > div {
+  display: flex;
+  align-items: center;
+}
+.panel-theme .panel-client-shell .catalog-reservations-heading {
+  justify-content: space-between;
+  gap: 12px;
+}
+.panel-theme .panel-client-shell .catalog-reservations-heading > div { min-width: 0; gap: 10px; }
+.panel-theme .panel-client-shell .catalog-reservations-heading > div > svg { width: 20px; height: 20px; flex: 0 0 auto; color: var(--lc-accent); }
+.panel-theme .panel-client-shell .catalog-reservations-heading > div > span { min-width: 0; display: grid; gap: 3px; }
+.panel-theme .panel-client-shell .catalog-reservations-heading small { color: var(--lc-muted); font-size: 9px; font-weight: 750; letter-spacing: .1em; }
+.panel-theme .panel-client-shell .catalog-reservations-heading strong { color: var(--lc-text); font-size: 14px; }
+.panel-theme .panel-client-shell .catalog-reservations-heading > b { min-width: 25px; height: 25px; display: grid; place-items: center; color: var(--lc-primary); border-radius: 50%; background: var(--lc-accent); font-size: 11px; }
+.panel-theme .panel-client-shell .catalog-reservation-list { margin-top: 10px; display: grid; gap: 8px; }
+.panel-theme .panel-client-shell .catalog-reservation-list > article {
+  min-width: 0;
+  padding: 11px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--lc-border);
+  border-radius: 12px;
+  background: var(--lc-surface);
+}
+.panel-theme .panel-client-shell .catalog-reservation-list > article > div { min-width: 0; display: grid; gap: 4px; }
+.panel-theme .panel-client-shell .catalog-reservation-list > article strong { overflow: hidden; color: var(--lc-text); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.panel-theme .panel-client-shell .catalog-reservation-list > article span,
+.panel-theme .panel-client-shell .catalog-reservation-list > article small { color: var(--lc-muted); font-size: 10px; }
+.panel-theme .panel-client-shell .catalog-reservation-list > article > button {
+  min-height: 36px;
+  flex: 0 0 auto;
+  padding: 0 11px;
+  color: var(--lc-danger);
+  border: 1px solid color-mix(in srgb,var(--lc-danger) 36%,var(--lc-border));
+  border-radius: 9px;
+  background: var(--lc-card);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.panel-theme .panel-client-shell .catalog-reservation-list > article > button:disabled { opacity: .6; cursor: wait; }
+.panel-theme .panel-client-shell .catalog-reservations-empty,
+.panel-theme .panel-client-shell .catalog-reservation-feedback { margin: 10px 0 0; color: var(--lc-muted); font-size: 11px; line-height: 1.45; }
+.panel-theme .panel-client-shell .catalog-reservation-feedback { color: var(--lc-accent-dark); }

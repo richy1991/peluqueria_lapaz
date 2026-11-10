@@ -12,10 +12,20 @@ const pendingProductKey = "legend_club_pending_product";
 const productCartKey = "legend_club_product_cart";
 
 type CartLine = { productId: string; quantity: number };
+export type ProductReservationSummary = {
+  id: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  expiresAt: string;
+};
 
-export function ProductCatalog({ products, variant = "catalog" }: { products: PublicProduct[]; variant?: "home" | "catalog" }) {
+export function ProductCatalog({ products, variant = "catalog", reservations }: { products: PublicProduct[]; variant?: "home" | "catalog"; reservations?: ProductReservationSummary[] }) {
   const router = useRouter();
   const [busyId, setBusyId] = useState("");
+  const [cancelBusyId, setCancelBusyId] = useState("");
+  const [cancelledReservationIds, setCancelledReservationIds] = useState<string[]>([]);
+  const [reservationFeedback, setReservationFeedback] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<PublicProduct | null>(null);
@@ -48,6 +58,27 @@ export function ProductCatalog({ products, variant = "catalog" }: { products: Pu
     setMessage("Producto apartado durante 24 horas. Preséntate en el local para recogerlo y pagar.");
     router.refresh();
   }, [router]);
+
+  async function cancelReservation(reservation: ProductReservationSummary) {
+    if (!window.confirm(`¿Cancelar el apartado de ${reservation.productName}?`)) return;
+    setCancelBusyId(reservation.id);
+    setReservationFeedback("");
+    try {
+      const { error: cancellationError } = await createClient().rpc("cancel_my_product_reservation", { p_reservation_id: reservation.id });
+      if (cancellationError) {
+        setReservationFeedback(cancellationError.message);
+        router.refresh();
+        return;
+      }
+      setCancelledReservationIds((ids) => [...ids, reservation.id]);
+      setReservationFeedback("Apartado cancelado. El producto ya no está reservado.");
+      router.refresh();
+    } catch {
+      setReservationFeedback("No pudimos cancelar el apartado. Inténtalo otra vez.");
+    } finally {
+      setCancelBusyId("");
+    }
+  }
 
   useEffect(() => {
     try {
@@ -109,7 +140,8 @@ export function ProductCatalog({ products, variant = "catalog" }: { products: Pu
     const nextQuantity = Math.min(Math.max(quantity, 1), Math.max(1, Math.min(product.stock, 10)));
     setCart((items) => items.map((item) => item.productId === product.id ? { ...item, quantity: nextQuantity } : item));
   }
-  if (!products.length) return <p className="catalog-empty">Pronto publicaremos nuestros productos disponibles.</p>;
+  const visibleReservations = (reservations ?? []).filter((reservation) => !cancelledReservationIds.includes(reservation.id));
+  if (!products.length && reservations === undefined) return <p className="catalog-empty">Pronto publicaremos nuestros productos disponibles.</p>;
   const selectedImages = selected?.images.length ? selected.images : selected?.image ? [selected.image] : [];
   const cartItems = cart.flatMap((item) => {
     const product = products.find((candidate) => candidate.id === item.productId);
@@ -117,22 +149,24 @@ export function ProductCatalog({ products, variant = "catalog" }: { products: Pu
   });
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   const cartTotal = cartItems.reduce((total, item) => total + item.quantity * item.product.price, 0);
+  const reservedQuantity = visibleReservations.reduce((total, item) => total + item.quantity, 0);
+  const cartDisplayCount = cartCount + reservedQuantity;
 
   return <>
     {message && <p className="catalog-message">{message}</p>}
     {error && <p className="catalog-error">{error}</p>}
     {variant === "catalog" && <div className="product-cart-bar">
-      <div><ShoppingCart /><span><strong>Tu carrito</strong><small>{cartCount ? `${cartCount} producto(s) seleccionado(s)` : "A\u00fan est\u00e1 vac\u00edo"}</small></span></div>
-      <button type="button" onClick={() => { setSelected(null); setCartOpen(true); }} aria-label={`Abrir carrito, ${cartCount} productos`}><span>Ver carrito</span><b>{cartCount}</b></button>
+      <div><ShoppingCart /><span><strong>Tu carrito</strong><small>{cartCount ? `${cartCount} seleccionado(s) · ${visibleReservations.length} apartado(s)` : visibleReservations.length ? `${visibleReservations.length} apartado(s) activo(s)` : "A\u00fan est\u00e1 vac\u00edo"}</small></span></div>
+      <button type="button" onClick={() => { setSelected(null); setCartOpen(true); }} aria-label={`Abrir carrito, ${cartCount} seleccionados y ${visibleReservations.length} apartados`}><span>Ver carrito</span><b>{cartDisplayCount}</b></button>
     </div>}
     <div className={`product-grid product-grid-${variant}`}>
-      {products.map((product) => <button className="product-card" key={product.id} type="button" onClick={() => openProduct(product)} aria-label={`Ver detalles de ${product.name}`}>
+      {products.length ? products.map((product) => <button className="product-card" key={product.id} type="button" onClick={() => openProduct(product)} aria-label={`Ver detalles de ${product.name}`}>
         <span className={`product-photo ${product.image ? "" : "product-placeholder"}`} style={product.image ? { backgroundImage: `url(${product.image})` } : undefined}>
           {!product.image && <PackageCheck size={38} />}{product.images.length > 1 && <i>{product.images.length} fotos</i>}
         </span>
         <span className="tag">{product.category}</span><h3>{product.name}</h3><p>{product.description}</p>
         <span className="product-meta"><strong>Bs {product.price}</strong><span>{product.stock > 0 ? `${product.stock} disponibles` : "Agotado"}</span></span>
-      </button>)}
+      </button>) : <p className="catalog-empty">Pronto publicaremos nuevos productos disponibles.</p>}
     </div>
 
     {selected && <div className="catalog-modal" role="dialog" aria-modal="true" aria-label={`Detalles de ${selected.name}`} onMouseDown={(event) => event.target === event.currentTarget && closeOverlay()}>
@@ -168,6 +202,14 @@ export function ProductCatalog({ products, variant = "catalog" }: { products: Pu
             <div className="catalog-cart-total"><span>Total de la selecci&#243;n</span><strong>Bs {cartTotal.toFixed(2)}</strong></div>
             <p className="catalog-cart-note">El apartado dura 24 horas. El pago se realiza al recoger el producto en el local.</p>
           </> : <div className="catalog-cart-empty"><ShoppingCart /><strong>Tu carrito est&#225; vac&#237;o</strong><p>Abre un producto y agr&#233;galo aqu&#237; para tenerlo a mano.</p></div>}
+          {reservations !== undefined && <section className="catalog-reservations" aria-label="Mis productos apartados">
+            <div className="catalog-reservations-heading"><div><PackageCheck /><span><small>APARTADOS ACTIVOS</small><strong>Mis productos apartados</strong></span></div><b>{visibleReservations.length}</b></div>
+            {reservationFeedback && <p className="catalog-reservation-feedback" aria-live="polite">{reservationFeedback}</p>}
+            {visibleReservations.length ? <div className="catalog-reservation-list">{visibleReservations.map((reservation) => <article key={reservation.id}>
+              <div><strong>{reservation.productName}</strong><span>{reservation.quantity} unidad(es) · Bs {(reservation.unitPrice * reservation.quantity).toFixed(2)}</span><small>Vence {new Intl.DateTimeFormat("es-BO", { dateStyle: "short", timeStyle: "short" }).format(new Date(reservation.expiresAt))}</small></div>
+              <button type="button" disabled={Boolean(cancelBusyId)} onClick={() => void cancelReservation(reservation)} aria-label={`Cancelar apartado de ${reservation.productName}`}>{cancelBusyId === reservation.id ? "Cancelando…" : "Cancelar"}</button>
+            </article>)}</div> : <p className="catalog-reservations-empty">No tienes productos apartados activos.</p>}
+          </section>}
           <button className="button catalog-cart-continue" type="button" onClick={closeOverlay}>Seguir viendo productos</button>
         </div>
       </article>

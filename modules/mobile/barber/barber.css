@@ -256,6 +256,17 @@ body:has(.barber-portal) {
   animation-delay: var(--lc-stagger-delay,0ms);
 }
 
+@media (max-width: 760px) {
+  .panel-theme > .panel-bottom-nav.panel-animated-bottom-nav.barber-bottom-nav {
+    background: #0D0D0D !important;
+    transition: transform 480ms cubic-bezier(.22,1,.36,1),opacity 360ms ease;
+  }
+  .panel-theme > .panel-bottom-nav.panel-animated-bottom-nav.barber-bottom-nav > a::before {
+    display: none !important;
+    content: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero,
   .panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero h1,

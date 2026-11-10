@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export type WorkCarouselItem = { id: string; title: string; image: string };
@@ -10,13 +10,32 @@ export type WorkCarouselItem = { id: string; title: string; image: string };
 export function WorkCarousel({ items, href }: { items: WorkCarouselItem[]; href: string }) {
   const slides = items.slice(0, 6);
   const [[page, direction], setPage] = useState<[number, number]>([0, 0]);
+  const [paused, setPaused] = useState(false);
+  const activeIndex = slides.length ? ((page % slides.length) + slides.length) % slides.length : 0;
+
+  useEffect(() => {
+    if (slides.length < 2 || paused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setTimeout(() => setPage(([current]) => [current + 1, 1]), 5000);
+    return () => window.clearTimeout(timer);
+  }, [activeIndex, paused, slides.length]);
+
   if (!slides.length) return <p className="portal-empty work-carousel-empty">Pronto compartiremos nuevos trabajos del equipo.</p>;
 
-  const activeIndex = ((page % slides.length) + slides.length) % slides.length;
   const item = slides[activeIndex];
   const paginate = (newDirection: number) => setPage([activeIndex + newDirection, newDirection]);
 
-  return <div className="work-carousel" role="region" aria-roledescription="carrusel" aria-label="Inspiración Legend">
+  return <div
+    className="work-carousel"
+    role="region"
+    aria-roledescription="carrusel"
+    aria-label="Inspiración Legend"
+    onMouseEnter={() => setPaused(true)}
+    onMouseLeave={() => setPaused(false)}
+    onFocus={() => setPaused(true)}
+    onBlur={(event) => {
+      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setPaused(false);
+    }}
+  >
     <div className="work-carousel-viewport">
       <Link
         key={item.id}

@@ -51,7 +51,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
   const [profile, appointments, reservations, notifications, loyalty, transactions, preferences, availableProducts, businessSettings, businessHours, gallery] = await Promise.all([
     supabase.from("profiles").select("full_name,email,phone,avatar_url,status,no_show_count,is_blacklisted,is_blocked,referral_code").eq("id", user.id).single(),
     section === "inicio" ? supabase.from("appointments").select("id,starts_at,status,price_snapshot,service_name_snapshot,barber_name_snapshot,barber_profiles!appointments_barber_id_fkey(display_name)").eq("client_id", user.id).gte("starts_at", requestTime).in("status", ["requested", "confirmed", "in_progress", "pending_payment", "pending_client_confirmation", "needs_reschedule"]).order("starts_at", { ascending: true }).limit(1) : Promise.resolve({ data: [] }),
-    section === "productos" ? supabase.from("product_reservations").select("id,quantity,status,expires_at,products(name)").eq("client_id", user.id).eq("status", "reserved").gt("expires_at", activeReservationCutoff).order("created_at", { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
+    section === "productos" ? supabase.from("product_reservations").select("id,quantity,price_snapshot,expires_at,products(name)").eq("client_id", user.id).eq("status", "reserved").gt("expires_at", activeReservationCutoff).order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
     supabase.from("notifications").select("id,title,body,read_at,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
     ["inicio", "puntos"].includes(section) ? supabase.from("customer_barber_loyalty_accounts").select("barber_id,balance,lifetime_earned,lifetime_redeemed,barber_profiles(display_name)").eq("user_id", user.id).order("balance", { ascending: false }) : Promise.resolve({ data: [] }),
     section === "puntos" ? supabase.from("loyalty_transactions").select("id,points,reason,created_at,barber_id_snapshot,barber_profiles(display_name)").eq("user_id", user.id).or("barber_id.not.is.null,barber_id_snapshot.not.is.null").order("created_at", { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
@@ -81,6 +81,13 @@ export async function ClientAccountView({ section }: { section: ClientSection })
   const replaceNavigation = section !== "inicio";
   const clientBusinessHours = (businessHours.data ?? []) as BusinessHour[];
   const clientBusinessTimezone = String(businessSettings.data?.timezone ?? DEFAULT_BUSINESS_TIMEZONE);
+  const activeProductReservations = (reservations.data ?? []).map(item => ({
+    id: item.id,
+    productName: (item.products as unknown as { name?: string } | null)?.name ?? "Producto",
+    quantity: item.quantity,
+    unitPrice: Number(item.price_snapshot),
+    expiresAt: item.expires_at,
+  }));
   const clientHeroImage = "/brand/legend-club-salon-header.jpg";
   const clientConfiguredStatus = String(businessSettings.data?.business_status ?? "open");
   const clientInitialStatus = resolveBusinessStatus(clientConfiguredStatus, clientBusinessHours, clientBusinessTimezone);
@@ -113,8 +120,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
     </StaggerContainer>}
 
     {section === "productos" && <StaggerContainer className="portal-grid client-section-grid client-products-page">
-      <section className="portal-card portal-wide client-reservations-card"><div className="portal-title"><PackageCheck /><h2>Mis productos apartados</h2></div><div className="portal-list">{reservations.data?.length ? reservations.data.map(item => <article key={item.id}><div><strong>{(item.products as unknown as { name?: string } | null)?.name ?? "Producto"}</strong><span>{item.quantity} unidad(es) · {item.status === "reserved" ? "apartado" : item.status}</span></div><b>Vence {new Intl.DateTimeFormat("es-BO", { dateStyle: "short", timeStyle: "short", timeZone: clientBusinessTimezone }).format(new Date(item.expires_at))}</b></article>) : <p className="portal-empty">No tienes productos apartados.</p>}</div></section>
-      <section className="portal-card portal-wide client-catalog-card"><div className="portal-title"><PackageCheck /><h2>Catálogo</h2></div><ProductCatalog products={availableProducts} variant="catalog" /></section>
+      <section className="portal-card portal-wide client-catalog-card"><div className="portal-title"><PackageCheck /><h2>Catálogo</h2></div><ProductCatalog products={availableProducts} variant="catalog" reservations={activeProductReservations} /></section>
     </StaggerContainer>}
 
     {section === "notificaciones" && <StaggerContainer className="portal-grid client-section-grid">

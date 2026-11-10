@@ -2279,15 +2279,17 @@
 
 /* The active tab indicator tracks its link; tab selection responds on pointer down. */
 .panel-theme > .panel-bottom-nav.panel-animated-bottom-nav > a > svg {
-  transition: color 180ms ease,transform 360ms cubic-bezier(.2,1.35,.35,1);
+  transition: color 180ms ease,transform 480ms cubic-bezier(.22,1,.36,1);
 }
+.panel-theme > .panel-bottom-nav.panel-animated-bottom-nav { transition: transform 480ms cubic-bezier(.22,1,.36,1),opacity 360ms ease; }
+.panel-theme > .panel-bottom-nav.panel-animated-bottom-nav > a::before { display: none !important; content: none !important; }
 .panel-theme > .panel-bottom-nav.panel-animated-bottom-nav > a > i { display: none; }
 .panel-theme > .panel-bottom-nav.panel-animated-bottom-nav > a > span {
   color: #6B7280;
   font-weight: 400;
   transition: color 160ms ease,font-weight 160ms ease;
 }
-.panel-theme > .panel-bottom-nav.panel-animated-bottom-nav > a.active > svg { color: #D4A853; transform: scale(1.16); }
+.panel-theme > .panel-bottom-nav.panel-animated-bottom-nav > a.active > svg { color: #D4A853; transform: scale(1.08); }
 .panel-theme > .panel-bottom-nav.panel-animated-bottom-nav > a.active > span { color: #D4A853; font-weight: 600; }
 .panel-theme > .panel-bottom-nav.panel-animated-bottom-nav > a:active { transform: scale(.9); }
 .panel-nav-active-indicator {
@@ -2295,13 +2297,13 @@
   z-index: 4;
   top: 5px;
   left: 0;
-  width: 8px;
-  height: 4px;
+  width: 20px;
+  height: 3px;
   border-radius: 99px;
   background: #D4A853;
   box-shadow: 0 0 12px rgba(212,168,83,.38);
   pointer-events: none;
-  transition: transform 460ms cubic-bezier(.2,1.25,.34,1);
+  transition: transform 520ms cubic-bezier(.22,1,.36,1);
   will-change: transform;
 }
 .panel-theme .client-business-status > span,
@@ -2353,6 +2355,7 @@
 @media (max-width: 760px) {
   .work-carousel-viewport { height: min(62vw,270px); min-height: 205px; }
   .work-carousel-slide { padding: 16px; }
+  .panel-theme > .panel-bottom-nav.panel-animated-bottom-nav { transition-duration: 480ms,360ms; }
   .panel-theme.panel-mobile-chrome-hidden > .panel-bottom-nav.client-bottom-nav,
   .panel-theme.panel-mobile-chrome-hidden > .panel-bottom-nav.barber-bottom-nav,
   .panel-theme.mobile-nav-open > .panel-bottom-nav.client-bottom-nav,

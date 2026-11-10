@@ -36,7 +36,7 @@ export function PanelBottomNavigation({ items, activeId, className, ariaLabel, r
       if (!activeLink) return;
       const navBounds = nav.getBoundingClientRect();
       const linkBounds = activeLink.getBoundingClientRect();
-      indicator.style.transform = `translate3d(${linkBounds.left + linkBounds.width / 2 - navBounds.left - 4}px,0,0)`;
+      indicator.style.transform = `translate3d(${linkBounds.left + linkBounds.width / 2 - navBounds.left - 10}px,0,0)`;
     };
 
     moveIndicator();
