@@ -15,7 +15,13 @@ export default async function BookingPage() {
 
   return (
     <Suspense fallback={<div className="booking-loading">Preparando horarios…</div>}>
-      <BookingFlow services={services} barbers={barbers} timezone={business.timezone} />
+      <BookingFlow
+        services={services}
+        barbers={barbers}
+        timezone={business.timezone}
+        businessHours={business.schedule}
+        businessStatus={business.configuredStatus}
+      />
     </Suspense>
   );
 }
