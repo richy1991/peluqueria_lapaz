@@ -163,16 +163,22 @@ export function PanelThemeSelector({ compact = false }: { compact?: boolean }) {
     detailsRef.current?.removeAttribute("open");
   }
 
+  const options = <div className="panel-theme-options" role="group" aria-label="Seleccionar tema">
+    <button type="button" title="Usar tema del sistema" aria-label="Usar tema del sistema" aria-pressed={preference === "system"} className={preference === "system" ? "active" : ""} onClick={() => choose("system")}><Monitor /></button>
+    <button type="button" title="Usar tema claro" aria-label="Usar tema claro" aria-pressed={preference === "light"} className={preference === "light" ? "active" : ""} onClick={() => choose("light")}><Sun /></button>
+    <button type="button" title="Usar tema oscuro" aria-label="Usar tema oscuro" aria-pressed={preference === "dark"} className={preference === "dark" ? "active" : ""} onClick={() => choose("dark")}><Moon /></button>
+  </div>;
+
+  if (compact) {
+    return <div className="panel-theme-selector compact">{options}</div>;
+  }
+
   return (
-    <details ref={detailsRef} className={`panel-theme-selector ${compact ? "compact" : ""}`}>
+    <details ref={detailsRef} className="panel-theme-selector">
       <summary aria-label="Seleccionar apariencia">
         <Palette />
       </summary>
-      <div className="panel-theme-options" role="group" aria-label="Seleccionar tema">
-        <button type="button" title="Usar tema del sistema" aria-label="Usar tema del sistema" aria-pressed={preference === "system"} className={preference === "system" ? "active" : ""} onClick={() => choose("system")}><Monitor /></button>
-        <button type="button" title="Usar tema claro" aria-label="Usar tema claro" aria-pressed={preference === "light"} className={preference === "light" ? "active" : ""} onClick={() => choose("light")}><Sun /></button>
-        <button type="button" title="Usar tema oscuro" aria-label="Usar tema oscuro" aria-pressed={preference === "dark"} className={preference === "dark" ? "active" : ""} onClick={() => choose("dark")}><Moon /></button>
-      </div>
+      {options}
     </details>
   );
 }

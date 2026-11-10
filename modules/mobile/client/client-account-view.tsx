@@ -9,7 +9,6 @@ import { GalleryCatalog } from "@/components/gallery-catalog";
 import { createClient } from "@/lib/supabase/server";
 import { getUserCapabilities } from "@/lib/user-capabilities";
 import { getPublicGallery, getPublicProducts, type PublicGalleryItem } from "@/lib/public-data";
-import { publicMediaUrl } from "@/lib/public-media";
 import { DEFAULT_BUSINESS_TIMEZONE, resolveBusinessStatus, type BusinessHour } from "@/lib/business-hours";
 import { CancelAppointmentButton, ConfirmReassignmentButton } from "./appointment-actions";
 import { ClaimVisitForm } from "./loyalty-actions";
@@ -54,7 +53,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
     section === "puntos" ? supabase.from("loyalty_transactions").select("id,points,reason,created_at,barber_id_snapshot,barber_profiles(display_name)").eq("user_id", user.id).or("barber_id.not.is.null,barber_id_snapshot.not.is.null").order("created_at", { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
     section === "notificaciones" ? supabase.from("notification_preferences").select("appointment_notifications,promotion_notifications,chat_notifications,system_notifications,muted_all").eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
     section === "productos" ? getPublicProducts() : Promise.resolve([]),
-    supabase.from("business_settings").select("business_status,status_message,timezone,cover_path").eq("id", true).maybeSingle(),
+    supabase.from("business_settings").select("business_status,status_message,timezone").eq("id", true).maybeSingle(),
     supabase.from("business_hours").select("*").order("weekday"),
     section === "inicio" || section === "galeria" ? getPublicGallery() : Promise.resolve([]),
   ]);
@@ -78,7 +77,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
   const replaceNavigation = section !== "inicio";
   const clientBusinessHours = (businessHours.data ?? []) as BusinessHour[];
   const clientBusinessTimezone = String(businessSettings.data?.timezone ?? DEFAULT_BUSINESS_TIMEZONE);
-  const clientHeroImage = publicMediaUrl(businessSettings.data?.cover_path) ?? "/brand/legend-club-hero.webp";
+  const clientHeroImage = "/brand/legend-club-salon-header.jpg";
   const clientConfiguredStatus = String(businessSettings.data?.business_status ?? "open");
   const clientInitialStatus = resolveBusinessStatus(clientConfiguredStatus, clientBusinessHours, clientBusinessTimezone);
 
@@ -129,7 +128,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
       <section className="portal-card portal-wide client-profile-card">
         <div className="client-profile-section-heading"><h2>Tu cuenta</h2><span>Datos de tu perfil</span></div>
         <dl>
-          <div><dt><Mail />Correo</dt><dd>{person?.email ?? "Pendiente de registrar"}</dd></div>
+          <div className="client-profile-email-row"><dt><Mail />Correo</dt><dd>{person?.email ?? "Pendiente de registrar"}</dd></div>
           <div><dt><Phone />Teléfono</dt><dd>{person?.phone ?? "Pendiente de registrar"}</dd></div>
           <div><dt><BadgeCheck />Estado</dt><dd><span className={`client-profile-status ${person?.status === "active" ? "is-active" : ""}`}>{person?.status === "active" ? "Activo" : person?.status ?? "Pendiente"}</span></dd></div>
           <div><dt><CircleAlert />Inasistencias</dt><dd>{person?.no_show_count ?? 0}</dd></div>

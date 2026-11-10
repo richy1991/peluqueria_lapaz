@@ -74,7 +74,6 @@ export function ProductCatalog({ products, variant = "catalog" }: { products: Pu
         </span>
         <span className="tag">{product.category}</span><h3>{product.name}</h3><p>{product.description}</p>
         <span className="product-meta"><strong>Bs {product.price}</strong><span>{product.stock > 0 ? `${product.stock} disponibles` : "Agotado"}</span></span>
-        <span className="button button-dark">Ver producto</span>
       </button>)}
     </div>
 

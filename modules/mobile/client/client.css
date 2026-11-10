@@ -571,8 +571,6 @@
 .panel-theme .panel-client-shell .product-grid { grid-template-columns: repeat(auto-fit,minmax(145px,1fr)); gap: 14px; }
 .panel-theme .panel-client-shell .product-card { padding: 11px; color: var(--client-text); border: 1px solid var(--client-line); border-radius: 14px; background: var(--client-card); box-shadow: 0 2px 12px rgba(0,0,0,.06); }
 .panel-theme .panel-client-shell .product-card:hover { transform: translateY(-2px); box-shadow: 0 7px 18px rgba(0,0,0,.12); }
-.panel-theme .panel-client-shell .product-card > .button { display: inline-flex; color: #0D0D0D; border-color: #D4A853; background: #D4A853; }
-.panel-theme .panel-client-shell .product-card > .button:hover { background: #B8860B; transform: none; }
 .panel-theme .panel-client-shell .product-photo { height: auto; aspect-ratio: 1 / 1.1; margin-bottom: 12px; border-radius: 10px; background-color: var(--client-bg); }
 .panel-theme .panel-client-shell .product-card h3 { color: var(--client-text); font: 700 15px/1.25 Inter,Poppins,ui-sans-serif,system-ui,sans-serif; }
 .panel-theme .panel-client-shell .product-card > p { min-height: 0; color: var(--client-muted); font-size: 11px; }
@@ -603,7 +601,6 @@
   .panel-theme .panel-client-shell .product-card > .tag { display: inline-flex; }
   .panel-theme .panel-client-shell .product-card > p { display: block; }
   .panel-theme .panel-client-shell .product-meta > span { display: inline; }
-  .panel-theme .panel-client-shell .product-card > .button { display: inline-flex; }
   .panel-theme .panel-client-shell .public-gallery-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
   .panel-theme .panel-client-shell .public-gallery-grid > button { padding: 6px; }
 }
@@ -853,4 +850,67 @@
   .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-overview .client-profile-avatar { width: 108px; height: 108px; flex-basis: 108px; }
   .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-card { padding: 17px; }
   .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-card dl > div { padding: 14px 0; grid-template-columns: minmax(0,1fr) minmax(0,1.25fr); gap: 8px; }
+}
+
+/* Keep the mobile status-bar and camera safe area visually joined to the hero. */
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell {
+  --app-theme-color: var(--lc-primary);
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-page-hero::before {
+  background: linear-gradient(90deg,rgba(13,13,13,.88) 0%,rgba(13,13,13,.76) 48%,rgba(13,13,13,.42) 100%),
+    linear-gradient(0deg,rgba(13,13,13,.34),transparent 72%);
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-action-row .panel-theme-selector.compact {
+  min-width: 0;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-action-row .panel-theme-selector.compact > .panel-theme-options {
+  position: static;
+  inset: auto;
+  width: auto;
+  margin: 0;
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid var(--lc-border);
+  border-radius: 12px;
+  background: var(--lc-surface);
+  box-shadow: none;
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-action-row .panel-theme-selector.compact > .panel-theme-options button {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 9px;
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-action-row .panel-theme-selector.compact > .panel-theme-options button svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 760px) {
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-page-hero {
+    padding-top: max(env(safe-area-inset-top), 32px);
+  }
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-card dl > .client-profile-email-row {
+    grid-template-columns: minmax(0,1fr);
+    align-items: start;
+    gap: 6px;
+  }
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-profile-email-row dd {
+    padding-left: 26px;
+    text-align: left;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
 }

@@ -117,8 +117,6 @@
 .panel-theme .barber-portal :is(input,select,textarea) { color: var(--lc-text); border-color: var(--lc-border); border-radius: 8px; background: var(--lc-card); }
 .panel-theme .barber-portal .barber-product-catalog .product-grid { grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 12px; }
 .panel-theme .barber-portal .barber-product-catalog .product-card { color: var(--lc-text); border-color: var(--lc-border); border-radius: 14px; background: var(--lc-card); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
-.panel-theme .barber-portal .barber-product-catalog .product-card > .button { display: inline-flex; color: var(--lc-primary); border-color: var(--lc-accent); background: var(--lc-accent); }
-.panel-theme .barber-portal .barber-product-catalog .product-card > .button:hover { background: var(--lc-accent-dark); }
 .panel-theme .barber-portal .barber-product-catalog .product-card h3 { color: var(--lc-text); font: 700 15px/1.25 Inter,Poppins,ui-sans-serif,system-ui,sans-serif; }
 .panel-theme .barber-portal .barber-product-catalog .product-card > p,
 .panel-theme .barber-portal .barber-product-catalog .product-meta > span { color: var(--lc-muted); }
@@ -185,7 +183,6 @@
   .panel-theme .barber-portal .barber-product-catalog .product-card > .tag { display: inline-flex; }
   .panel-theme .barber-portal .barber-product-catalog .product-card > p { display: block; }
   .panel-theme .barber-portal .barber-product-catalog .product-meta > span { display: inline; }
-  .panel-theme .barber-portal .barber-product-catalog .product-card > .button { display: inline-flex; }
   .panel-theme > .panel-bottom-nav.barber-bottom-nav {
     position: fixed !important; z-index: 80; left: 50%; right: auto; bottom: max(10px, env(safe-area-inset-bottom));
     width: min(520px, calc(100vw - 20px)); height: 68px; margin: 0; padding: 6px 4px;
@@ -203,3 +200,19 @@
   .panel-theme > .panel-bottom-nav.barber-bottom-nav > a.active { color: #D4A853; }
   .panel-theme > .panel-bottom-nav.barber-bottom-nav > a.active::before { background: #D4A853; }
 }
+
+/* Match the client hero and keep the browser/PWA status bar on the dark brand edge. */
+.panel-theme.panel-theme[data-panel-theme] .barber-portal {
+  --app-theme-color: var(--lc-primary);
+}
+.panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-image: linear-gradient(90deg,rgba(13,13,13,.9),rgba(13,13,13,.58)),url("/brand/legend-club-salon-header.jpg") !important;
+  background-position: center, 56% 46%;
+  background-size: cover, cover;
+  background-repeat: no-repeat, no-repeat;
+}
+.panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero::after { display: none; }
+.panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero > * { position: relative; z-index: 1; }
