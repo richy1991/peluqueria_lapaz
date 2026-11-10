@@ -15,6 +15,10 @@ import { ClaimVisitForm } from "./loyalty-actions";
 import { PreferencesForm } from "./preferences-form";
 import { PushNotificationSetup } from "@/components/push-notification-setup";
 import { ReferralCode } from "./referral-code";
+import { WorkCarousel } from "./work-carousel";
+import { StaggerContainer } from "@/components/stagger-animations";
+import { PanelBottomNavigation, type PanelNavigationItem } from "@/components/panel-bottom-navigation";
+import type { CSSProperties } from "react";
 import {
   PanelExperience,
   PanelMobileLogout,
@@ -89,36 +93,36 @@ export async function ClientAccountView({ section }: { section: ClientSection })
       <Link className="client-hero-public-link" href="/sitio"><Globe2 /><span>Ver sitio público</span></Link>
     </section>
 
-    {section === "inicio" && <div className="portal-grid client-home-dashboard">
+    {section === "inicio" && <StaggerContainer className="portal-grid client-home-dashboard">
       <section className="portal-card portal-wide client-next-appointment">
         <div className="portal-title"><CalendarDays /><div><small>MI PRÓXIMA VISITA</small><h2>{nextAppointmentTitle}</h2></div></div>
         {nextAppointment ? (() => { const appointment = nextAppointment; const barberName = (appointment.barber_profiles as unknown as { display_name?: string } | null)?.display_name ?? appointment.barber_name_snapshot; const canCancel = ["requested", "confirmed", "pending_client_confirmation"].includes(appointment.status); return <div className="client-appointment-summary"><div><strong>{appointment.service_name_snapshot}</strong><span>{new Intl.DateTimeFormat("es-BO", { dateStyle: "full", timeStyle: "short", timeZone: clientBusinessTimezone }).format(new Date(appointment.starts_at))}</span><span>{barberName ? `Peluquero: ${barberName}` : "Peluquero por asignar"}</span></div><b>Bs {appointment.price_snapshot}</b><div className="client-appointment-actions">{appointment.status === "pending_client_confirmation" && <ConfirmReassignmentButton id={appointment.id} />}{canCancel && <CancelAppointmentButton id={appointment.id} />}</div></div>; })() : <div className="client-empty-appointment"><p>Agenda tu próximo corte y lo verás aquí.</p><Link className="button button-dark" href="/reservar?return=%2Fmi-cuenta">Reservar cita <Scissors /></Link></div>}
       </section>
       <ClientWorkShowcase items={gallery as PublicGalleryItem[]} />
-    </div>}
+    </StaggerContainer>}
 
-    {section === "galeria" && <div className="portal-grid client-section-grid client-gallery-page">
+    {section === "galeria" && <StaggerContainer className="portal-grid client-section-grid client-gallery-page">
       <section className="portal-card portal-wide"><div className="portal-title"><Images /><div><small>PORTAFOLIO DEL EQUIPO</small><h2>Trabajos Legend</h2></div></div><GalleryCatalog items={gallery as PublicGalleryItem[]} /></section>
-    </div>}
+    </StaggerContainer>}
 
-    {section === "puntos" && <div className="portal-grid client-section-grid">
+    {section === "puntos" && <StaggerContainer className="portal-grid client-section-grid">
       <section className="portal-card portal-wide"><div className="portal-title"><Star /><h2>Puntos por peluquero</h2></div><div className="barber-loyalty-grid">{barberBalances.length ? barberBalances.map(account => <article key={account.barberId}><span>{account.barberName}</span><strong>{account.balance}</strong><small>disponibles</small></article>) : <p className="portal-empty">Aún no tienes puntos.</p>}</div></section>
       <section className="portal-card"><div className="portal-title"><Gift /><h2>Recomendar</h2></div>{person?.referral_code && <ReferralCode code={person.referral_code} />}</section>
       <section className="portal-card"><div className="portal-title"><PackageCheck /><h2>Agregar una visita</h2></div><ClaimVisitForm /></section>
       <section className="portal-card"><div className="portal-title"><Star /><h2>Historial de puntos</h2></div><div className="portal-list">{transactions.data?.length ? transactions.data.map(item => <article key={item.id}><div><strong>{item.reason}</strong><span>{(item.barber_profiles as unknown as { display_name?: string } | null)?.display_name ?? (item.barber_id_snapshot ? "Peluquero eliminado" : "Peluquero")} · {new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeZone: clientBusinessTimezone }).format(new Date(item.created_at))}</span></div><b className={item.points > 0 ? "points-positive" : "points-negative"}>{item.points > 0 ? "+" : ""}{item.points}</b></article>) : <p className="portal-empty">Aún no tienes movimientos.</p>}</div></section>
-    </div>}
+    </StaggerContainer>}
 
-    {section === "productos" && <div className="portal-grid client-section-grid client-products-page">
+    {section === "productos" && <StaggerContainer className="portal-grid client-section-grid client-products-page">
       <section className="portal-card portal-wide client-reservations-card"><div className="portal-title"><PackageCheck /><h2>Mis productos apartados</h2></div><div className="portal-list">{reservations.data?.length ? reservations.data.map(item => <article key={item.id}><div><strong>{(item.products as unknown as { name?: string } | null)?.name ?? "Producto"}</strong><span>{item.quantity} unidad(es) · {item.status === "reserved" ? "apartado" : item.status}</span></div><b>Vence {new Intl.DateTimeFormat("es-BO", { dateStyle: "short", timeStyle: "short", timeZone: clientBusinessTimezone }).format(new Date(item.expires_at))}</b></article>) : <p className="portal-empty">No tienes productos apartados.</p>}</div></section>
       <section className="portal-card portal-wide client-catalog-card"><div className="portal-title"><PackageCheck /><h2>Catálogo</h2></div><ProductCatalog products={availableProducts} variant="catalog" /></section>
-    </div>}
+    </StaggerContainer>}
 
-    {section === "notificaciones" && <div className="portal-grid client-section-grid">
+    {section === "notificaciones" && <StaggerContainer className="portal-grid client-section-grid">
       <section className="portal-card portal-wide"><div className="portal-title"><Bell /><h2>Avisos recientes</h2></div><div className="portal-list">{notifications.data?.length ? notifications.data.map(item => <article key={item.id}><div><strong>{item.title}</strong><span>{item.body}</span></div></article>) : <p className="portal-empty">No tienes avisos nuevos.</p>}</div></section>
       <section className="portal-card portal-wide"><div className="portal-title"><Bell /><h2>Preferencias</h2></div><PreferencesForm userId={user.id} current={preferences.data} /><PushNotificationSetup userId={user.id} /></section>
-    </div>}
+    </StaggerContainer>}
 
-    {section === "perfil" && <div className="portal-grid client-section-grid client-profile-page">
+    {section === "perfil" && <StaggerContainer className="portal-grid client-section-grid client-profile-page">
       <section className="client-profile-overview portal-wide" aria-label="Resumen del perfil">
         <div className={`client-profile-avatar ${person?.avatar_url ? "has-photo" : ""}`} style={avatarStyle}>{!person?.avatar_url && initials}</div>
         <span className="client-profile-role"><UserRound /> Cliente</span>
@@ -142,7 +146,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
           <PanelMobileLogout />
         </div>
       </section>
-    </div>}
+    </StaggerContainer>}
   </main>
   <PanelViewportPortal>
     <ClientMainNavigation section={section} replaceNavigation={replaceNavigation} variant="mobile" />
@@ -152,16 +156,22 @@ export async function ClientAccountView({ section }: { section: ClientSection })
 const clientNavigationIcons = { inicio: Home, productos: PackageCheck, puntos: Star, perfil: UserRound } as const;
 
 function ClientMainNavigation({ section, replaceNavigation, variant }: { section: ClientSection; replaceNavigation: boolean; variant: "desktop" | "mobile" }) {
-  return <nav className={variant === "mobile" ? "panel-bottom-nav client-bottom-nav" : "client-desktop-nav"} aria-label={variant === "mobile" ? "Navegación principal" : "Páginas de mi cuenta"}>
+  if (variant === "mobile") {
+    const items: PanelNavigationItem[] = CLIENT_NAVIGATION.map(item => {
+      const Icon = clientNavigationIcons[item.id];
+      return { ...item, icon: <Icon /> };
+    });
+    return <PanelBottomNavigation items={items} activeId={section} replace={replaceNavigation} className="client-bottom-nav" ariaLabel="Navegación principal" />;
+  }
+
+  return <nav className="client-desktop-nav" aria-label="Páginas de mi cuenta">
     {CLIENT_NAVIGATION.map(item => { const Icon = clientNavigationIcons[item.id]; const active = section === item.id; return <Link key={item.id} href={item.href} replace={replaceNavigation} aria-label={item.label} aria-current={active ? "page" : undefined} className={active ? "active" : ""}><Icon /><span>{item.label}</span><i /></Link>; })}
   </nav>;
 }
 
-function ClientWorkShowcase({ items }: { items: PublicGalleryItem[] }) {
-  return <section className="portal-card portal-wide client-work-showcase" aria-labelledby="client-work-title">
+function ClientWorkShowcase({ items, className = "", style }: { items: PublicGalleryItem[]; className?: string; style?: CSSProperties }) {
+  return <section className={`portal-card portal-wide client-work-showcase ${className}`} style={style} aria-labelledby="client-work-title">
     <div className="portal-title"><div><small>INSPIRACIÓN LEGEND</small><h2 id="client-work-title">Trabajos con firma propia</h2></div><Link href="/mi-cuenta/galeria">Ver galería</Link></div>
-    <div className="client-work-track">
-      {items.slice(0, 6).map((item, index) => <Link href="/mi-cuenta/galeria" className={`client-work-card client-work-card-${index + 1}`} key={item.id} style={{ backgroundImage: `linear-gradient(180deg,transparent 30%,rgba(5,12,29,.88)),url(${JSON.stringify(item.image)})` }}><span>{item.title}</span><strong>Ver trabajo</strong></Link>)}
-    </div>
+    <WorkCarousel items={items.map(({ id, title, image }) => ({ id, title, image }))} href="/mi-cuenta/galeria" />
   </section>;
 }

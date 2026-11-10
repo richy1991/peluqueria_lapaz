@@ -14,6 +14,8 @@ import { AppointmentStatusActions } from "./appointment-status-actions";
 import { PublicProfileManager } from "./public-profile-manager";
 import { InstallAppButton } from "@/components/install-app-button";
 import { BARBER_NAVIGATION, type BarberSection } from "./contracts";
+import { StaggerContainer } from "@/components/stagger-animations";
+import { PanelBottomNavigation, type PanelNavigationItem } from "@/components/panel-bottom-navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -29,13 +31,11 @@ const barberNavigationIcons = { agenda: CalendarClock, productos: PackageOpen, p
 
 function BarberMobileNavigation({ section }: { section: BarberSection }) {
   const replaceNavigation = section !== "agenda";
-  return <PanelViewportPortal><nav className="panel-bottom-nav barber-bottom-nav" aria-label="Accesos rápidos de peluquero">
-    {BARBER_NAVIGATION.map(item => {
-      const Icon = barberNavigationIcons[item.id];
-      const active = section === item.id;
-      return <Link key={item.id} href={item.href} replace={replaceNavigation} aria-label={item.label} aria-current={active ? "page" : undefined} className={active ? "active" : ""}><Icon /><span>{item.label}</span><i /></Link>;
-    })}
-  </nav></PanelViewportPortal>;
+  const items: PanelNavigationItem[] = BARBER_NAVIGATION.map(item => {
+    const Icon = barberNavigationIcons[item.id];
+    return { ...item, icon: <Icon /> };
+  });
+  return <PanelViewportPortal><PanelBottomNavigation items={items} activeId={section} replace={replaceNavigation} className="barber-bottom-nav" ariaLabel="Accesos rápidos de peluquero" /></PanelViewportPortal>;
 }
 
 function groupAppointmentsByBusinessDay<T extends { starts_at: string }>(appointments: T[], timezone: string) {
@@ -149,7 +149,7 @@ export async function BarberView({ section }: { section: BarberSection }) {
       </PanelResponsiveSidebar>
       <section className="barber-content">
         <section className="portal-hero dash-role-hero"><div><p className="eyebrow">{info.eyebrow}</p><h1>{info.title}</h1><p>{info.description}</p><InstallAppButton compact /></div><div className="barber-pulse"><span><i />{active.length} citas activas</span>{section === "agenda" ? <Clock3 /> : section === "productos" ? <PackageOpen /> : section === "balance" ? <Banknote /> : section === "trabajos" ? <Images /> : <UserRoundPen />}</div></section>
-        <div className="portal-grid dash-portal-grid">
+        <StaggerContainer className="portal-grid dash-portal-grid">
           {section === "agenda" && <>
             <section className="portal-card"><div className="portal-title"><Activity /><h2>Resumen de hoy</h2></div><strong className="daily-appointment-count">{active.length}</strong><p>cita(s) pendientes o en proceso.</p></section>
             <section className="portal-card"><div className="portal-title"><Clock3 /><h2>Próxima cita</h2></div>{nextAppointment ? <div className="next-appointment"><strong>{nextAppointment.service_name_snapshot}</strong><span>{new Intl.DateTimeFormat("es-BO", { weekday: "short", day: "numeric", month: "short", timeStyle: "short", timeZone: businessTimezone }).format(new Date(nextAppointment.starts_at))}</span></div> : <p className="portal-empty">No tienes citas próximas en los siguientes 7 días.</p>}</section>
@@ -169,7 +169,7 @@ export async function BarberView({ section }: { section: BarberSection }) {
             <section className="portal-card portal-wide"><div className="portal-title"><Sparkles /><h2>Descuentos compartidos</h2></div><p>Cada registro muestra cuánto asumiste tú y cuánto asumió el local.</p><div className="portal-list">{discounts.data?.length?discounts.data.map(item=><article key={item.id}><div><strong>{item.name_snapshot}</strong><span>Base Bs {Number(item.eligible_base).toFixed(2)} · descuento total Bs {Number(item.discount_amount).toFixed(2)} · {new Intl.DateTimeFormat("es-BO",{dateStyle:"medium",timeZone:businessTimezone}).format(new Date(item.created_at))}</span></div><b>Tú: Bs {Number(item.barber_discount_share).toFixed(2)} · Local: Bs {Number(item.business_discount_share).toFixed(2)}</b></article>):<p className="portal-empty">Este mes todavía no asumiste descuentos.</p>}</div></section>
             <section className="portal-card"><div className="portal-title"><History /><h2>Liquidaciones</h2></div><div className="portal-list">{payouts.data?.length ? payouts.data.map((item) => <article key={item.id}><div><strong>{item.period_start}</strong><span>Servicios Bs {Number(item.commission_amount).toFixed(2)} · incentivo Bs {Number(item.incentive_amount).toFixed(2)} · {item.status === "paid" ? "pagada" : "preparada"}</span></div><b>Bs {Number(item.total_amount).toFixed(2)}</b></article>) : <p className="portal-empty">Aún no existen liquidaciones.</p>}</div></section>
           </>}
-        </div>
+        </StaggerContainer>
       </section>
     </div>
     <BarberMobileNavigation section={section} />

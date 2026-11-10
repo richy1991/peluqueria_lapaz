@@ -224,3 +224,49 @@ body:has(.barber-portal) {
   background-repeat: no-repeat;
   background-size: cover,100% auto;
 }
+
+/* The barber hero shares the client's mobile-only scroll compression. */
+@media (max-width: 760px) {
+  .panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero {
+    height: var(--panel-header-height,280px);
+    min-height: 140px;
+    padding: max(env(safe-area-inset-top),28px,var(--panel-header-padding,40px)) 20px 20px;
+    border-bottom-left-radius: var(--panel-header-radius,0px);
+    border-bottom-right-radius: var(--panel-header-radius,0px);
+    transition: height 110ms linear,border-radius 140ms ease,padding 120ms ease;
+    will-change: height;
+  }
+  .panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero h1 {
+    font-size: var(--panel-header-title-size,48px);
+    transition: font-size 110ms linear;
+  }
+  .panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero .eyebrow,
+  .panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero > div > p:not(.eyebrow),
+  .panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero .pwa-install {
+    max-height: var(--panel-header-subtitle-height,56px);
+    overflow: hidden;
+    opacity: var(--panel-header-subtitle-opacity,1);
+    transition: max-height 140ms ease,opacity 120ms ease;
+  }
+}
+
+/* Give the stagger animation precedence over the dashboard's legacy card entrance. */
+.panel-theme .barber-portal .lc-stagger-container > .lc-stagger-item {
+  animation: lcStaggerEnter 520ms cubic-bezier(.2,1.18,.32,1) both;
+  animation-delay: var(--lc-stagger-delay,0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero,
+  .panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero h1,
+  .panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero .eyebrow,
+  .panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero > div > p:not(.eyebrow),
+  .panel-theme.panel-theme[data-panel-theme] .barber-portal .dash-role-hero .pwa-install {
+    transition-duration: 1ms;
+    will-change: auto;
+  }
+  .panel-theme .barber-portal .lc-stagger-container > .lc-stagger-item {
+    animation: none;
+    will-change: auto;
+  }
+}

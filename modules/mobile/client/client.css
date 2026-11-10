@@ -1016,3 +1016,65 @@ body:has(.panel-client-shell) {
     background-size: 100% auto;
   }
 }
+
+/* Compress the client header on mobile while preserving its background photograph. */
+@media (max-width: 760px) {
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-page-hero {
+    height: var(--panel-header-height,280px);
+    min-height: 140px;
+    padding-bottom: var(--panel-header-bottom-padding,16px);
+    padding-top: calc(max(env(safe-area-inset-top),32px) + 16px);
+    border-bottom-left-radius: var(--panel-header-radius,0px);
+    border-bottom-right-radius: var(--panel-header-radius,0px);
+    transition: height 110ms linear,border-radius 140ms ease,padding 120ms ease;
+    will-change: height;
+  }
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-hero-content {
+    margin-top: var(--panel-header-content-gap,26px);
+    transition: margin 110ms linear;
+  }
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-hero-content h1 {
+    font-size: var(--panel-header-title-size,48px);
+    transition: font-size 110ms linear;
+  }
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-hero-content > .eyebrow {
+    max-height: var(--panel-header-eyebrow-height,18px);
+    margin-bottom: 7px;
+    overflow: hidden;
+    opacity: var(--panel-header-subtitle-opacity,1);
+    transition: max-height 140ms ease,opacity 120ms ease;
+  }
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-hero-content > p:last-child,
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-hero-public-link,
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-business-status {
+    max-height: var(--panel-header-subtitle-height,56px);
+    overflow: hidden;
+    opacity: var(--panel-header-subtitle-opacity,1);
+    transition: max-height 140ms ease,opacity 120ms ease;
+  }
+
+  /* Keep the centered client navigation animated when it leaves the viewport. */
+  .panel-theme > .panel-bottom-nav.panel-animated-bottom-nav.client-bottom-nav {
+    transition: transform .3s cubic-bezier(.2,.8,.2,1),opacity .22s ease;
+  }
+  .panel-theme.panel-mobile-chrome-hidden > .panel-bottom-nav.client-bottom-nav,
+  .panel-theme.mobile-nav-open > .panel-bottom-nav.client-bottom-nav,
+  body.support-chat-open .panel-theme > .panel-bottom-nav.client-bottom-nav {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translate(-50%,calc(100% + 22px + env(safe-area-inset-bottom))) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-page-hero,
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-hero-content,
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-hero-content h1,
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-hero-content > .eyebrow,
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-hero-content > p:last-child,
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-hero-public-link,
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-business-status {
+    transition-duration: 1ms;
+    will-change: auto;
+  }
+}

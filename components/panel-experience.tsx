@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  type CSSProperties,
   ReactNode,
   useContext,
   useEffect,
@@ -10,12 +11,13 @@ import {
   useSyncExternalStore,
 } from "react";
 import { LogOut, Menu, Monitor, Moon, Palette, Sun, X } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { FloatingSupportChat } from "@/components/floating-support-chat";
 import { DashboardToastHost } from "@/components/dashboard-toast";
 import { PanelExitGuard } from "@/components/panel-exit-guard";
 import { createClient } from "@/lib/supabase/client";
+import { useScrollDirection } from "@/hooks/useScrollDirection";
 
 type Preference = "system" | "light" | "dark";
 const EVENT = "legend-panel-theme";
@@ -65,86 +67,6 @@ function snapshot(): `${Preference}:${"light" | "dark"}` {
 
 function serverSnapshot(): `${Preference}:${"light" | "dark"}` {
   return "system:light";
-}
-
-function getScrollTop() {
-  return Math.max(window.scrollY, document.documentElement.scrollTop);
-}
-
-function useAutoHidePanelChrome(disabled: boolean) {
-  const pathname = usePathname();
-  const [hidden, setHidden] = useState(false);
-  const hiddenRef = useRef(false);
-
-  useEffect(() => {
-    const mobileViewport = window.matchMedia("(max-width: 760px)");
-    let previous = getScrollTop();
-    let direction: -1 | 0 | 1 = 0;
-    let distance = 0;
-    let frame: number | null = null;
-
-    function updateHidden(next: boolean) {
-      if (hiddenRef.current === next) return;
-      hiddenRef.current = next;
-      setHidden(next);
-    }
-
-    function reset() {
-      previous = getScrollTop();
-      direction = 0;
-      distance = 0;
-      updateHidden(false);
-    }
-
-    function measure() {
-      frame = null;
-      const current = getScrollTop();
-
-      if (disabled || !mobileViewport.matches || current <= 32) {
-        previous = current;
-        direction = 0;
-        distance = 0;
-        updateHidden(false);
-        return;
-      }
-
-      const delta = current - previous;
-      previous = current;
-      if (Math.abs(delta) < 1) return;
-
-      const nextDirection: -1 | 1 = delta > 0 ? 1 : -1;
-      if (nextDirection !== direction) {
-        direction = nextDirection;
-        distance = 0;
-      }
-      distance += Math.abs(delta);
-
-      if (direction === 1 && current > 96 && distance >= 16) {
-        distance = 0;
-        updateHidden(true);
-      } else if (direction === -1 && distance >= 10) {
-        distance = 0;
-        updateHidden(false);
-      }
-    }
-
-    function requestMeasure() {
-      if (frame === null) frame = window.requestAnimationFrame(measure);
-    }
-
-    reset();
-    window.addEventListener("scroll", requestMeasure, { passive: true });
-    window.addEventListener("pageshow", reset);
-    mobileViewport.addEventListener("change", reset);
-    return () => {
-      if (frame !== null) window.cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", requestMeasure);
-      window.removeEventListener("pageshow", reset);
-      mobileViewport.removeEventListener("change", reset);
-    };
-  }, [disabled, pathname]);
-
-  return hidden;
 }
 
 function selectTheme(next: Preference) {
@@ -235,7 +157,22 @@ export function PanelExperience({ children, chatInHeader = false }: { children: 
   const value = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
   const [, resolved] = value.split(":") as [Preference, "light" | "dark"];
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const chromeHidden = useAutoHidePanelChrome(mobileNavOpen);
+  const mobileViewport = useSyncExternalStore(subscribeToMobileViewport, mobileViewportSnapshot, () => false);
+  const { scrollDirection, scrollY } = useScrollDirection(10, mobileViewport && !mobileNavOpen);
+  const chromeHidden = mobileViewport && !mobileNavOpen && scrollY > 32 && scrollDirection === "down";
+  const headerScrollY = mobileViewport ? scrollY : 0;
+  const headerProgress = Math.min(1, Math.max(0, headerScrollY / 200));
+  const headerStyle = {
+    "--panel-header-height": `${280 - 140 * headerProgress}px`,
+    "--panel-header-title-size": `${48 - 20 * headerProgress}px`,
+    "--panel-header-subtitle-opacity": `${1 - Math.min(1, headerScrollY / 100)}`,
+    "--panel-header-radius": `${24 * headerProgress}px`,
+    "--panel-header-content-gap": `${26 - 20 * headerProgress}px`,
+    "--panel-header-bottom-padding": `${16 - 8 * headerProgress}px`,
+    "--panel-header-padding": `${40 - 20 * headerProgress}px`,
+    "--panel-header-eyebrow-height": `${headerScrollY >= 110 ? 0 : 18}px`,
+    "--panel-header-subtitle-height": `${headerScrollY >= 100 ? 0 : 56}px`,
+  } as CSSProperties;
 
   useEffect(() => {
     const themedPanel = document.querySelector<HTMLElement>(".panel-client-shell, .admin-shell");
@@ -302,7 +239,7 @@ export function PanelExperience({ children, chatInHeader = false }: { children: 
 
   return (
     <MobileNavigationContext.Provider value={navigation}>
-      <div className={`panel-theme ${chromeHidden && !mobileNavOpen ? "panel-mobile-chrome-hidden" : ""} ${mobileNavOpen ? "mobile-nav-open" : ""} ${chatInHeader ? "panel-chat-in-header" : ""}`} data-panel-theme={resolved} suppressHydrationWarning>
+      <div className={`panel-theme ${chromeHidden && !mobileNavOpen ? "panel-mobile-chrome-hidden" : ""} ${mobileNavOpen ? "mobile-nav-open" : ""} ${chatInHeader ? "panel-chat-in-header" : ""}`} data-panel-theme={resolved} style={headerStyle} suppressHydrationWarning>
         {children}
         <PanelExitGuard />
         <DashboardToastHost />
