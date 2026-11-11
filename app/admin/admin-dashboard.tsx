@@ -795,16 +795,16 @@ export function AdminDashboard({
             </form>}
           </div>}
 
-          {section === "negocio" && <div className="admin-panel">
+          {section === "negocio" && <div className="admin-panel business-settings-panel">
             <div className="admin-title"><Store /><div><p>CONFIGURACIÓN PÚBLICA</p><h1>Información del negocio</h1></div></div>
-            <div className="dash-section-intro"><p>Edita la identidad, ubicación y modo de atención desde una ventana dedicada.</p><DashboardModal title="Editar información del negocio" description="Los cambios se reflejarán en la página pública." triggerLabel="Editar negocio" triggerIcon={<Store/>} size="large">
-            <form className="admin-form" onSubmit={saveBusiness} acceptCharset="UTF-8">
+            <p className="business-settings-help">Actualiza aquí los datos que aparecen en la página pública.</p>
+            <form className="admin-form business-settings-form" onSubmit={saveBusiness} acceptCharset="UTF-8">
               <label>Nombre<input name="business_name" required defaultValue={String(settings.business_name ?? "Barbería LEGEND CLUB")} /></label>
               <label>Modo de atención<select name="business_status" defaultValue={String(settings.business_status ?? "open")}><option value="open">Horario automático</option><option value="appointment_only">Solo con reserva</option><option value="closed">Cierre manual</option><option value="emergency_closed">Cierre de emergencia</option></select></label>
               <label className="wide">Descripción<textarea name="description" defaultValue={String(settings.description ?? "")} /></label>
-              <label className="wide">Lema<input name="slogan" defaultValue={String(settings.slogan ?? "")} /></label>
-              <label className="wide">Beneficios separados por comas<input name="amenities" defaultValue={Array.isArray(settings.amenities) ? settings.amenities.join(", ") : ""} /></label>
-              <label className="wide">Mensaje de estado<input name="status_message" defaultValue={String(settings.status_message ?? "")} /></label>
+              <label>Lema<input name="slogan" defaultValue={String(settings.slogan ?? "")} /></label>
+              <label>Beneficios separados por comas<input name="amenities" defaultValue={Array.isArray(settings.amenities) ? settings.amenities.join(", ") : ""} /></label>
+              <label>Mensaje de estado<input name="status_message" defaultValue={String(settings.status_message ?? "")} /></label>
               <label className="wide">Dirección<input name="address" defaultValue={String(settings.address ?? "")} /></label>
               <label>Teléfono<input name="phone" defaultValue={String(settings.phone ?? "")} /></label>
               <label>WhatsApp sin +<input name="whatsapp" defaultValue={String(settings.whatsapp ?? "")} /></label>
@@ -814,9 +814,8 @@ export function AdminDashboard({
                 <label>Facebook<input name="facebook_url" type="url" inputMode="url" placeholder="https://facebook.com/tu-página" defaultValue={String(settings.facebook_url ?? "")} /></label>
                 <label>TikTok<input name="tiktok_url" type="url" inputMode="url" placeholder="https://tiktok.com/@tu-cuenta" defaultValue={String(settings.tiktok_url ?? "")} /></label>
               </div></fieldset>
-              <button className="button button-dark wide" disabled={busy}><Save size={17} /> Guardar cambios</button>
+              <div className="business-settings-actions wide"><span>Los cambios se reflejan en el sitio público al guardar.</span><button className="button button-dark" disabled={busy}><Save size={17} /> Guardar cambios</button></div>
             </form>
-            </DashboardModal></div>
           </div>}
 
           {section === "servicios" && <div className="admin-panel">
@@ -869,6 +868,7 @@ export function AdminDashboard({
               </div>
             </div>
 
+            <div className="team-role-grid">
             <section className="team-role-section">
               <header><div><Scissors/><span><small>ROL OPERATIVO</small><h2>Peluqueros</h2></span></div><b>{activeBarbers.length} activos</b></header>
               <div className="admin-list editable-list team-list admin-managed-list">{activeBarbers.length ? activeBarbers.map((item) => { const invitation = pendingBarbers.find((pending) => String(pending.barber_profile_id) === item.id && String(pending.status) === "pending"); const accountStatus = item.user_id ? "Cuenta vinculada" : invitation ? `Invitado · ${String(invitation.email)}` : "Sin correo asociado"; return <article key={item.id}><div><strong>{String(item.display_name)}</strong><span><i className="team-status-dot" /> Activo · {Array.isArray(item.specialties) ? item.specialties.join(", ") : "Sin especialidades"} · {accountStatus}</span></div>{renderBarberActions(item)}</article>; }) : <p className="admin-help">No hay peluqueros activos.</p>}</div>
@@ -879,6 +879,7 @@ export function AdminDashboard({
               <div className="admin-list team-list">{activeCashiers.length ? activeCashiers.map((item)=>{const profile=item.profiles as Row|null;const email=String(profile?.email??"");return <article key={item.id}><div><strong>{String(profile?.full_name??profile?.email??"Cajero")}</strong><span><i className="team-status-dot"/> Activo · {email} · Acceso a terminal de caja</span></div><button disabled={busy||!email} onClick={()=>toggleCashier(email,false)}>Desactivar</button></article>}) : <p className="admin-help">No hay cajeros activos.</p>}</div>
               {pendingCashiers.length>0&&<div className="team-pending"><h3>Accesos pendientes de Google</h3><div className="admin-list team-list">{pendingCashiers.map((item)=><article key={item.id}><div><strong>{String(item.email)}</strong><span>Invitación guardada · se activará automáticamente en su primer ingreso</span></div><b>Pendiente</b></article>)}</div></div>}
             </section>
+            </div>
 
             <details className="inactive-team">
               <summary><span>Ver personal inactivo</span><b>{inactiveTeamCount}</b></summary>

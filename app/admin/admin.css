@@ -2508,3 +2508,70 @@
   .panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-quick-actions{grid-template-columns:1fr;gap:8px}
   .panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-quick-action{padding:13px;gap:10px}
 }
+
+/* Organización de las vistas administrativas señaladas en revisión. */
+.panel-theme .admin-control-shell .team-role-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);align-items:start;gap:12px;margin-top:14px}
+.panel-theme .admin-control-shell .team-role-section{min-width:0;margin:0;border:1px solid var(--dash-line);border-left:3px solid var(--dash-cyan);border-radius:12px;background:var(--dash-card)}
+.panel-theme .admin-control-shell .team-role-section:nth-of-type(2){border-left-color:var(--dash-copper)}
+.panel-theme .admin-control-shell .team-role-section>header{min-height:58px;padding:10px 13px;border-color:var(--dash-line);background:var(--dash-card-2)}
+.panel-theme .admin-control-shell .team-role-section>header>div>svg{width:34px;height:34px;padding:8px;color:var(--dash-cyan);border-color:var(--dash-line);background:color-mix(in srgb,var(--dash-cyan) 8%,var(--dash-card))}
+.panel-theme .admin-control-shell .team-role-section>header small,.panel-theme .admin-control-shell .team-role-section>header>b{color:var(--dash-cyan)}
+.panel-theme .admin-control-shell .team-role-section>header>b{padding:6px 9px;border-color:var(--dash-line);background:var(--dash-card)}
+.panel-theme .admin-control-shell .team-list{padding-inline:12px}
+.panel-theme .admin-control-shell .team-list>article{min-width:0;min-height:58px;gap:12px;padding:10px 2px}
+.panel-theme .admin-control-shell .team-list>article>div{min-width:0;gap:4px}
+.panel-theme .admin-control-shell .team-list>article strong{font-size:11px;line-height:1.35}
+.panel-theme .admin-control-shell .team-list>article span{font-size:9px;line-height:1.45;overflow-wrap:anywhere}
+.panel-theme .admin-control-shell .team-list>article button,.panel-theme .admin-control-shell .team-list>article>a{flex:none;white-space:nowrap}
+.panel-theme .admin-control-shell .inactive-team{margin-top:13px;border-color:var(--dash-line);background:var(--dash-card)}
+.panel-theme .admin-control-shell .inactive-team>summary{min-height:46px;color:var(--dash-text)}
+.panel-theme .admin-control-shell .inactive-team>summary::before{color:var(--dash-cyan);border-color:var(--dash-line);background:var(--dash-card-2)}
+.panel-theme .admin-control-shell .inactive-team>summary>b{color:var(--dash-muted);background:var(--dash-card-2)}
+.panel-theme .admin-control-shell .inactive-team-content{border-color:var(--dash-line)}
+.panel-theme .admin-control-shell .business-settings-panel{width:100%}
+.panel-theme .admin-control-shell .business-settings-help{margin:-5px 0 14px;color:var(--dash-muted);font-size:11px;line-height:1.5}
+.panel-theme .admin-control-shell .business-settings-form{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+.panel-theme .admin-control-shell .business-settings-form textarea{min-height:76px}
+.panel-theme .admin-control-shell .business-settings-form .business-settings-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:4px}
+.panel-theme .admin-control-shell .business-settings-actions>span{color:var(--dash-muted);font-size:10px}
+.panel-theme .admin-control-shell .business-settings-actions>button{width:auto;min-width:170px;justify-content:center}
+.panel-theme .admin-control-shell .appointment-admin-list>article{display:grid;grid-template-columns:minmax(0,1fr) minmax(420px,auto);align-items:center;gap:18px;padding:12px 4px}
+.panel-theme .admin-control-shell .appointment-admin-list>article>div:first-child{min-width:0;margin:0}
+.panel-theme .admin-control-shell .appointment-admin-list>article>div:first-child strong{font-size:12px;line-height:1.4}
+.panel-theme .admin-control-shell .appointment-admin-list>article>div:first-child span{font-size:9px;line-height:1.45;overflow-wrap:anywhere}
+.panel-theme .admin-control-shell .appointment-admin-list .admin-operation{width:100%;min-width:0;justify-items:stretch}
+.panel-theme .admin-control-shell .appointment-admin-list .admin-operation>div{justify-content:flex-end;flex-wrap:nowrap;gap:6px}
+.panel-theme .admin-control-shell .appointment-admin-list .admin-operation button{min-height:34px;padding:6px 9px;white-space:nowrap}
+.panel-theme .admin-control-shell .appointment-admin-list .admin-operation>small{text-align:right;overflow-wrap:anywhere}
+.panel-theme .admin-control-shell .business-hours-panel{width:100%;max-width:none;padding:24px}
+.panel-theme .admin-control-shell .business-hours-help{max-width:1000px;margin:0 0 12px;font-size:11px;line-height:1.55}
+.panel-theme .admin-control-shell .business-hours-summary{margin:12px 0;padding:12px 14px;gap:13px;border-color:var(--dash-line);background:var(--dash-card-2)}
+.panel-theme .admin-control-shell .business-hours-form{grid-template-columns:1fr;gap:8px}
+.panel-theme .admin-control-shell .business-hours-form>article{min-height:0;padding:11px 13px;display:grid;grid-template-columns:minmax(110px,150px) minmax(0,1fr);align-items:center;gap:8px 16px;border:1px solid var(--dash-line);border-left:3px solid var(--dash-cyan);border-radius:10px;background:var(--dash-card)}
+.panel-theme .admin-control-shell .business-hours-form>article.active{border-left-color:#4c9870}
+.panel-theme .admin-control-shell .business-hours-form>article.closed{border-left-color:var(--dash-muted)}
+.panel-theme .admin-control-shell .business-day-toggle{min-width:0;flex-basis:auto}
+.panel-theme .admin-control-shell .business-day-toggle input{accent-color:var(--dash-cyan)}
+.panel-theme .admin-control-shell .business-day-times{width:100%;flex:none;gap:8px 16px}
+.panel-theme .admin-control-shell .business-day-times legend{margin-bottom:5px;font-size:10px}
+.panel-theme .admin-control-shell .business-shift-times>label{font-size:8px}
+.panel-theme .admin-control-shell .business-day-times input{min-height:36px;border-color:var(--dash-line);background:var(--dash-surface)}
+.panel-theme .admin-control-shell .business-day-break{font-size:9px}
+.panel-theme .admin-control-shell .business-hours-form>.button{justify-self:end;margin-top:4px}
+@media(max-width:1180px){
+  .panel-theme .admin-control-shell .team-role-grid{grid-template-columns:1fr}
+  .panel-theme .admin-control-shell .appointment-admin-list>article{grid-template-columns:minmax(0,1fr) minmax(350px,auto);gap:12px}
+  .panel-theme .admin-control-shell .appointment-admin-list .admin-operation>div{flex-wrap:wrap}
+}
+@media(max-width:760px){
+  .panel-theme .admin-control-shell .business-settings-form{grid-template-columns:1fr}
+  .panel-theme .admin-control-shell .business-settings-form .wide{grid-column:auto}
+  .panel-theme .admin-control-shell .business-settings-form .business-settings-actions{align-items:stretch;flex-direction:column}
+  .panel-theme .admin-control-shell .business-settings-actions>button{width:100%}
+  .panel-theme .admin-control-shell .appointment-admin-list>article{grid-template-columns:minmax(0,1fr);gap:10px}
+  .panel-theme .admin-control-shell .appointment-admin-list .admin-operation>div{justify-content:flex-start;flex-wrap:wrap}
+  .panel-theme .admin-control-shell .appointment-admin-list .admin-operation>small{text-align:left}
+  .panel-theme .admin-control-shell .business-hours-panel{padding:16px!important}
+  .panel-theme .admin-control-shell .business-hours-form>article{grid-template-columns:minmax(0,1fr);align-items:stretch;gap:10px}
+  .panel-theme .admin-control-shell .business-day-times{grid-template-columns:minmax(0,1fr)}
+}
