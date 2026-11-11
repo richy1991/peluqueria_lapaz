@@ -13,5 +13,5 @@ export function LegendCrownIcon({ size = 28, className }: IconProps) {
 }
 
 export function LegendDivider() {
-  return <div className="legend-divider" aria-hidden="true"><span/><StraightRazorIcon size={25}/><BearPawIcon size={24}/><LegendCrownIcon size={25}/><span/></div>;
+  return <div className="legend-divider" aria-hidden="true"><span/><StraightRazorIcon size={25}/><LegendCrownIcon size={25}/><span/></div>;
 }

@@ -7,11 +7,16 @@ import {
   MapPin,
   MessageCircle,
   Sparkles,
+  Scissors,
+  UserRound,
+  Armchair,
+  ShieldCheck,
+  Wifi,
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductCatalog } from "@/components/product-catalog";
-import { BearPawIcon, LegendCrownIcon, LegendDivider, StraightRazorIcon } from "@/components/legend-icons";
+import { LegendCrownIcon, LegendDivider } from "@/components/legend-icons";
 import { getPublicData } from "@/lib/public-data";
 import { BusinessStatus } from "@/components/business-status";
 import { createClient } from "@/lib/supabase/server";
@@ -19,6 +24,16 @@ import { getDashboardPath, getUserCapabilities } from "@/lib/user-capabilities";
 import { InstallAppButton } from "@/components/install-app-button";
 
 export const dynamic = "force-dynamic";
+
+const amenityIcons = [UserRound, Scissors, Armchair, ShieldCheck, Wifi];
+
+function getIntroDescription(description: string, amenities: string[]) {
+  const normalizedDescription = description.toLocaleLowerCase();
+  const repeatedAmenities = amenities.filter((amenity) => normalizedDescription.includes(amenity.toLocaleLowerCase()));
+  return repeatedAmenities.length >= 2
+    ? "Un espacio de barrio para disfrutar del oficio, recibir buena atención y salir con estilo."
+    : description;
+}
 
 type HomePageProps = {
   searchParams: Promise<{ vista?: string | string[] }>;
@@ -71,9 +86,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               <h2>El barrio reconoce<br /><em>un corte bien hecho.</em></h2>
             </div>
             <div className="intro-copy">
-              <p>{business.description}</p>
+              <p>{getIntroDescription(business.description, business.amenities)}</p>
               <div className="mini-benefits">
-                {business.amenities.map((amenity, index) => <span key={amenity}>{index % 3 === 0 ? <BearPawIcon size={18} /> : index % 3 === 1 ? <StraightRazorIcon size={18} /> : <LegendCrownIcon size={18} />} {amenity}</span>)}
+                {business.amenities.map((amenity, index) => {
+                  const AmenityIcon = amenityIcons[index % amenityIcons.length];
+                  return <span key={amenity}><AmenityIcon size={16} strokeWidth={1.8} /> {amenity}</span>;
+                })}
               </div>
             </div>
           </div>
@@ -195,7 +213,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </section>
 
         <section className="closing-cta">
-          <BearPawIcon size={42} />
+          <Scissors size={38} strokeWidth={1.5} aria-hidden="true" />
           <h2>Entra al club.</h2>
           <p>{business.slogan}</p>
           <Link className="button" href="/reservar">Ver horarios disponibles <Sparkles size={17} /></Link>

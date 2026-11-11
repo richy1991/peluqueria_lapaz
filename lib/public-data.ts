@@ -59,6 +59,7 @@ export type BusinessInfo = {
   mapUrl: string;
   instagramUrl: string;
   facebookUrl: string;
+  tiktokUrl: string;
   status: string;
   configuredStatus: string;
   statusMessage: string;
@@ -88,6 +89,7 @@ const fallbackBusiness: BusinessInfo = {
   mapUrl: "https://maps.app.goo.gl/E2riV3QtnhfvmqKK9?g_st=ac",
   instagramUrl: "#",
   facebookUrl: "#",
+  tiktokUrl: "#",
   status: "open",
   configuredStatus: "open",
   statusMessage: "",
@@ -206,6 +208,7 @@ export async function getPublicData() {
           mapUrl: row.map_url ?? fallbackBusiness.mapUrl,
           instagramUrl: row.instagram_url ?? fallbackBusiness.instagramUrl,
           facebookUrl: row.facebook_url ?? fallbackBusiness.facebookUrl,
+          tiktokUrl: row.tiktok_url ?? fallbackBusiness.tiktokUrl,
           status: effectiveStatus,
           configuredStatus,
           statusMessage: effectiveStatus === "schedule_closed" ? "Fuera del horario de atención" : row.status_message ?? "",

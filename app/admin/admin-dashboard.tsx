@@ -397,6 +397,7 @@ export function AdminDashboard({
       map_url: String(data.get("map_url") ?? ""),
       instagram_url: String(data.get("instagram_url") ?? ""),
       facebook_url: String(data.get("facebook_url") ?? ""),
+      tiktok_url: String(data.get("tiktok_url") ?? ""),
       business_status: String(data.get("business_status") ?? "open"),
       status_message: String(data.get("status_message") ?? ""),
     };
@@ -808,8 +809,11 @@ export function AdminDashboard({
               <label>Teléfono<input name="phone" defaultValue={String(settings.phone ?? "")} /></label>
               <label>WhatsApp sin +<input name="whatsapp" defaultValue={String(settings.whatsapp ?? "")} /></label>
               <label className="wide">Enlace de Google Maps<input name="map_url" type="url" defaultValue={String(settings.map_url ?? "")} /></label>
-              <label>Instagram<input name="instagram_url" defaultValue={String(settings.instagram_url ?? "")} /></label>
-              <label>Facebook<input name="facebook_url" defaultValue={String(settings.facebook_url ?? "")} /></label>
+              <fieldset className="admin-social-settings wide"><legend>Redes sociales</legend><div>
+                <label>Instagram<input name="instagram_url" type="url" inputMode="url" placeholder="https://instagram.com/tu-cuenta" defaultValue={String(settings.instagram_url ?? "")} /></label>
+                <label>Facebook<input name="facebook_url" type="url" inputMode="url" placeholder="https://facebook.com/tu-página" defaultValue={String(settings.facebook_url ?? "")} /></label>
+                <label>TikTok<input name="tiktok_url" type="url" inputMode="url" placeholder="https://tiktok.com/@tu-cuenta" defaultValue={String(settings.tiktok_url ?? "")} /></label>
+              </div></fieldset>
               <button className="button button-dark wide" disabled={busy}><Save size={17} /> Guardar cambios</button>
             </form>
             </DashboardModal></div>

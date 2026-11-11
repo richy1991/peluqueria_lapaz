@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
 import { Brand } from "./brand";
+import { FacebookIcon, InstagramIcon, TikTokIcon, WhatsAppIcon } from "./social-icons";
 import type { BusinessInfo } from "@/lib/public-data";
 
 export function SiteFooter({ business }: { business?: BusinessInfo }) {
@@ -29,9 +29,10 @@ export function SiteFooter({ business }: { business?: BusinessInfo }) {
         <div>
           <h3>Síguenos</h3>
           <div className="social-row">
-            <a href={business?.instagramUrl ?? "#"} aria-label="Instagram" target="_blank" rel="noreferrer"><strong>IG</strong></a>
-            <a href={business?.facebookUrl ?? "#"} aria-label="Facebook" target="_blank" rel="noreferrer"><strong>f</strong></a>
-            <a href={business?.whatsapp ? `https://wa.me/${business.whatsapp}` : "#"} aria-label="WhatsApp" target="_blank" rel="noreferrer"><MessageCircle size={20} /></a>
+            {business?.instagramUrl && business.instagramUrl !== "#" && <a className="social-instagram" href={business.instagramUrl} aria-label="Instagram" target="_blank" rel="noreferrer"><InstagramIcon /></a>}
+            {business?.facebookUrl && business.facebookUrl !== "#" && <a className="social-facebook" href={business.facebookUrl} aria-label="Facebook" target="_blank" rel="noreferrer"><FacebookIcon /></a>}
+            {business?.tiktokUrl && business.tiktokUrl !== "#" && <a className="social-tiktok" href={business.tiktokUrl} aria-label="TikTok" target="_blank" rel="noreferrer"><TikTokIcon /></a>}
+            {business?.whatsapp && <a className="social-whatsapp" href={`https://wa.me/${business.whatsapp}`} aria-label="WhatsApp" target="_blank" rel="noreferrer"><WhatsAppIcon /></a>}
           </div>
         </div>
       </div>

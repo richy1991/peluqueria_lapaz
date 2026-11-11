@@ -21,6 +21,9 @@
 .dash-danger-action{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;color:#ffaaa3;border:1px solid rgba(255,111,101,.3);border-radius:8px;background:rgba(255,81,70,.07);cursor:pointer}.dash-danger-action svg{width:14px;height:14px}.dash-danger-action:hover{color:#fff;background:rgba(220,62,51,.35)}
 .admin-form textarea { min-height: 78px; resize: vertical; }
 .admin-form .wide { grid-column: 1 / 3; }
+.admin-form .admin-social-settings { min-width: 0; margin: 0; padding: 14px; border: 1px solid rgba(23,24,20,.14); }
+.admin-form .admin-social-settings legend { padding: 0 6px; color: #6d3828; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.admin-form .admin-social-settings > div { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
 .admin-form .check-label { display: flex; align-items: center; font-weight: 500; }
 .admin-form .check-label input { width: auto; min-height: auto; }
 .admin-list { margin-top: 28px; border-top: 1px solid rgba(23,24,20,.14); }
@@ -113,6 +116,7 @@
   .admin-panel { padding: 20px 15px; }
   .admin-form { grid-template-columns: 1fr; padding: 15px; }
   .admin-form .wide { grid-column: auto; }
+  .admin-form .admin-social-settings > div { grid-template-columns: 1fr; }
   .admin-list article { align-items: flex-start; }
   .admin-metrics { grid-template-columns: 1fr; }.admin-operation { width: 100%; min-width: 0; justify-items: stretch; }.admin-operation > div { flex-wrap: wrap; }.admin-operation summary { text-align: left; }.admin-operation form { grid-template-columns: 1fr; }
   .inline-edit-form { grid-template-columns: 1fr; }.inline-edit-form .wide { grid-column: auto; }.link-account-form { grid-template-columns: 1fr; }
@@ -2384,3 +2388,123 @@
   .panel-theme .barber-pulse i { animation: none; }
 }
 .panel-theme[data-panel-theme="dark"] .support-error { color: var(--lc-danger) !important; background: var(--lc-secondary) !important; }
+
+/* Administración y caja: paleta única y distribución enfocada en escritorio. */
+.panel-theme[data-panel-theme="light"]:has(.admin-control-shell),.panel-theme[data-panel-theme="light"]:has(.cashier-shell){--dash-bg:#f2f0ec;--dash-surface:#fff;--dash-card:#fff;--dash-card-2:#f7f5f1;--dash-line:rgba(51,42,36,.12);--dash-cyan:#792f3d;--dash-copper:#b18a4f;--dash-text:#211d1a;--dash-muted:#706962;color-scheme:light}
+.panel-theme[data-panel-theme="dark"]:has(.admin-control-shell),.panel-theme[data-panel-theme="dark"]:has(.cashier-shell){--dash-bg:#11100f;--dash-surface:#191715;--dash-card:#201d1a;--dash-card-2:#28231f;--dash-line:rgba(228,213,194,.12);--dash-cyan:#d4ad69;--dash-copper:#bd6970;--dash-text:#f4efe8;--dash-muted:#b1a89f;color-scheme:dark}
+.panel-theme[data-panel-theme="light"] :is(.admin-control-shell,.cashier-shell){
+  --dash-bg:#f2f0ec;--dash-surface:#fff;--dash-card:#fff;--dash-card-2:#f7f5f1;
+  --dash-line:rgba(51,42,36,.12);--dash-cyan:#792f3d;--dash-copper:#b18a4f;
+  --dash-text:#211d1a;--dash-muted:#706962;color:var(--dash-text);color-scheme:light;
+  background:radial-gradient(circle at 82% 0,rgba(177,138,79,.09),transparent 30%),linear-gradient(145deg,#f7f5f1,#eeece7);
+}
+.panel-theme[data-panel-theme="dark"] :is(.admin-control-shell,.cashier-shell){
+  --dash-bg:#11100f;--dash-surface:#191715;--dash-card:#201d1a;--dash-card-2:#28231f;
+  --dash-line:rgba(228,213,194,.12);--dash-cyan:#d4ad69;--dash-copper:#bd6970;
+  --dash-text:#f4efe8;--dash-muted:#b1a89f;color:var(--dash-text);color-scheme:dark;
+  background:radial-gradient(circle at 80% 0,rgba(189,105,112,.1),transparent 31%),linear-gradient(145deg,#11100f,#171513 58%,#100f0e);
+}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-header{height:72px;padding-inline:24px;border-color:var(--dash-line);background:rgba(20,18,17,.94);box-shadow:0 10px 32px rgba(0,0,0,.16)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-brand .brand,.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-header .dash-user{color:#f4efe8}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-live,.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-header .dash-user small{color:#c9bda9}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-header .mode-switcher{border-color:rgba(212,173,105,.18);background:#100f0e}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-header .mode-switcher a.active{color:#211b14;background:linear-gradient(135deg,#e3c889,#bd9251);box-shadow:none}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-layout{grid-template-columns:232px minmax(0,1fr);min-height:calc(100vh - 72px)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-layout.nav-collapsed{grid-template-columns:72px minmax(0,1fr)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-sidebar{top:72px;height:calc(100vh - 72px);padding:18px 12px;border-color:var(--dash-line);background:linear-gradient(180deg,#191614,#151311);box-shadow:8px 0 24px rgba(0,0,0,.08)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-sidebar-head p,.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-sidebar nav i{color:#d4ad69}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-sidebar nav :is(a,button),.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-sidebar-foot a{min-height:42px;color:#c4b9a9;border-radius:9px}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-sidebar nav :is(a,button):hover{color:#fff8ec;border-color:rgba(212,173,105,.15);background:rgba(212,173,105,.07);transform:none}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-sidebar nav .active{color:#fff7e8;border-color:rgba(212,173,105,.17);background:linear-gradient(90deg,rgba(121,47,61,.38),rgba(121,47,61,.08));box-shadow:inset 3px 0 #d4ad69}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-content{width:100%;max-width:1720px;margin-inline:auto;padding:28px clamp(20px,2.2vw,38px) 54px}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-content{width:100%;max-width:1760px;margin-inline:auto;padding:24px clamp(20px,2vw,36px) 44px}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-panel{padding:24px;border-color:var(--dash-line);border-radius:14px;background:linear-gradient(145deg,var(--dash-card),var(--dash-surface));box-shadow:0 12px 34px rgba(0,0,0,.08)}
+.panel-theme[data-panel-theme="dark"] :is(.admin-control-shell,.cashier-shell) .admin-panel{box-shadow:0 16px 40px rgba(0,0,0,.2)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-title{gap:12px;margin-bottom:18px}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-title>svg{width:40px;height:40px;padding:10px;color:var(--dash-cyan);border:1px solid color-mix(in srgb,var(--dash-cyan) 20%,transparent);border-radius:11px;background:color-mix(in srgb,var(--dash-cyan) 8%,transparent);filter:none}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-title p,.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-list-head small{color:var(--dash-cyan)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-title h1{font-size:clamp(27px,2.8vw,38px);text-shadow:none}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-section-intro{min-height:0;padding:12px 14px;gap:14px;border-color:var(--dash-line);border-radius:10px;background:color-mix(in srgb,var(--dash-card-2) 72%,transparent)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-form{gap:12px;padding:16px;border-color:var(--dash-line);border-radius:11px;background:var(--dash-card-2)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-form label{color:var(--dash-text)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-form :is(input,textarea,select),.panel-theme :is(.admin-control-shell,.cashier-shell) .inline-edit-form :is(input,textarea,select){color:var(--dash-text);border-color:var(--dash-line);border-radius:8px;background:var(--dash-surface)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-form :is(input,textarea,select)::placeholder{color:var(--dash-muted)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-form select option{color:var(--dash-text);background:var(--dash-surface)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-form :is(input,textarea,select):focus{border-color:var(--dash-cyan);outline:3px solid color-mix(in srgb,var(--dash-cyan) 17%,transparent);box-shadow:none}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-form .admin-social-settings{border-color:var(--dash-line)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-form .admin-social-settings legend{color:var(--dash-cyan)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-form>button,.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-form .button-dark,.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-action-primary{color:#211b14;border:1px solid transparent;background:linear-gradient(135deg,#e1c47f,#b68c4e);box-shadow:0 6px 16px rgba(128,91,42,.16)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-action-secondary{color:#fff6ec;border-color:transparent;background:linear-gradient(135deg,#843848,#612833);box-shadow:0 6px 16px rgba(87,35,45,.18)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-action-ghost,.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-operation button{color:var(--dash-cyan);border-color:var(--dash-line);background:color-mix(in srgb,var(--dash-cyan) 7%,transparent)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-list{border-color:var(--dash-line)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-list article{border-color:var(--dash-line)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-list article:hover{background:color-mix(in srgb,var(--dash-cyan) 5%,transparent)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-list article strong,.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-list article>div{color:var(--dash-text)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) :is(.analytics-card,.program-grid>.program-card,.command-card){color:var(--dash-text);border-color:var(--dash-line);background:linear-gradient(145deg,var(--dash-card),var(--dash-surface));box-shadow:0 12px 34px rgba(0,0,0,.08)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .analytics-card :is(h2,h3,strong),.panel-theme :is(.admin-control-shell,.cashier-shell) .program-card .portal-title h2{color:var(--dash-text)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .analytics-card header{border-color:var(--dash-line)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .analytics-card header>span,.panel-theme :is(.admin-control-shell,.cashier-shell) .analytics-note{color:var(--dash-muted);background:var(--dash-card-2)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .analytics-bar-track{background:var(--dash-card-2)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .analytics-bar-track i{background:linear-gradient(90deg,var(--dash-copper),var(--dash-cyan));box-shadow:none}
+.panel-theme :is(.admin-control-shell,.cashier-shell) :is(.admin-metrics,.analytics-kpis,.cashier-kpis,.analytics-snapshot)>:is(div,article){color:var(--dash-text);border-color:var(--dash-line);background:linear-gradient(145deg,var(--dash-card),var(--dash-surface));box-shadow:none}
+.panel-theme :is(.admin-control-shell,.cashier-shell) :is(.admin-metrics,.analytics-kpis,.cashier-kpis,.analytics-snapshot) :is(strong,span){color:var(--dash-text)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) :is(.admin-metrics,.analytics-kpis,.cashier-kpis,.analytics-snapshot) span{color:var(--dash-muted)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .command-card.featured{background:linear-gradient(145deg,color-mix(in srgb,var(--dash-cyan) 14%,var(--dash-card)),var(--dash-surface))}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-modal{color:var(--dash-text);border-color:var(--dash-line);border-top-color:var(--dash-cyan);background:linear-gradient(145deg,var(--dash-card),var(--dash-surface));box-shadow:0 28px 80px rgba(0,0,0,.35)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .dash-modal-body .admin-form{background:var(--dash-card-2)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-status{color:var(--dash-text);border:1px solid var(--dash-line);border-radius:10px;background:var(--dash-card)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-status b{color:var(--dash-cyan)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-welcome{min-height:0;margin-top:18px;padding:20px 24px;display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:16px;text-align:left}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-orb{width:52px;height:52px;grid-column:1;grid-row:1;border-color:var(--dash-line);border-radius:14px;color:var(--dash-cyan);background:color-mix(in srgb,var(--dash-cyan) 8%,var(--dash-card));box-shadow:none;animation:none}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-orb svg{width:21px}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-welcome-copy{grid-column:2;grid-row:1;min-width:0}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-welcome-copy .eyebrow{margin:0 0 5px;color:var(--dash-cyan);font-size:8px}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-welcome h2{margin:0;color:var(--dash-text);font-size:21px;line-height:1.2}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-welcome-copy>p:last-child{max-width:720px;margin:5px 0 0;color:var(--dash-muted);font-size:10px;line-height:1.5}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-welcome-action{grid-column:3;grid-row:1}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-quick-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-quick-action{min-width:0;min-height:0;padding:18px;gap:16px;border-radius:12px}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-quick-action>div:first-child{min-width:0}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-quick-action>div:first-child>small{color:var(--dash-cyan);font-size:8px;font-weight:800;letter-spacing:.09em}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-quick-action h2{font-size:18px;line-height:1.2}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-quick-action p{max-width:52ch;margin-top:5px;font-size:10px;line-height:1.5}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-queue,.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-product-sale,.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-ledger{margin-top:12px}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-queue>.admin-help{margin:6px 0 12px;font-size:10px}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-client-fields,.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-line-group,.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-benefits{border-color:var(--dash-line);background:var(--dash-card)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-client-modes,.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-service-line,.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-history-filters{border-color:var(--dash-line);background:var(--dash-card-2)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-client-modes button.active{color:#211b14;background:var(--dash-cyan)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-client-results{border-color:var(--dash-line);background:var(--dash-surface)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-client-selected{border-color:color-mix(in srgb,var(--dash-cyan) 35%,var(--dash-line));background:color-mix(in srgb,var(--dash-cyan) 8%,var(--dash-card))}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-add-line{color:var(--dash-cyan);border-color:var(--dash-line);background:color-mix(in srgb,var(--dash-cyan) 7%,transparent)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-settlement-summary>article,.panel-theme :is(.admin-control-shell,.cashier-shell) .settlement-metrics article,.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-ledger-summary article{border-color:var(--dash-line);background:var(--dash-card)}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .settlement-metrics .net,.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-ledger-summary .ledger-grand-total{background:color-mix(in srgb,var(--dash-cyan) 10%,var(--dash-card))}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-settlement-state{color:var(--dash-cyan)!important}
+.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-paid-mark{color:#56a779}
+.panel-theme[data-panel-theme="dark"] :is(.admin-control-shell,.cashier-shell) .cashier-paid-mark{color:#8ccea5}
+.panel-theme:has(.admin-control-shell) .panel-floating-tools>details>summary,.panel-theme:has(.admin-control-shell) .support-fab,.panel-theme:has(.cashier-shell) .panel-floating-tools>details>summary,.panel-theme:has(.cashier-shell) .support-fab{color:#fff7e8;border-color:rgba(212,173,105,.24);background:linear-gradient(145deg,#743440,#3a2524);box-shadow:0 10px 28px rgba(0,0,0,.28)}
+.panel-theme:has(.admin-control-shell) .support-fab i,.panel-theme:has(.cashier-shell) .support-fab i{border-color:#743440;background:#d4ad69}
+.panel-theme:has(.admin-control-shell) .support-window,.panel-theme:has(.cashier-shell) .support-window{border-color:var(--dash-line);background:var(--dash-surface)}
+.panel-theme:has(.admin-control-shell) .support-window>header,.panel-theme:has(.cashier-shell) .support-window>header{background:linear-gradient(110deg,#71313c,#392322)}
+.panel-theme:has(.admin-control-shell) .support-layout>aside,.panel-theme:has(.cashier-shell) .support-layout>aside{border-color:var(--dash-line);background:var(--dash-card)}
+.panel-theme:has(.admin-control-shell) .support-thread,.panel-theme:has(.cashier-shell) .support-thread{background-color:var(--dash-bg);background-image:radial-gradient(color-mix(in srgb,var(--dash-text) 8%,transparent) .7px,transparent .7px)}
+.panel-theme:has(.admin-control-shell) .support-contact,.panel-theme:has(.cashier-shell) .support-contact,.panel-theme:has(.admin-control-shell) .support-compose,.panel-theme:has(.cashier-shell) .support-compose{border-color:var(--dash-line);background:var(--dash-card)}
+.panel-theme:has(.admin-control-shell) .support-messages article,.panel-theme:has(.cashier-shell) .support-messages article{color:var(--dash-text);background:var(--dash-card-2)}
+.panel-theme:has(.admin-control-shell) .support-messages article.mine,.panel-theme:has(.cashier-shell) .support-messages article.mine{color:var(--dash-text);background:color-mix(in srgb,var(--dash-cyan) 15%,var(--dash-card))}
+.panel-theme:has(.admin-control-shell) .support-compose textarea,.panel-theme:has(.cashier-shell) .support-compose textarea{color:var(--dash-text);border-color:var(--dash-line);background:var(--dash-surface)}
+
+@media(max-width:760px){
+  .panel-theme :is(.admin-control-shell,.cashier-shell) .admin-layout,.panel-theme :is(.admin-control-shell,.cashier-shell) .admin-layout.nav-collapsed{display:block;min-height:0}
+  .panel-theme :is(.admin-control-shell,.cashier-shell) .admin-content,.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-content{padding:18px 12px 76px}
+  .panel-theme :is(.admin-control-shell,.cashier-shell) .admin-panel{padding:16px;border-radius:12px}
+  .panel-theme :is(.admin-control-shell,.cashier-shell) .dash-section-intro{padding:11px;gap:10px}
+  .panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-welcome{grid-template-columns:42px minmax(0,1fr);gap:10px;padding:14px}
+  .panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-orb{width:40px;height:40px;grid-column:1;grid-row:1}
+  .panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-welcome-copy{grid-column:2;grid-row:1}
+  .panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-welcome h2{font-size:17px}
+  .panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-welcome-copy>p:last-child{font-size:9px}
+  .panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-welcome-action{grid-column:1/-1;grid-row:2;width:100%}
+  .panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-welcome-action>.dash-modal-trigger,.panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-welcome-action>button{width:100%;justify-content:center}
+  .panel-theme :is(.admin-control-shell,.cashier-shell) .admin-social-settings>div{grid-template-columns:1fr}
+  .panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-quick-actions{grid-template-columns:1fr;gap:8px}
+  .panel-theme :is(.admin-control-shell,.cashier-shell) .cashier-quick-action{padding:13px;gap:10px}
+}
