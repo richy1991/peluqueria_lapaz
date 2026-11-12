@@ -16,6 +16,9 @@ jobs:
     name: Publicar APK para Android y Huawei
     runs-on: ubuntu-latest
     steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v5
+
       - name: Descargar y validar el APK de Expo
         id: artifact
         env:
