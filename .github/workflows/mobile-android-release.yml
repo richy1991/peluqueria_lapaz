@@ -2,84 +2,48 @@ name: Publicar APK de LEGEND CLUB
 
 on:
   workflow_dispatch:
+    inputs:
+      expo_artifact_url:
+        description: URL del APK compilado por EAS (https://expo.dev/artifacts/eas/...apk)
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 jobs:
-  build-android:
-    name: Compilar y publicar APK Android
+  publish-android:
+    name: Publicar APK para Android y Huawei
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-    defaults:
-      run:
-        working-directory: apps/mobile
     steps:
-      - name: Descargar el repositorio
-        uses: actions/checkout@v5
-
-      - name: Preparar Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: apps/mobile/package-lock.json
-
-      - name: Configurar Expo y EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
-      - name: Instalar dependencias móviles
-        run: npm ci
-
-      - name: Compilar APK
-        id: eas-build
+      - name: Descargar y validar el APK de Expo
+        id: artifact
         env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_ARTIFACT_URL: ${{ inputs.expo_artifact_url }}
         run: |
-          eas build --platform android --profile huawei --non-interactive --wait --json > "$RUNNER_TEMP/eas-build.json"
-          node <<'NODE'
-          const fs = require('node:fs');
-          const parsed = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/eas-build.json', 'utf8'));
-          const candidates = Array.isArray(parsed) ? parsed : [parsed];
-          const build = candidates.find((item) => item && typeof item.id === 'string');
-          if (!build) throw new Error('EAS no devolvió el identificador de la compilación.');
-          fs.appendFileSync(process.env.GITHUB_OUTPUT, 'build_id=' + build.id + '\n');
-          fs.appendFileSync(process.env.GITHUB_OUTPUT, 'build_url=' + ((build.artifacts && build.artifacts.buildUrl) || '') + '\n');
-          NODE
+          set -euo pipefail
+          case "$EXPO_ARTIFACT_URL" in
+            https://expo.dev/artifacts/eas/*.apk) ;;
+            *) echo "Usa el enlace APK de expo.dev/artifacts/eas." >&2; exit 1 ;;
+          esac
+          apk="$RUNNER_TEMP/legend-club-android.apk"
+          curl --fail --location --retry 3 --output "$apk" "$EXPO_ARTIFACT_URL"
+          test -s "$apk"
+          unzip -t "$apk" >/dev/null
+          echo "apk_path=$apk" >> "$GITHUB_OUTPUT"
 
-      - name: Descargar el APK generado por EAS
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          BUILD_ID: ${{ steps.eas-build.outputs.build_id }}
-        run: |
-          eas build:download --build-id "$BUILD_ID" --non-interactive --json > "$RUNNER_TEMP/eas-download.json"
-          node <<'NODE'
-          const fs = require('node:fs');
-          const path = require('node:path');
-          const result = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/eas-download.json', 'utf8'));
-          const source = result.path;
-          if (!source || !fs.existsSync(source)) throw new Error('No se encontró el APK descargado desde EAS.');
-          const target = path.resolve('dist/legend-club-android.apk');
-          fs.mkdirSync(path.dirname(target), { recursive: true });
-          fs.copyFileSync(source, target);
-          NODE
-
-      - name: Publicar enlace de descarga en GitHub Releases
+      - name: Publicar en GitHub Releases
         env:
           GH_TOKEN: ${{ github.token }}
-          BUILD_ID: ${{ steps.eas-build.outputs.build_id }}
-          BUILD_URL: ${{ steps.eas-build.outputs.build_url }}
+          APK_PATH: ${{ steps.artifact.outputs.apk_path }}
+          EXPO_ARTIFACT_URL: ${{ inputs.expo_artifact_url }}
         run: |
+          set -euo pipefail
           tag="mobile-apk-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
-          gh release create "$tag" "dist/legend-club-android.apk#APK instalable de LEGEND CLUB para Android y Huawei" \
+          gh release create "$tag" "$APK_PATH#legend-club-android.apk" \
             --target "$GITHUB_SHA" \
-            --title "LEGEND CLUB para Android · ${GITHUB_RUN_NUMBER}" \
-            --notes "APK instalable para Android y Huawei. Compilación EAS: ${BUILD_URL}" \
+            --title "LEGEND CLUB Android ${GITHUB_RUN_NUMBER}" \
+            --notes "APK para Android y Huawei. Compilado con EAS: ${EXPO_ARTIFACT_URL}" \
             --latest
           echo "### APK listo para instalar" >> "$GITHUB_STEP_SUMMARY"
-          echo "[Descargar LEGEND CLUB para Android y Huawei](https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}/legend-club-android.apk)" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Compilación EAS: ${BUILD_URL} (ID: ${BUILD_ID})" >> "$GITHUB_STEP_SUMMARY"
+          echo "[Descargar LEGEND CLUB para Android y Huawei](https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/legend-club-android.apk)" >> "$GITHUB_STEP_SUMMARY"

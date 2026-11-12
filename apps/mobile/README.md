@@ -48,16 +48,14 @@ La instalación y publicación de iOS necesita las credenciales de firma de Appl
 
 ## Descargar el APK desde GitHub
 
-El workflow `.github/workflows/mobile-android-release.yml` compila el perfil `huawei` y publica el APK como un GitHub Release.
+Compila la versión móvil actual con EAS y publica el artefacto desde GitHub Actions:
 
-1. Vincula `apps/mobile` con tu proyecto Expo mediante `npx eas-cli@latest init` y completa una primera compilación Android para crear y guardar la firma de Android en EAS.
-2. Crea un token de acceso de Expo y guárdalo en GitHub en **Settings → Secrets and variables → Actions** con el nombre `EXPO_TOKEN`.
-3. En GitHub abre **Actions → Publicar APK de LEGEND CLUB → Run workflow**.
-4. Al terminar, el resumen del workflow muestra el enlace de descarga. El APK también queda en la sección **Releases**.
+1. Desde `apps/mobile`, ejecuta `npx eas-cli@latest build --platform android --profile huawei --non-interactive --wait`.
+2. Copia el enlace del APK que empieza con `https://expo.dev/artifacts/eas/` desde el resultado o el detalle de la compilación.
+3. En GitHub abre **Actions → Publicar APK de LEGEND CLUB → Run workflow**, pega ese enlace en `expo_artifact_url` y ejecuta el workflow.
+4. Cuando termine, la nueva APK quedará publicada en **Releases**.
 
-En este repositorio, el enlace directo a la descarga más reciente es `https://github.com/richy1991/peluqueria_lapaz/releases/latest/download/legend-club-android.apk`. Funcionará después de la primera publicación. Si el repositorio es privado, solo podrán descargarlo las personas con acceso. El mismo APK se instala en Android y Huawei; iOS necesita su propia compilación y no puede instalar archivos APK.
-
-El workflow debe estar en la rama por defecto para que GitHub muestre la opción **Run workflow**.
+El sitio público usa el enlace estable `https://github.com/richy1991/peluqueria_lapaz/releases/latest/download/legend-club-android.apk`, que siempre dirige a la última publicación. El repositorio debe ser público para que clientes y barberos puedan descargar sin iniciar sesión. El mismo APK se instala en Android y Huawei; iOS necesita su propia compilación y no puede instalar archivos APK.
 
 ## Notificaciones push
 
