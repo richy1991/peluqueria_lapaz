@@ -19,6 +19,7 @@ const authStorage = {
 export const supabase = createClient(url, publishableKey, {
   auth: {
     storage: authStorage,
+    flowType: 'pkce',
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,

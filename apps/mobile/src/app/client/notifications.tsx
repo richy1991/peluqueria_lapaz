@@ -75,13 +75,12 @@ export default function ClientNotificationsScreen() {
       </Card>
 
       <Card>
-        <CardTitle icon={Bell} title="Preferencias" subtitle="Puedes cambiar estas opciones desde la web y desde esta app." />
+        <CardTitle icon={Bell} title="Preferencias" subtitle="Elige qué avisos quieres recibir." />
         <SwitchRow label="Avisos de citas" value={preferences.appointment_notifications} onValueChange={(value) => setPreferences((previous) => ({ ...previous, appointment_notifications: value }))} />
         <SwitchRow label="Promociones y puntos" value={preferences.promotion_notifications} onValueChange={(value) => setPreferences((previous) => ({ ...previous, promotion_notifications: value }))} />
         <SwitchRow label="Mensajes internos" value={preferences.chat_notifications} onValueChange={(value) => setPreferences((previous) => ({ ...previous, chat_notifications: value }))} />
         <SwitchRow label="Silenciar avisos secundarios" value={preferences.muted_all} onValueChange={(value) => setPreferences((previous) => ({ ...previous, muted_all: value }))} />
         <ActionButton label="Guardar preferencias" loading={busyId === 'preferences'} onPress={() => void savePreferences()} />
-        <Text style={styles.note}>Los avisos quedan disponibles dentro de la app. Las notificaciones push del teléfono requieren configurar el servicio de envío y las credenciales de cada plataforma.</Text>
       </Card>
     </AppShell>
   );
@@ -94,5 +93,4 @@ const styles = StyleSheet.create({
   itemTitle: { color: palette.text, fontSize: 13, fontWeight: '800' },
   body: { color: palette.muted, fontSize: 12, lineHeight: 17 },
   date: { color: '#81766c', fontSize: 10 },
-  note: { color: palette.muted, fontSize: 11, lineHeight: 16 },
 });

@@ -1,23 +1,19 @@
-import * as Linking from 'expo-linking';
-import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Scissors, ShieldCheck, Smartphone } from 'lucide-react-native';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, ImageBackground, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { CalendarDays, Globe2 } from 'lucide-react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ActionButton, Card, InlineMessage, palette } from '@/components/ui';
+import salonHeader from '../../../assets/images/salon-header.jpg';
+import brandMark from '../../../assets/images/legend-club-icon.png';
+import { ActionButton, InlineMessage, palette } from '@/components/ui';
+import { publicSiteUrl } from '@/lib/links';
+import { authenticateWithGoogle } from '@/lib/google-auth';
 import { useSession } from '@/lib/session';
-import { supabase } from '@/lib/supabase';
-
-WebBrowser.maybeCompleteAuthSession();
-
-function queryValue(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
 
 export default function SignInScreen() {
-  const { session, role, loading } = useSession();
+  const { session, role, loading, roleError, refreshRole } = useSession();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,75 +28,75 @@ export default function SignInScreen() {
     setBusy(true);
     setError('');
     try {
-      const redirectTo = Linking.createURL('auth/callback', { scheme: 'legendclub' });
-      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo, skipBrowserRedirect: true },
-      });
-      if (oauthError) throw oauthError;
-      if (!data.url) throw new Error('No se pudo iniciar el acceso con Google.');
-
-      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-      if (result.type !== 'success') {
+      const result = await authenticateWithGoogle();
+      if (result === 'cancelled') {
         setBusy(false);
-        return;
-      }
-
-      const parsed = Linking.parse(result.url);
-      const query = parsed.queryParams ?? {};
-      const description = queryValue(query.error_description as string | string[] | undefined);
-      if (description) throw new Error(description);
-
-      const code = queryValue(query.code as string | string[] | undefined);
-      if (code) {
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-        if (exchangeError) throw exchangeError;
-      } else {
-        const fragment = result.url.split('#')[1] ?? '';
-        const tokens = new URLSearchParams(fragment);
-        const accessToken = tokens.get('access_token');
-        const refreshToken = tokens.get('refresh_token');
-        if (!accessToken || !refreshToken) throw new Error('Google no devolvió una sesión válida.');
-        const { error: sessionError } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-        if (sessionError) throw sessionError;
+        setError('Acceso cancelado. Puedes intentarlo de nuevo cuando quieras.');
       }
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'No se pudo iniciar sesión.');
       setBusy(false);
+      setError(reason instanceof Error ? reason.message : 'No se pudo iniciar sesión con Google.');
     }
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.content}>
-        <View style={styles.brandIcon}><Scissors size={28} color={palette.gold} strokeWidth={1.7} /></View>
-        <Text style={styles.wordmark}>LEGEND CLUB</Text>
-        <Text style={styles.title}>Tu estilo, a tu ritmo.</Text>
-        <Text style={styles.description}>Accede a tus citas, puntos y productos, o gestiona tu agenda como peluquero.</Text>
+    <ImageBackground source={salonHeader} resizeMode="cover" style={styles.background} imageStyle={styles.backgroundImage}>
+      <View pointerEvents="none" style={styles.shade} />
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.content}>
+          <Animated.View entering={FadeInDown.duration(520)} style={styles.brand}>
+            <Image source={brandMark} style={styles.brandMark} alt="LEGEND CLUB" accessibilityLabel="LEGEND CLUB" />
+            <Text style={styles.wordmark}>LEGEND CLUB</Text>
+            <Text style={styles.location}>BARBERÍA · LA PAZ</Text>
+          </Animated.View>
 
-        <Card style={styles.loginCard}>
-          <View style={styles.valueRow}><Smartphone size={18} color={palette.gold} /><Text style={styles.valueText}>Una app móvil para cliente y peluquero</Text></View>
-          <View style={styles.valueRow}><ShieldCheck size={18} color={palette.gold} /><Text style={styles.valueText}>Tu cuenta y datos siguen protegidos por Supabase</Text></View>
-          {error ? <InlineMessage>{error}</InlineMessage> : null}
-          <ActionButton label={busy ? 'Conectando…' : 'Continuar con Google'} onPress={() => void continueWithGoogle()} loading={busy} />
-          {loading ? <ActivityIndicator color={palette.gold} /> : null}
-        </Card>
-
-        <Text style={styles.footer}>El sitio público y las reservas mantienen su dirección actual.</Text>
-      </View>
-    </SafeAreaView>
+          <Animated.View entering={FadeInUp.delay(100).duration(560)} style={styles.card}>
+            <View style={styles.goldRule} />
+            <Text style={styles.eyebrow}>BIENVENIDO</Text>
+            <Text style={styles.title}>Tu estilo,{"\n"}a tu ritmo.</Text>
+            {loading && session ? <ActivityIndicator color={palette.gold} /> : null}
+            {error || (session && roleError) ? <InlineMessage>{error || roleError}</InlineMessage> : null}
+            {session && roleError ? (
+              <ActionButton label="Reintentar" onPress={() => { setError(''); void refreshRole(); }} loading={loading} />
+            ) : (
+              <Pressable accessibilityRole="button" disabled={busy} onPress={() => void continueWithGoogle()} style={({ pressed }) => [styles.googleButton, pressed && styles.googlePressed, busy && styles.disabled]}>
+                {busy ? <ActivityIndicator color="#211a14" /> : <Text style={styles.googleG}>G</Text>}
+                <Text style={styles.googleLabel}>{busy ? 'Conectando…' : 'Continuar con Google'}</Text>
+              </Pressable>
+            )}
+            {!session ? <ActionButton label="Reservar una cita" icon={CalendarDays} tone="secondary" onPress={() => router.push('/client/book-appointment')} /> : null}
+            <Pressable onPress={() => void Linking.openURL(publicSiteUrl)} style={styles.publicLink} accessibilityRole="link">
+              <Globe2 size={15} color={palette.gold} />
+              <Text style={styles.publicLabel}>Sitio público</Text>
+            </Pressable>
+          </Animated.View>
+          <Text style={styles.footer}>LEGEND CLUB</Text>
+        </View>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: palette.background },
-  content: { flex: 1, width: '100%', maxWidth: 500, alignSelf: 'center', justifyContent: 'center', paddingHorizontal: 24, gap: 13 },
-  brandIcon: { width: 62, height: 62, borderRadius: 20, backgroundColor: '#34291f', borderColor: '#624d30', borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-  wordmark: { color: palette.gold, fontSize: 12, fontWeight: '900', letterSpacing: 3 },
-  title: { color: palette.text, fontSize: 34, lineHeight: 39, fontWeight: '800', letterSpacing: -0.7 },
-  description: { color: palette.muted, fontSize: 15, lineHeight: 23, marginBottom: 8 },
-  loginCard: { gap: 16 },
-  valueRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  valueText: { flex: 1, color: palette.text, fontSize: 12, lineHeight: 18 },
-  footer: { color: '#887c70', fontSize: 11, lineHeight: 17, textAlign: 'center', marginTop: 6 },
+  background: { flex: 1, backgroundColor: palette.background },
+  backgroundImage: { opacity: 0.42 },
+  shade: { ...StyleSheet.absoluteFill, backgroundColor: '#080706a8' },
+  safe: { flex: 1 },
+  content: { flex: 1, width: '100%', maxWidth: 520, alignSelf: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingTop: 30, paddingBottom: 16 },
+  brand: { alignItems: 'center', gap: 4 },
+  brandMark: { width: 88, height: 88, resizeMode: 'contain', marginBottom: 5 },
+  wordmark: { color: '#fff8ed', fontSize: 15, fontWeight: '900', letterSpacing: 3 },
+  location: { color: palette.gold, fontSize: 9, fontWeight: '800', letterSpacing: 2.2 },
+  card: { borderRadius: 24, borderWidth: 1, borderColor: '#d9ad5d4d', backgroundColor: '#171310f2', padding: 23, gap: 16, shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 24, shadowOffset: { width: 0, height: 13 }, elevation: 16 },
+  goldRule: { width: 48, height: 3, borderRadius: 99, backgroundColor: palette.gold, marginBottom: 2 },
+  eyebrow: { color: palette.gold, fontSize: 10, fontWeight: '900', letterSpacing: 2 },
+  title: { color: palette.text, fontSize: 36, lineHeight: 41, fontWeight: '800', letterSpacing: -0.8 },
+  googleButton: { minHeight: 52, borderRadius: 14, backgroundColor: '#f8f4ed', paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 11 },
+  googlePressed: { transform: [{ scale: 0.985 }], opacity: 0.9 },
+  disabled: { opacity: 0.6 },
+  googleG: { color: '#4285f4', fontSize: 19, fontWeight: '900' },
+  googleLabel: { color: '#201a14', fontSize: 14, fontWeight: '800' },
+  publicLink: { alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 7, padding: 8 },
+  publicLabel: { color: palette.muted, fontSize: 12, fontWeight: '700' },
+  footer: { color: '#d4c5b5', opacity: 0.58, fontSize: 9, fontWeight: '800', letterSpacing: 3, textAlign: 'center' },
 });

@@ -69,12 +69,12 @@ export default function BarberAgendaScreen() {
         <CardTitle icon={History} title="Agenda semanal" subtitle="Próximos siete días" />
         {Object.entries(groups).length ? Object.entries(groups).map(([key, appointments]) => (
           <View key={key} style={styles.dayGroup}>
-            <Text style={styles.dayTitle}>{formatDate(appointments[0].starts_at, { weekday: 'long', dateStyle: 'full', timeZone: data?.timezone ?? 'America/La_Paz' })}</Text>
+            <Text style={styles.dayTitle}>{formatDate(appointments[0].starts_at, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: data?.timezone ?? 'America/La_Paz' })}</Text>
             {appointments.map((appointment) => {
               const client = clientById.get(appointment.id);
               return <View key={appointment.id} style={styles.weekItem}>
                 <Text style={styles.time}>{formatDate(appointment.starts_at, { timeStyle: 'short', timeZone: data?.timezone ?? 'America/La_Paz' })}</Text>
-                <View style={{ flex: 1, gap: 3 }}><Text style={styles.clientName}>{client?.full_name ?? appointment.client_name_snapshot ?? 'Cliente'}</Text><Text style={styles.muted}>{appointment.service_name_snapshot} · {statusLabel(appointment.status)}</Text></View>
+                <View style={{ flex: 1, gap: 3 }}><Text style={styles.clientName}>{client?.full_name ?? appointment.client_name_snapshot ?? 'Cliente'}</Text><Text style={styles.muted}>{appointment.service_name_snapshot} · {statusLabel(appointment.status)}</Text>{client?.phone ? <Pressable onPress={() => void Linking.openURL('tel:' + client.phone)} style={styles.phone}><Phone size={13} color={palette.gold} /><Text style={styles.muted}>{client.phone}</Text></Pressable> : null}</View>
               </View>;
             })}
           </View>

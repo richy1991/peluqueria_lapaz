@@ -19,8 +19,7 @@ export default function IndexRoute() {
     return (
       <View style={styles.center}>
         <Text style={styles.brand}>LEGEND CLUB</Text>
-        <Text style={styles.title}>Este acceso se administra desde la web</Text>
-        <Text style={styles.copy}>La app móvil está preparada para las cuentas de cliente y peluquero.</Text>
+        <Text style={styles.title}>No se pudo abrir esta cuenta</Text>
         <ActionButton label="Cerrar sesión" onPress={() => void signOut()} tone="secondary" />
       </View>
     );

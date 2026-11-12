@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { router } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { CalendarCheck, CalendarDays, Check, ChevronLeft, Clock3, Scissors, ShieldCheck, Sun, Sunset, UserRound } from 'lucide-react-native';
+import { CalendarCheck, CalendarDays, Check, ChevronLeft, Clock3, LogIn, Scissors, ShieldCheck, Sun, Sunset, UserRound } from 'lucide-react-native';
 
 import { AppShell } from '@/components/AppShell';
 import { ActionButton, Card, CardTitle, EmptyState, InlineMessage, PageHeading, TextField, palette } from '@/components/ui';
@@ -10,6 +10,7 @@ import { businessDateKey, zonedDateTimeToDate } from '@/lib/business-time';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
 import { publicMediaUrl, requireData, useRemoteData } from '@/lib/utils';
+import { authenticateWithGoogle } from '@/lib/google-auth';
 
 type Service = { slug: string; name: string; description: string | null; category: string | null; price: number; duration_minutes: number };
 type Barber = { slug: string; display_name: string; bio: string | null; photo_path: string | null; specialties: string[] | null };
@@ -57,12 +58,13 @@ export default function ClientBookingScreen() {
   const [availabilityVersion, setAvailabilityVersion] = useState(0);
   const [bookingError, setBookingError] = useState('');
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
   const [confirmed, setConfirmed] = useState(false);
   const selectedTimeRef = useRef('');
   const phonePrefilled = useRef(false);
 
   const query = useRemoteData<BookingData>(async () => {
-    if (!userId) throw new Error('Inicia sesión para reservar una cita.');
     const settingsResult = await supabase.from('business_settings').select('timezone,business_status').eq('id', true).maybeSingle();
     const servicesResult = await supabase.from('services').select('slug,name,description,category,price,duration_minutes').eq('status', 'active').order('price');
     const barbersResult = await supabase.from('barber_profiles').select('slug,display_name,bio,photo_path,specialties').eq('active', true).order('display_name');
@@ -78,8 +80,8 @@ export default function ClientBookingScreen() {
     const rangeEnd = zonedDateTimeToDate(afterLastDay.toISOString().slice(0, 10) + 'T00:00:00', timezone).toISOString();
     const [hoursResult, appointmentsResult, profileResult] = await Promise.all([
       supabase.from('business_hours').select('weekday,opens_at,closes_at,afternoon_opens_at,afternoon_closes_at,active').order('weekday'),
-      supabase.from('appointments').select('starts_at').eq('client_id', userId).neq('status', 'canceled').gte('starts_at', rangeStart).lt('starts_at', rangeEnd),
-      supabase.from('profiles').select('phone').eq('id', userId).maybeSingle(),
+      userId ? supabase.from('appointments').select('starts_at').eq('client_id', userId).neq('status', 'canceled').gte('starts_at', rangeStart).lt('starts_at', rangeEnd) : Promise.resolve({ data: [], error: null }),
+      userId ? supabase.from('profiles').select('phone').eq('id', userId).maybeSingle() : Promise.resolve({ data: null, error: null }),
     ]);
     const hours = requireData(hoursResult) as BusinessHour[];
     const appointments = requireData(appointmentsResult) as Array<{ starts_at: string }>;
@@ -109,11 +111,11 @@ export default function ClientBookingScreen() {
   useEffect(() => { selectedTimeRef.current = selectedTime; }, [selectedTime]);
 
   useEffect(() => {
-    if (data && !phonePrefilled.current) {
+    if (data && userId && !query.loading && !phonePrefilled.current) {
       setPhone(data.phone);
       phonePrefilled.current = true;
     }
-  }, [data]);
+  }, [data, query.loading, userId]);
 
   useEffect(() => {
     if (!data || !dayKey || !serviceSlug) return;
@@ -217,13 +219,26 @@ export default function ClientBookingScreen() {
     query.refresh();
   }
 
+  async function signInToReserve() {
+    setAuthLoading(true);
+    setAuthError('');
+    try {
+      const result = await authenticateWithGoogle();
+      if (result === 'cancelled') setAuthError('Acceso cancelado. Puedes volver a intentarlo.');
+    } catch (reason) {
+      setAuthError(reason instanceof Error ? reason.message : 'No se pudo iniciar sesión con Google.');
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
   const onBack = () => {
-    if (step === 1) router.replace('/client');
+    if (step === 1) router.replace(userId ? '/client' : '/sign-in');
     else setStep((value) => Math.max(1, value - 1));
   };
 
   return (
-    <AppShell title="Reservar cita" roleLabel="MODO CLIENTE" tabs={clientTabs} backHref="/client">
+    <AppShell title="Reservar cita" roleLabel="RESERVAS" tabs={userId ? clientTabs : []} backHref={userId ? '/client' : '/sign-in'} showChat={Boolean(userId)}>
       {confirmed && selectedService ? (
         <>
           <PageHeading eyebrow="Reserva registrada" title="¡Nos vemos pronto!" description="Tu cita quedó registrada. Puedes consultarla o cancelarla desde tu cuenta." />
@@ -328,18 +343,28 @@ export default function ClientBookingScreen() {
               <SummaryRow label="Profesional" value={selectedBarber?.display_name ?? 'Primero disponible'} />
               <SummaryRow label="Horario" value={displayDate(selectedDay) + ' · ' + selectedTime} />
               <SummaryRow label="Precio" value={'Bs ' + Number(selectedService.price).toFixed(2)} />
-              <Text style={styles.accountName}>{session?.user.user_metadata?.full_name || session?.user.email?.split('@')[0] || 'Cliente'}</Text>
-              <Text style={styles.muted}>{session?.user.email}</Text>
-              <TextField label="Teléfono de contacto" value={phone} onChangeText={setPhone} placeholder="Ej. 720 12345" keyboardType="phone-pad" maxLength={20} />
-              <Pressable style={styles.termsRow} onPress={() => setAcceptedTerms((value) => !value)} accessibilityRole="checkbox" accessibilityState={{ checked: acceptedTerms }}>
-                <View style={[styles.checkbox, acceptedTerms && styles.checkboxSelected]}>{acceptedTerms ? <Check size={14} color="#20180f" /> : null}</View>
-                <Text style={styles.muted}>Acepto las condiciones de reserva y cancelación.</Text>
-              </Pressable>
-              {bookingError ? <InlineMessage>{bookingError}</InlineMessage> : null}
-              <View style={styles.buttonRow}>
-                <ActionButton label="Atrás" icon={ChevronLeft} tone="secondary" onPress={onBack} />
-                <ActionButton label={bookingLoading ? 'Confirmando…' : 'Confirmar reserva'} icon={CalendarCheck} disabled={phone.trim().length < 7 || !acceptedTerms} loading={bookingLoading} onPress={() => void confirmBooking()} />
-              </View>
+              {!session ? (
+                <View style={styles.loginBox}>
+                  <Text style={styles.sectionLabel}>Inicia sesión para reservar</Text>
+                  <ActionButton label="Continuar con Google" icon={LogIn} loading={authLoading} onPress={() => void signInToReserve()} />
+                  {authError ? <InlineMessage>{authError}</InlineMessage> : null}
+                </View>
+              ) : (
+                <>
+                  <Text style={styles.accountName}>{session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Cliente'}</Text>
+                  <Text style={styles.muted}>{session.user.email}</Text>
+                  <TextField label="Teléfono de contacto" value={phone} onChangeText={setPhone} placeholder="Ej. 720 12345" keyboardType="phone-pad" maxLength={20} />
+                  <Pressable style={styles.termsRow} onPress={() => setAcceptedTerms((value) => !value)} accessibilityRole="checkbox" accessibilityState={{ checked: acceptedTerms }}>
+                    <View style={[styles.checkbox, acceptedTerms && styles.checkboxSelected]}>{acceptedTerms ? <Check size={14} color="#20180f" /> : null}</View>
+                    <Text style={styles.muted}>Acepto las condiciones de reserva y cancelación.</Text>
+                  </Pressable>
+                  {bookingError ? <InlineMessage>{bookingError}</InlineMessage> : null}
+                  <View style={styles.buttonRow}>
+                    <ActionButton label="Atrás" icon={ChevronLeft} tone="secondary" onPress={onBack} />
+                    <ActionButton label={bookingLoading ? 'Confirmando…' : 'Confirmar reserva'} icon={CalendarCheck} disabled={phone.trim().length < 7 || !acceptedTerms} loading={bookingLoading} onPress={() => void confirmBooking()} />
+                  </View>
+                </>
+              )}
             </Card>
           ) : null}
           {step > 1 && step !== 3 && step !== 4 ? <ActionButton label="Atrás" icon={ChevronLeft} tone="secondary" onPress={onBack} /> : null}
@@ -407,6 +432,7 @@ const styles = StyleSheet.create({
   summaryValue: { flex: 1, color: palette.text, fontSize: 12, fontWeight: '800', textAlign: 'right' },
   accountName: { color: palette.text, fontSize: 14, fontWeight: '800' },
   termsRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 5 },
+  loginBox: { borderColor: palette.border, borderWidth: 1, borderRadius: 14, backgroundColor: '#191512', padding: 14, gap: 12 },
   checkbox: { width: 22, height: 22, alignItems: 'center', justifyContent: 'center', borderRadius: 6, borderWidth: 1, borderColor: palette.border },
   checkboxSelected: { backgroundColor: palette.gold, borderColor: palette.gold },
   buttonRow: { flexDirection: 'row', gap: 9 },

@@ -16,7 +16,7 @@ Las fotos del perfil y de la galería se reducen a un máximo de 1600 px, se con
 1. Instala Node.js 22.13 o posterior.
 2. Desde esta carpeta ejecuta `npm install`.
 3. Copia `.env.example` a `.env` si necesitas cambiar el proyecto de Supabase o el dominio público.
-4. En Supabase Auth agrega `legendclub://auth/callback` a las URL de redirección permitidas. Mantén Google configurado como proveedor.
+4. Mantén Google configurado como proveedor en Supabase. El acceso móvil vuelve por el callback web /auth/callback?native=1 y entrega el código a legendclub://auth/callback sin crear una sesión dentro del navegador.
 5. Ejecuta `npx expo start` y abre la app en un development build.
 
 El endpoint y la publishable key incluidos como respaldo son públicos, igual que en la web. No uses una clave `service_role` ni una `sb_secret` en esta app.
