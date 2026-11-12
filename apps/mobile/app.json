@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "LEGEND CLUB",
+    "slug": "legend-club-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/legend-club-icon.png",
+    "scheme": "legendclub",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#171310",
+    "ios": {
+      "bundleIdentifier": "com.legendclub.barberia",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.legendclub.barberia",
+      "adaptiveIcon": {
+        "backgroundColor": "#171310",
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "output": "server",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#171310",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 150
+        }
+      ],
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "LEGEND CLUB utiliza tus fotos para actualizar tu perfil y compartir trabajos autorizados.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

@@ -3,6 +3,8 @@
 import { Download, ExternalLink, Smartphone } from "lucide-react";
 import { useEffect, useState } from "react";
 
+const ANDROID_APK_URL = "https://github.com/richy1991/peluqueria_lapaz/releases/latest/download/legend-club-android.apk";
+
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
@@ -24,7 +26,7 @@ function getInstallContext() {
   };
 }
 
-export function InstallAppButton({ compact = false }: { compact?: boolean }) {
+export function InstallAppButton({ compact = false, androidApk = false }: { compact?: boolean; androidApk?: boolean }) {
   const installContext = getInstallContext();
   const [installEvent, setInstallEvent] = useState<InstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(installContext.installed);
@@ -69,17 +71,31 @@ export function InstallAppButton({ compact = false }: { compact?: boolean }) {
     }
   }
 
-  if (installed) return <span className="pwa-installed"><Smartphone size={16} /> App instalada</span>;
+  if (installed && !(androidApk && platform === "android")) return <span className="pwa-installed"><Smartphone size={16} /> App instalada</span>;
   let instructions = "En Chrome, Edge, Firefox o Safari: usa el icono de instalación de la barra de direcciones o el menú del navegador.";
   if (platform === "ios") {
     instructions = iosBrowser === "safari"
-      ? "En iPhone o iPad: pulsa Compartir en Safari y elige “Agregar a inicio”."
-      : "iOS solo permite instalar desde Safari. Copia esta dirección, ábrela en Safari y pulsa Compartir → Agregar a inicio.";
+      ? "En iPhone o iPad: pulsa Compartir en Safari y elige “Agregar a pantalla de inicio”."
+      : "En iOS, abre esta página en Safari, pulsa Compartir y elige “Agregar a pantalla de inicio”.";
   } else if (platform === "android") {
     instructions = isXiaomi
-      ? "En Redmi/Xiaomi: confirma “Instalar” si aparece. Si no aparece, abre el menú del navegador y elige “Instalar aplicación” o “Agregar a pantalla principal”. En Mi Browser puede aparecer como “Añadir a pantalla de inicio”."
-      : "En Android o Huawei: confirma “Instalar” en el diálogo. Si no aparece, abre el menú del navegador y elige “Instalar aplicación” o “Agregar a pantalla principal”.";
+      ? "En Redmi o Xiaomi: confirma “Instalar” si aparece. Si no aparece, abre el menú del navegador y elige “Instalar aplicación” o “Agregar a pantalla principal”."
+      : "En Android o Huawei: abre el menú del navegador y elige “Instalar aplicación” o “Agregar a pantalla principal”.";
   }
+
+  if (androidApk && platform === "android") return <div className={`pwa-install ${compact ? "pwa-install-compact" : ""}`}>
+    <a className={compact ? "button button-small" : "button"} href={ANDROID_APK_URL}>
+      <Download size={17} /> Descargar APK
+    </a>
+    <button type="button" className="pwa-install-web" onClick={() => void install()}>
+      <Smartphone size={14} /> Instalar versión web
+    </button>
+    {showHelp && <div className="pwa-install-help" role="status">
+      <strong>Instalar la versión web</strong><span>{instructions}</span>{message && <small>{message}</small>}
+      <button type="button" onClick={() => setShowHelp(false)} aria-label="Cerrar instrucciones"><ExternalLink size={14} /> Entendido</button>
+    </div>}
+  </div>;
+
   return <div className={`pwa-install ${compact ? "pwa-install-compact" : ""}`}>
     <button type="button" className={compact ? "button button-small" : "button"} onClick={install}><Download size={17} /> Instalar la app</button>
     {showHelp && <div className="pwa-install-help" role="status"><strong>Instalación segura</strong><span>{instructions}</span><small>El sistema solicitará tu confirmación. No se instala nada sin tu permiso.</small>{message && <small>{message}</small>}<button type="button" onClick={() => setShowHelp(false)} aria-label="Cerrar instrucciones"><ExternalLink size={14} /> Entendido</button></div>}

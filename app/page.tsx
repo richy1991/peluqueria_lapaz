@@ -66,7 +66,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               <Link className="button" href="/reservar">
                 Reservar una cita <ArrowRight size={18} />
               </Link>
-              <InstallAppButton />
+              <InstallAppButton androidApk />
               <Link className="text-link light-link" href="#servicios">Ver servicios</Link>
             </div>
           </div>

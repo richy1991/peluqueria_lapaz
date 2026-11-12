@@ -2575,3 +2575,240 @@
   .panel-theme .admin-control-shell .business-hours-form>article{grid-template-columns:minmax(0,1fr);align-items:stretch;gap:10px}
   .panel-theme .admin-control-shell .business-day-times{grid-template-columns:minmax(0,1fr)}
 }
+
+/* Organización común de las páginas de Administración y Caja. */
+.panel-theme .admin-control-shell .admin-content,
+.panel-theme .cashier-shell .cashier-content{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  align-content:start;
+  gap:12px;
+}
+.panel-theme .admin-control-shell .admin-content>*,
+.panel-theme .cashier-shell .cashier-content>*{min-width:0}
+.panel-theme .admin-control-shell .admin-content>.admin-panel,
+.panel-theme .cashier-shell .cashier-content>.admin-panel{width:100%;min-width:0;margin:0}
+.panel-theme .admin-control-shell .admin-content>.admin-panel>.admin-list{margin-top:14px}
+.panel-theme .admin-control-shell .admin-title{margin-bottom:14px}
+.panel-theme .admin-control-shell .dash-section-intro{min-height:0;flex-wrap:wrap}
+.panel-theme .admin-control-shell .admin-record-count{
+  flex:none;
+  padding:7px 9px;
+  color:var(--dash-muted);
+  border:1px solid var(--dash-line);
+  border-radius:999px;
+  background:var(--dash-card);
+  font-size:9px;
+  font-weight:700;
+}
+.panel-theme .admin-control-shell .admin-list-empty{
+  min-height:88px;
+  padding:16px 4px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  border-bottom:1px solid var(--dash-line);
+}
+.panel-theme .admin-control-shell .admin-list-empty>svg{
+  width:36px;
+  height:36px;
+  flex:none;
+  padding:9px;
+  color:var(--dash-cyan);
+  border:1px solid var(--dash-line);
+  border-radius:10px;
+  background:var(--dash-card-2);
+}
+.panel-theme .admin-control-shell .admin-list-empty>div{min-width:0;display:grid;gap:4px}
+.panel-theme .admin-control-shell .admin-list-empty strong{color:var(--dash-text);font-size:11px}
+.panel-theme .admin-control-shell .admin-list-empty span{color:var(--dash-muted);font-size:9px;line-height:1.5}
+
+/* El perfil ocupa dos zonas útiles en escritorio en vez de limitarse a una columna. */
+.panel-theme .admin-control-shell .admin-profile-panel{
+  max-width:none;
+  display:grid;
+  grid-template-columns:minmax(260px,.85fr) minmax(0,1.15fr);
+  align-content:start;
+  align-items:stretch;
+  gap:12px;
+}
+.panel-theme .admin-control-shell .admin-profile-panel>.admin-title{grid-column:1/-1;margin-bottom:4px}
+.panel-theme .admin-control-shell .admin-profile-identity{min-width:0;min-height:100%;margin:0;padding:18px;border-color:var(--dash-line);background:var(--dash-card-2)}
+.panel-theme .admin-control-shell .admin-profile-details{min-width:0;margin:0;align-content:stretch}
+.panel-theme .admin-control-shell .admin-profile-details>div{background:var(--dash-card-2)}
+
+/* Programa comercial en columnas independientes para evitar tarjetas estiradas. */
+.panel-theme .admin-control-shell .program-layout{
+  display:grid;
+  grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);
+  align-items:start;
+  gap:14px;
+}
+.panel-theme .admin-control-shell .program-column{min-width:0;display:grid;align-content:start;gap:12px}
+.panel-theme .admin-control-shell .program-layout .program-card{
+  position:relative;
+  min-width:0;
+  margin:0;
+  padding:18px;
+  overflow:hidden;
+  color:var(--dash-text);
+  border:1px solid var(--dash-line);
+  border-radius:12px;
+  background:linear-gradient(145deg,var(--dash-card),var(--dash-surface));
+  box-shadow:0 10px 26px rgba(0,0,0,.08);
+}
+.panel-theme[data-panel-theme="dark"] .admin-control-shell .program-layout .program-card{box-shadow:0 12px 30px rgba(0,0,0,.16)}
+.panel-theme .admin-control-shell .program-layout .program-card>header{min-height:38px;margin-bottom:12px;align-items:center}
+.panel-theme .admin-control-shell .program-layout .program-card .portal-title{min-width:0;gap:9px}
+.panel-theme .admin-control-shell .program-layout .program-card .portal-title>svg{width:22px;height:22px;flex:none;color:var(--dash-copper)}
+.panel-theme .admin-control-shell .program-layout .program-card .portal-title h2{font-size:18px;line-height:1.2}
+.panel-theme .admin-control-shell .program-layout .program-card>header>span{padding:5px 8px;color:var(--dash-copper);background:var(--dash-card-2)}
+.panel-theme .admin-control-shell .program-layout .program-card>.admin-list{margin-top:12px}
+.panel-theme .admin-control-shell .program-layout .admin-list>article{min-height:54px;padding-block:9px;gap:10px}
+.panel-theme .admin-control-shell .program-layout .admin-list>article>div{min-width:0;gap:4px}
+.panel-theme .admin-control-shell .program-layout .admin-list>article strong{font-size:11px;line-height:1.35}
+.panel-theme .admin-control-shell .program-layout .admin-list>article span{font-size:9px;line-height:1.4}
+.panel-theme .admin-control-shell .program-layout .program-card>.dash-action{min-height:36px}
+.panel-theme .admin-control-shell .program-rule-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:0 0 12px}
+.panel-theme .admin-control-shell .program-rule-summary>div{min-width:0;padding:10px;border:1px solid var(--dash-line);border-radius:9px;background:var(--dash-card-2)}
+.panel-theme .admin-control-shell .program-rule-summary span,.panel-theme .admin-control-shell .program-incentive-summary span{display:block;color:var(--dash-muted);font-size:8px;line-height:1.35}
+.panel-theme .admin-control-shell .program-rule-summary strong{display:block;margin-top:4px;color:var(--dash-text);font-size:10px;line-height:1.3}
+.panel-theme .admin-control-shell .program-empty{margin-top:12px;padding:13px;display:grid;gap:4px;border:1px dashed var(--dash-line);border-radius:9px;background:var(--dash-card-2)}
+.panel-theme .admin-control-shell .program-empty strong{color:var(--dash-text);font-size:10px}
+.panel-theme .admin-control-shell .program-empty span,.panel-theme .admin-control-shell .program-card-help{margin:0;color:var(--dash-muted);font-size:9px;line-height:1.5}
+.panel-theme .admin-control-shell .program-card-help{margin-bottom:12px}
+.panel-theme .admin-control-shell .program-incentive-summary{margin-bottom:8px;display:flex;align-items:baseline;gap:8px}
+.panel-theme .admin-control-shell .program-incentive-summary strong{color:var(--dash-cyan);font-size:24px;line-height:1}
+.panel-theme .admin-control-shell .program-layout .dash-action-stack{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.panel-theme .admin-control-shell .program-layout .dash-action-stack>.dash-action{width:100%;min-height:38px;padding-inline:9px;line-height:1.25;text-align:center}
+
+/* Caja: resumen y operación principal permanecen juntos y usan el ancho necesario. */
+.panel-theme .cashier-shell .cashier-content{gap:12px}
+.panel-theme .cashier-shell .cashier-content>.dash-page-heading{margin:0}
+.panel-theme .cashier-shell .cashier-queue,
+.panel-theme .cashier-shell .cashier-product-sale,
+.panel-theme .cashier-shell .cashier-reservations,
+.panel-theme .cashier-shell .cashier-ledger,
+.panel-theme .cashier-shell .cashier-team-panel,
+.panel-theme .cashier-shell .cashier-history,
+.panel-theme .cashier-shell .cashier-quick-actions{margin:0}
+.panel-theme .cashier-shell .cashier-product-sale{padding:18px 20px}
+.panel-theme .cashier-shell .cashier-product-layout{display:grid;grid-template-columns:minmax(0,1fr) auto max-content;align-items:center;gap:18px}
+.panel-theme .cashier-shell .cashier-product-copy{min-width:0}
+.panel-theme .cashier-shell .cashier-product-copy .dash-list-head{margin:0}
+.panel-theme .cashier-shell .cashier-product-copy .dash-list-head>svg{color:var(--dash-cyan)}
+.panel-theme .cashier-shell .cashier-product-copy .admin-help{max-width:70ch;margin:6px 0 0;font-size:10px;line-height:1.5}
+.panel-theme .cashier-shell .cashier-product-stats{display:flex;flex-wrap:wrap;gap:7px}
+.panel-theme .cashier-shell .cashier-product-stats>span{padding:8px 10px;color:var(--dash-muted);border:1px solid var(--dash-line);border-radius:8px;background:var(--dash-card-2);font-size:8px;white-space:nowrap}
+.panel-theme .cashier-shell .cashier-product-stats strong{color:var(--dash-text);font-size:13px}
+.panel-theme .cashier-shell .cashier-inline-empty{max-width:280px;display:grid;gap:3px;color:var(--dash-muted);font-size:9px;line-height:1.45}
+.panel-theme .cashier-shell .cashier-inline-empty strong{color:var(--dash-text);font-size:10px}
+.panel-theme .cashier-shell .cashier-reservation-overview,
+.panel-theme .cashier-shell .cashier-settlement-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.panel-theme .cashier-shell .cashier-reservation-overview>article,
+.panel-theme .cashier-shell .cashier-settlement-overview>article{min-width:0;padding:10px 12px;display:grid;gap:4px;border:1px solid var(--dash-line);border-radius:9px;background:var(--dash-card-2)}
+.panel-theme .cashier-shell .cashier-reservation-overview span,
+.panel-theme .cashier-shell .cashier-settlement-overview span{color:var(--dash-muted);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.panel-theme .cashier-shell .cashier-reservation-overview strong,
+.panel-theme .cashier-shell .cashier-settlement-overview strong{color:var(--dash-text);font-size:15px;line-height:1.2}
+.panel-theme .cashier-shell .cashier-reservation-list{margin-top:12px}
+.panel-theme .cashier-shell .cashier-empty-state{min-height:112px;padding:18px;display:grid;place-items:center;align-content:center;gap:7px;text-align:center;border:1px dashed var(--dash-line);border-radius:10px;background:var(--dash-card-2)}
+.panel-theme .cashier-shell .cashier-empty-state>svg{width:25px;height:25px;color:var(--dash-cyan)}
+.panel-theme .cashier-shell .cashier-empty-state>strong{color:var(--dash-text);font-size:11px}
+.panel-theme .cashier-shell .cashier-empty-state>span{max-width:48ch;color:var(--dash-muted);font-size:9px;line-height:1.5}
+.panel-theme .cashier-shell .cashier-settlement-overview{margin:12px 0 8px}
+.panel-theme .cashier-shell .cashier-settlement-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0}
+.panel-theme .cashier-shell .cashier-settlement-summary>article{min-width:0;padding:12px;border-color:var(--dash-line);background:var(--dash-card-2)}
+.panel-theme .cashier-shell .cashier-settlement-summary>article>div{min-width:0}
+.panel-theme .cashier-shell .cashier-settlement-summary>article>div>strong{overflow-wrap:anywhere;color:var(--dash-text);font-size:11px}
+.panel-theme .cashier-shell .cashier-settlement-summary>article span{font-size:9px;line-height:1.4}
+.panel-theme .cashier-shell .cashier-history .admin-list{margin-top:12px}
+.panel-theme .cashier-shell .cashier-history .admin-list>article{align-items:center;gap:14px}
+.panel-theme .cashier-shell .cashier-history .admin-list>article>div:first-child{min-width:0}
+.panel-theme .cashier-shell .cashier-history .admin-list>article small{color:var(--dash-muted);font-size:9px;line-height:1.45;overflow-wrap:anywhere}
+.panel-theme .admin-control-shell .dash-section-intro .admin-record-count{align-self:center}
+.panel-theme .admin-control-shell .clients-empty,
+.panel-theme .admin-control-shell .products-empty{min-height:170px;padding:22px 16px;gap:6px}
+.panel-theme .admin-control-shell .clients-empty>svg,
+.panel-theme .admin-control-shell .products-empty>svg{width:38px;height:38px;padding:9px;border-radius:11px}
+.panel-theme .admin-control-shell .clients-empty h3,
+.panel-theme .admin-control-shell .products-empty h3{margin:5px 0 2px;font-size:15px}
+.panel-theme .admin-control-shell .clients-empty a,
+.panel-theme .admin-control-shell .products-empty button{margin-top:6px}
+
+/* La ficha de una liquidación usa una cuadrícula de trabajo y conserva todo a la vista. */
+.panel-theme .cashier-shell .settlement-detail-content{
+  max-width:none!important;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-content:start;
+  align-items:start;
+  gap:12px;
+}
+.panel-theme .cashier-shell .settlement-detail-content>.settlement-back,
+.panel-theme .cashier-shell .settlement-detail-content>.dash-page-heading,
+.panel-theme .cashier-shell .settlement-detail-content>.settlement-metrics,
+.panel-theme .cashier-shell .settlement-detail-content>.settlement-warning,
+.panel-theme .cashier-shell .settlement-detail-content>.settlement-columns{grid-column:1/-1}
+.panel-theme .cashier-shell .settlement-detail-content>.settlement-back{margin:0}
+.panel-theme .cashier-shell .settlement-detail-content>.settlement-columns{gap:12px}
+.panel-theme .cashier-shell .settlement-detail-content>.settlement-action-panel,
+.panel-theme .cashier-shell .settlement-detail-content>.settlement-history{min-width:0;margin:0}
+.panel-theme .cashier-shell .settlement-detail-content .settlement-history .settlement-concept-list>article{gap:10px}
+
+@media(max-width:1180px){
+  .panel-theme .admin-control-shell .program-layout{grid-template-columns:minmax(0,1fr)}
+  .panel-theme .admin-control-shell .admin-profile-panel{grid-template-columns:minmax(0,1fr)}
+  .panel-theme .admin-control-shell .admin-profile-panel>.admin-title{grid-column:auto}
+  .panel-theme .admin-control-shell .admin-profile-identity{min-height:0}
+  .panel-theme .cashier-shell .cashier-product-layout{grid-template-columns:minmax(0,1fr) auto;gap:12px}
+  .panel-theme .cashier-shell .cashier-product-stats{grid-column:1}
+  .panel-theme .cashier-shell .cashier-product-layout>.dash-action{grid-column:2;grid-row:1/3}
+  .panel-theme .cashier-shell .cashier-reservation-list>article{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:14px}
+  .panel-theme .cashier-shell .cashier-reservation-list dl{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .panel-theme .cashier-shell .cashier-reservation-list>article>.dash-action{grid-column:2;justify-self:end}
+  .panel-theme .cashier-shell .cashier-reservation-expired{grid-column:2;max-width:none}
+}
+@media(max-width:900px){
+  .panel-theme .cashier-shell .settlement-detail-content{grid-template-columns:minmax(0,1fr)}
+  .panel-theme .cashier-shell .settlement-detail-content>.settlement-back,
+  .panel-theme .cashier-shell .settlement-detail-content>.dash-page-heading,
+  .panel-theme .cashier-shell .settlement-detail-content>.settlement-metrics,
+  .panel-theme .cashier-shell .settlement-detail-content>.settlement-warning,
+  .panel-theme .cashier-shell .settlement-detail-content>.settlement-columns{grid-column:auto}
+  .panel-theme .cashier-shell .settlement-detail-content>.settlement-columns{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:760px){
+  .panel-theme .admin-control-shell .admin-profile-panel{grid-template-columns:minmax(0,1fr)}
+  .panel-theme .admin-control-shell .admin-profile-identity{padding:13px;gap:12px}
+  .panel-theme .admin-control-shell .admin-profile-avatar{width:64px;height:64px;flex-basis:64px;border-radius:16px;font-size:18px}
+  .panel-theme .admin-control-shell .admin-profile-identity h2{font-size:20px}
+  .panel-theme .admin-control-shell .admin-profile-details{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .panel-theme .admin-control-shell .admin-profile-details>div{padding:10px}
+  .panel-theme .admin-control-shell .program-layout .program-card{padding:14px}
+  .panel-theme .admin-control-shell .program-layout .program-card>header{gap:8px}
+  .panel-theme .admin-control-shell .program-layout .program-card .portal-title h2{font-size:16px}
+  .panel-theme .admin-control-shell .program-rule-summary{gap:5px}
+  .panel-theme .admin-control-shell .program-rule-summary>div{padding:8px 7px}
+  .panel-theme .admin-control-shell .program-rule-summary span{font-size:7px}
+  .panel-theme .admin-control-shell .program-rule-summary strong{font-size:8px}
+  .panel-theme .admin-control-shell .program-layout .dash-action-stack{grid-template-columns:1fr}
+  .panel-theme .cashier-shell .cashier-product-layout{grid-template-columns:minmax(0,1fr);gap:10px}
+  .panel-theme .cashier-shell .cashier-product-layout>.dash-action{grid-column:auto;grid-row:auto;width:100%;justify-content:center}
+  .panel-theme .cashier-shell .cashier-product-stats{grid-column:auto}
+  .panel-theme .cashier-shell .cashier-inline-empty{max-width:none}
+  .panel-theme .cashier-shell .cashier-reservation-overview,
+  .panel-theme .cashier-shell .cashier-settlement-overview{gap:6px}
+  .panel-theme .cashier-shell .cashier-reservation-overview>article,
+  .panel-theme .cashier-shell .cashier-settlement-overview>article{padding:8px}
+  .panel-theme .cashier-shell .cashier-reservation-list>article{grid-template-columns:minmax(0,1fr);gap:11px}
+  .panel-theme .cashier-shell .cashier-reservation-list>article>.dash-action{grid-column:auto;justify-self:stretch}
+  .panel-theme .cashier-shell .cashier-reservation-expired{grid-column:auto}
+  .panel-theme .cashier-shell .cashier-settlement-summary{grid-template-columns:minmax(0,1fr)}
+  .panel-theme .cashier-shell .cashier-history .admin-list>article{align-items:stretch}
+}
+@media(max-width:420px){
+  .panel-theme .admin-control-shell .program-rule-summary{grid-template-columns:minmax(0,1fr)}
+  .panel-theme .cashier-shell .cashier-reservation-overview,
+  .panel-theme .cashier-shell .cashier-settlement-overview{grid-template-columns:minmax(0,1fr)}
+}

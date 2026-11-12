@@ -820,7 +820,7 @@ export function AdminDashboard({
 
           {section === "servicios" && <div className="admin-panel">
             <div className="admin-title"><Scissors /><div><p>CATÁLOGO</p><h1>Servicios</h1></div></div>
-            <div className="dash-section-intro"><p>Administra el catálogo sin saturar la vista principal.</p><DashboardModal title="Crear servicio" description="Define precio, duración y tiempo de gracia." triggerLabel="Nuevo servicio" triggerIcon={<Scissors/>}>
+            <div className="dash-section-intro"><p>Administra el catálogo sin saturar la vista principal.</p><span className="admin-record-count">{initialServices.length} registrados</span><DashboardModal title="Crear servicio" description="Define precio, duración y tiempo de gracia." triggerLabel="Nuevo servicio" triggerIcon={<Scissors/>}>
             <form className="admin-form compact-form" onSubmit={addService} acceptCharset="UTF-8">
               <label className="wide">Nombre<input name="name" required /></label>
               <label className="wide">Descripción<input name="description" /></label><label>Categoría<input name="category" /></label>
@@ -828,28 +828,28 @@ export function AdminDashboard({
               <button className="button button-dark wide" disabled={busy}>Agregar servicio</button>
             </form>
             </DashboardModal></div>
-            <div className="admin-list admin-managed-list">{initialServices.map((item) => <article key={item.id}>
+            <div className="admin-list admin-managed-list">{initialServices.length ? initialServices.map((item) => <article key={item.id}>
               <div><strong>{String(item.name)}</strong><span>Bs {String(item.price)} · {String(item.duration_minutes)} min · {item.status === "active" ? "Activo" : "Inactivo"}</span></div>
               <div className="dash-row-actions"><DashboardModal title={String(item.name)} eyebrow="FICHA DEL SERVICIO" description={`Estado: ${item.status === "active" ? "Activo" : "Inactivo"}. Actualiza el servicio o administra su disponibilidad.`} triggerLabel="Ver ficha" triggerIcon={<Pencil />} variant="ghost">
                 <form className="admin-form" onSubmit={(event) => updateService(event, item)}><label>Nombre<input name="name" defaultValue={String(item.name)} required /></label><label>Categoría<input name="category" defaultValue={String(item.category ?? "")} /></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description ?? "")} /></label><label>Precio Bs<input name="price" type="number" min="0" step="0.5" defaultValue={Number(item.price)} required /></label><label>Duración<input name="duration_minutes" type="number" min="5" defaultValue={Number(item.duration_minutes)} required /></label><label>Gracia<input name="grace_minutes" type="number" min="0" defaultValue={Number(item.grace_minutes ?? 10)} /></label><button className="button button-dark wide" disabled={busy}>Guardar servicio</button></form>
                 <div className="admin-record-actions"><button type="button" className="dash-action dash-action-ghost" disabled={busy} onClick={() => toggleStatus("services", item.id, item.status === "active" ? "inactive" : "active")}><Power /><span>{item.status === "active" ? "Desactivar" : "Activar"}</span></button><AdminDeleteAction entity="service" id={item.id} label={String(item.name)} disabled={busy} /></div>
               </DashboardModal></div>
-            </article>)}</div>
+            </article>) : <div className="admin-list-empty"><Scissors/><div><strong>No hay servicios registrados</strong><span>Crea el primer servicio para mostrarlo en el catálogo público y habilitar reservas.</span></div></div>}</div>
           </div>}
 
           {section === "galeria" && <div className="admin-panel">
             <div className="admin-title"><ImagePlus /><div><p>CONTENIDO</p><h1>Galería de trabajos</h1></div></div>
-            <div className="dash-section-intro"><p>Publica imágenes optimizadas únicamente con autorización del cliente.</p><DashboardModal title="Publicar trabajo" description="La imagen será optimizada automáticamente." triggerLabel="Nueva publicación" triggerIcon={<ImagePlus/>}>
+            <div className="dash-section-intro"><p>Publica imágenes optimizadas únicamente con autorización del cliente.</p><span className="admin-record-count">{initialGallery.length} publicaciones</span><DashboardModal title="Publicar trabajo" description="La imagen será optimizada automáticamente." triggerLabel="Nueva publicación" triggerIcon={<ImagePlus/>}>
             <form className="admin-form" onSubmit={addGalleryPost} acceptCharset="UTF-8"><label>Título<input name="title" required /></label><label>Imágenes (máximo 3)<input name="images" type="file" accept={IMAGE_INPUT_ACCEPT} multiple required /></label><label className="wide">Descripción<input name="description" /></label><label className="check-label wide"><input type="checkbox" name="client_consent" /> Confirmo que existe autorización del cliente.</label><label className="check-label wide"><input type="checkbox" name="featured" /> Marcar como destacada.</label><button className="button button-dark wide" disabled={busy}>Optimizar y publicar</button></form>
             </DashboardModal></div>
-            <div className="admin-list admin-managed-list">{initialGallery.map((item) => <article key={item.id}>
+            <div className="admin-list admin-managed-list">{initialGallery.length ? initialGallery.map((item) => <article key={item.id}>
               <div><strong>{String(item.title)}</strong><span>{item.status === "published" ? "Publicada" : "Oculta"} · consentimiento: {item.client_consent ? "sí" : "no"} · {Array.isArray(item.image_paths) ? item.image_paths.length : 1} foto(s)</span></div>
               <div className="dash-row-actions"><DashboardModal title={String(item.title)} eyebrow="FICHA DE LA PUBLICACIÓN" description={`${item.status === "published" ? "Publicada" : "Oculta"}. Consentimiento del cliente: ${item.client_consent ? "sí" : "no"}.`} triggerLabel="Ver ficha" triggerIcon={<Pencil />} variant="ghost">
                 <div className="admin-gallery-preview">{productImagePaths(item).map((path, index) => { const url = publicMediaUrl(path); return url ? <span key={`${path}-${index}`} role="img" aria-label={`Foto ${index + 1} de ${String(item.title)}`} style={{ backgroundImage: `url(${JSON.stringify(url)})` }} /> : null; })}</div>
                 <form className="admin-form" onSubmit={(event) => updateGalleryPost(event, item)}><label>Título<input name="title" defaultValue={String(item.title)} required /></label><label>Reemplazar imágenes (máximo 3)<input name="images" type="file" accept={IMAGE_INPUT_ACCEPT} multiple /></label><label className="wide">Descripción<input name="description" defaultValue={String(item.description ?? "")} /></label><label className="check-label wide"><input type="checkbox" name="featured" defaultChecked={Boolean(item.featured)} /> Destacada</label><button className="button button-dark wide" disabled={busy}>Guardar publicación</button></form>
                 <div className="admin-record-actions"><button type="button" className="dash-action dash-action-ghost" disabled={busy} onClick={() => toggleStatus("gallery_posts", item.id, item.status === "published" ? "hidden" : "published")}><Power /><span>{item.status === "published" ? "Ocultar" : "Publicar"}</span></button><AdminDeleteAction entity="gallery" id={item.id} label={String(item.title)} imagePaths={productImagePaths(item)} disabled={busy} /></div>
               </DashboardModal></div>
-            </article>)}</div>
+            </article>) : <div className="admin-list-empty"><ImagePlus/><div><strong>La galería está vacía</strong><span>Publica trabajos con autorización del cliente para comenzar a mostrar resultados.</span></div></div>}</div>
           </div>}
 
           {section === "productos" && <AdminProductsTable products={initialProducts} initialCategories={initialProductCategories} busy={busy} onAdd={addProduct} onToggle={(id, nextStatus) => toggleStatus("products", id, nextStatus)} onUpdate={updateProduct} />}
@@ -892,13 +892,13 @@ export function AdminDashboard({
 
           {section === "administradores" && isSuperadmin && <div className="admin-panel">
             <div className="admin-title"><ShieldCheck /><div><p>SEGURIDAD</p><h1>Administradores</h1></div></div>
-            <div className="dash-section-intro"><p>Puedes registrar el correo antes de su primer ingreso. La invitación se activará automáticamente con Google.</p><DashboardModal title="Habilitar administrador" description="Solo el superadministrador puede conceder este permiso." triggerLabel="Nuevo administrador" triggerIcon={<UserPlus/>}>
+            <div className="dash-section-intro"><p>Puedes registrar el correo antes de su primer ingreso. La invitación se activará automáticamente con Google.</p><span className="admin-record-count">{adminUsers.length} cuentas</span><DashboardModal title="Habilitar administrador" description="Solo el superadministrador puede conceder este permiso." triggerLabel="Nuevo administrador" triggerIcon={<UserPlus/>}>
             <form className="admin-form admin-role-form" onSubmit={manageAdmin} acceptCharset="UTF-8">
               <label className="wide">Correo de la cuenta Google<input name="email" type="email" inputMode="email" autoComplete="email" placeholder="administrador@correo.com" required /></label>
               <button className="button button-dark wide" disabled={busy}><UserPlus size={17} /> Habilitar administrador</button>
             </form>
             </DashboardModal></div>
-            <div className="admin-list">{adminUsers.map((item) => <article key={`${String(item.user_id ?? item.email)}-${String(item.role)}`}><div><strong>{String(item.email)}</strong><span>{item.role === "superadmin" ? "Superadministrador · desarrollador" : item.role === "pending" ? "Invitación pendiente de ingreso con Google" : "Administrador"}</span></div>{item.role !== "superadmin" && <button disabled={busy} onClick={() => removeAdmin(String(item.email))}>{item.role === "pending" ? "Cancelar invitación" : "Retirar acceso"}</button>}</article>)}</div>
+            <div className="admin-list">{adminUsers.length ? adminUsers.map((item) => <article key={`${String(item.user_id ?? item.email)}-${String(item.role)}`}><div><strong>{String(item.email)}</strong><span>{item.role === "superadmin" ? "Superadministrador · desarrollador" : item.role === "pending" ? "Invitación pendiente de ingreso con Google" : "Administrador"}</span></div>{item.role !== "superadmin" && <button disabled={busy} onClick={() => removeAdmin(String(item.email))}>{item.role === "pending" ? "Cancelar invitación" : "Retirar acceso"}</button>}</article>) : <div className="admin-list-empty"><ShieldCheck/><div><strong>No hay administradores adicionales</strong><span>El superadministrador es el único con acceso administrativo por ahora.</span></div></div>}</div>
           </div>}
         </section>
       </div>
