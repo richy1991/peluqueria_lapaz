@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "LEGEND CLUB",
-    "slug": "legend-club-mobile",
+    "slug": "legend-club",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/legend-club-icon.png",
@@ -46,6 +46,17 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "ab807495-1a11-408c-b327-f42e3a87429b"
+      }
+    },
+    "owner": "richy1991s-team"
   }
 }

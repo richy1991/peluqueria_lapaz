@@ -33,6 +33,13 @@ yarn-error.*
 # local env files
 .env*.local
 
+# Local assistant and editor settings
+.claude/
+.vscode/
+
+# LICENSE copied from the Expo starter template
+/LICENSE
+
 # typescript
 *.tsbuildinfo
 
