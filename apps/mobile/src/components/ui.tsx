@@ -1,9 +1,8 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { ActivityIndicator, ImageBackground, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import type { TextInputProps } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import salonHeader from '../../assets/images/salon-header.jpg';
 
 export const palette = {
   background: '#171310',
@@ -21,15 +20,10 @@ export const palette = {
 
 export function PageHeading({ eyebrow, title, description }: { eyebrow?: string; title: string; description?: string }) {
   return (
-    <Animated.View entering={FadeInUp.duration(500)} style={styles.headingFrame}>
-      <ImageBackground source={salonHeader} resizeMode="cover" imageStyle={styles.headingImage} style={styles.heading}>
-        <View pointerEvents="none" style={styles.headingShade} />
-        <View style={styles.headingContent}>
-          {eyebrow ? <Text style={styles.eyebrow}>{eyebrow.toUpperCase()}</Text> : null}
-          <Text style={styles.pageTitle}>{title}</Text>
-          {description ? <Text style={styles.description}>{description}</Text> : null}
-        </View>
-      </ImageBackground>
+    <Animated.View entering={FadeInUp.duration(360)} style={styles.headingFrame}>
+      {eyebrow ? <Text style={styles.eyebrow}>{eyebrow.toUpperCase()}</Text> : null}
+      <Text style={styles.pageTitle}>{title}</Text>
+      {description ? <Text style={styles.description}>{description}</Text> : null}
     </Animated.View>
   );
 }
@@ -139,15 +133,11 @@ export function InlineMessage({ children, tone = 'error' }: { children: string; 
 }
 
 const styles = StyleSheet.create({
-  headingFrame: { marginHorizontal: -17, marginTop: -18, marginBottom: 2, overflow: 'hidden', borderBottomLeftRadius: 25, borderBottomRightRadius: 25 },
-  heading: { minHeight: 218, justifyContent: 'flex-end', paddingHorizontal: 23, paddingTop: 22, paddingBottom: 26, backgroundColor: '#161310' },
-  headingImage: { opacity: 0.5 },
-  headingShade: { ...StyleSheet.absoluteFill, backgroundColor: '#090807a8' },
-  headingContent: { gap: 7 },
-  eyebrow: { color: palette.gold, fontSize: 9, fontWeight: '900', letterSpacing: 2.1 },
-  pageTitle: { color: '#fffaf1', fontSize: 31, lineHeight: 36, fontWeight: '800', letterSpacing: -0.8 },
-  description: { color: '#d1c5b7', fontSize: 12, lineHeight: 18, maxWidth: 480 },
-  card: { backgroundColor: '#1d1916', borderColor: '#40352b', borderWidth: 1, borderRadius: 18, padding: 17, gap: 14, shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 13, shadowOffset: { width: 0, height: 5 }, elevation: 3 },
+  headingFrame: { marginBottom: 1, paddingTop: 4, paddingBottom: 10, gap: 5 },
+  eyebrow: { color: palette.gold, fontSize: 9, fontWeight: '900', letterSpacing: 1.8 },
+  pageTitle: { color: '#fffaf1', fontSize: 27, lineHeight: 33, fontWeight: '800', letterSpacing: -0.7 },
+  description: { color: '#b9b0a3', fontSize: 12, lineHeight: 18, maxWidth: 480 },
+  card: { backgroundColor: '#1d1916', borderColor: '#37322c', borderWidth: 1, borderRadius: 18, padding: 16, gap: 13, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
   cardHeading: { flexDirection: 'row', alignItems: 'center', gap: 11 },
   cardIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: '#34291f', borderColor: '#58452b', borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   cardHeadingCopy: { flex: 1, gap: 3 },

@@ -37,15 +37,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
 
     setLoading(true);
-    const [adminResult, cashierResult, barberResult] = await Promise.all([
+    const [adminResult, cashierResult, barberResult, rolesResult] = await Promise.all([
       supabase.rpc('is_admin'),
       supabase.rpc('is_cashier'),
       supabase.from('barber_profiles').select('id,display_name').eq('user_id', current.user.id).eq('active', true).maybeSingle(),
+      supabase.from('user_roles').select('role').eq('user_id', current.user.id),
     ]);
     if (currentRequest !== requestId.current) return;
 
-    if (adminResult.error || cashierResult.error || barberResult.error) {
-      setRoleError(adminResult.error?.message ?? cashierResult.error?.message ?? barberResult.error?.message ?? 'No se pudo validar tu acceso.');
+    if (adminResult.error || cashierResult.error || barberResult.error || rolesResult.error) {
+      setRoleError(adminResult.error?.message ?? cashierResult.error?.message ?? barberResult.error?.message ?? rolesResult.error?.message ?? 'No se pudo validar tu acceso.');
       setRole(null);
       setBarber(null);
     } else if (adminResult.data || cashierResult.data) {
@@ -54,8 +55,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     } else if (barberResult.data) {
       setRole('barber');
       setBarber({ id: barberResult.data.id, display_name: barberResult.data.display_name });
-    } else {
+    } else if ((rolesResult.data ?? []).some((item) => item.role === 'client')) {
       setRole('client');
+      setBarber(null);
+    } else {
+      setRole('unsupported');
       setBarber(null);
     }
     setLoading(false);

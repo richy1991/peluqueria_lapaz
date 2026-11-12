@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { router } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { CalendarCheck, CalendarDays, Check, ChevronLeft, Clock3, LogIn, Scissors, ShieldCheck, Sun, Sunset, UserRound } from 'lucide-react-native';
+import { CalendarCheck, CalendarDays, Check, ChevronLeft, Clock3, Mail, Scissors, ShieldCheck, Sun, Sunset, UserRound } from 'lucide-react-native';
 
 import { AppShell } from '@/components/AppShell';
 import { ActionButton, Card, CardTitle, EmptyState, InlineMessage, PageHeading, TextField, palette } from '@/components/ui';
@@ -10,7 +10,6 @@ import { businessDateKey, zonedDateTimeToDate } from '@/lib/business-time';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
 import { publicMediaUrl, requireData, useRemoteData } from '@/lib/utils';
-import { authenticateWithGoogle } from '@/lib/google-auth';
 
 type Service = { slug: string; name: string; description: string | null; category: string | null; price: number; duration_minutes: number };
 type Barber = { slug: string; display_name: string; bio: string | null; photo_path: string | null; specialties: string[] | null };
@@ -60,6 +59,9 @@ export default function ClientBookingScreen() {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authCode, setAuthCode] = useState('');
+  const [authCodeSent, setAuthCodeSent] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const selectedTimeRef = useRef('');
   const phonePrefilled = useRef(false);
@@ -223,10 +225,18 @@ export default function ClientBookingScreen() {
     setAuthLoading(true);
     setAuthError('');
     try {
-      const result = await authenticateWithGoogle();
-      if (result === 'cancelled') setAuthError('Acceso cancelado. Puedes volver a intentarlo.');
+      if (!authCodeSent) {
+        const normalized = authEmail.trim().toLowerCase();
+        if (!normalized) { setAuthError('Escribe tu correo electrónico.'); return; }
+        const { error } = await supabase.auth.signInWithOtp({ email: normalized, options: { shouldCreateUser: true } });
+        if (error) throw error;
+        setAuthEmail(normalized); setAuthCodeSent(true);
+      } else {
+        const { error } = await supabase.auth.verifyOtp({ email: authEmail.trim().toLowerCase(), token: authCode.trim(), type: 'email' });
+        if (error) throw error;
+      }
     } catch (reason) {
-      setAuthError(reason instanceof Error ? reason.message : 'No se pudo iniciar sesión con Google.');
+      setAuthError(reason instanceof Error ? reason.message : 'No se pudo validar el código.');
     } finally {
       setAuthLoading(false);
     }
@@ -346,7 +356,8 @@ export default function ClientBookingScreen() {
               {!session ? (
                 <View style={styles.loginBox}>
                   <Text style={styles.sectionLabel}>Inicia sesión para reservar</Text>
-                  <ActionButton label="Continuar con Google" icon={LogIn} loading={authLoading} onPress={() => void signInToReserve()} />
+                  {!authCodeSent ? <TextField label="Correo electrónico" value={authEmail} onChangeText={setAuthEmail} placeholder="tu@correo.com" keyboardType="email-address" autoCapitalize="none" autoComplete="email" /> : <TextField label={`Código enviado a ${authEmail}`} value={authCode} onChangeText={(value) => setAuthCode(value.replace(/\D/g, '').slice(0, 8))} placeholder="000000" keyboardType="number-pad" autoComplete="one-time-code" />}
+                  <ActionButton label={authCodeSent ? 'Verificar código' : 'Enviar código'} icon={Mail} loading={authLoading} onPress={() => void signInToReserve()} />
                   {authError ? <InlineMessage>{authError}</InlineMessage> : null}
                 </View>
               ) : (

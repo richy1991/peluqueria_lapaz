@@ -75,9 +75,6 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
   const [signedUser, setSignedUser] = useState<SignedUser | null>(null);
   const [authError, setAuthError] = useState(params.get("auth_error") ?? "");
   const [authLoading, setAuthLoading] = useState(false);
-  const [authEmail, setAuthEmail] = useState("");
-  const [authCode, setAuthCode] = useState("");
-  const [authCodeSent, setAuthCodeSent] = useState(false);
   const [phone, setPhone] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
@@ -236,34 +233,29 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
     };
   }, [availabilityVersion, barberId, bookingClosed, day, selectedBusinessDay?.active, serviceId, timezone]);
 
-  async function sendBookingCode(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function signInWithGoogle() {
     setAuthLoading(true);
     setAuthError("");
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({ email: authEmail.trim().toLowerCase(), options: { shouldCreateUser: true } });
-    setAuthLoading(false);
-    if (error) {
-      setAuthError("No pudimos enviar el código. Revisa el correo e inténtalo de nuevo.");
-      return;
-    }
-    setAuthCodeSent(true);
-  }
+    window.sessionStorage.setItem(
+      pendingBookingKey,
+      JSON.stringify({ serviceId, barberId, day, time }),
+    );
 
-  async function verifyBookingCode(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setAuthLoading(true);
-    setAuthError("");
     const supabase = createClient();
-    const { data, error } = await supabase.auth.verifyOtp({ email: authEmail.trim().toLowerCase(), token: authCode.replace(/\s/g, ""), type: "email" });
-    setAuthLoading(false);
-    if (error || !data.user) {
-      setAuthError("El código no es válido o venció. Revisa el correo e inténtalo de nuevo.");
+    const bookingReturn = returnPath === "/" ? "/reservar?auth=complete" : `/reservar?auth=complete&return=${encodeURIComponent(returnPath)}`;
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(bookingReturn)}`;
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo, skipBrowserRedirect: true },
+    });
+
+    if (error) {
+      setAuthError(error.message);
+      setAuthLoading(false);
       return;
     }
-    const name = data.user.user_metadata?.full_name ?? data.user.email?.split("@")[0] ?? "Cliente";
-    setSignedUser({ name, email: data.user.email ?? authEmail, initials: name.split(" ").slice(0, 2).map((part: string) => part[0]).join("").toUpperCase() });
-    setSignedIn(true);
+    if (data.url) window.location.replace(data.url);
+    else { setAuthError("No pudimos abrir el acceso con Google."); setAuthLoading(false); }
   }
 
   async function confirmAppointment() {
@@ -491,20 +483,11 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
               {!signedIn ? (
                 <div className="login-box">
                   <h3>Inicia sesión para reservar</h3>
-                  <p>Te enviaremos un código para validar tu cuenta y guardar esta cita.</p>
-                  {!authCodeSent ? (
-                    <form className="booking-email-login" onSubmit={sendBookingCode}>
-                      <label>Correo electrónico<input type="email" inputMode="email" autoComplete="email" autoCapitalize="none" required value={authEmail} onChange={event => setAuthEmail(event.target.value)} placeholder="tu@correo.com" /></label>
-                      <Button variant="outline" className="google-button" disabled={authLoading}>{authLoading ? "Enviando…" : "Enviar código"}</Button>
-                    </form>
-                  ) : (
-                    <form className="booking-email-login" onSubmit={verifyBookingCode}>
-                      <label>Código de acceso<input type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]*" maxLength={8} required value={authCode} onChange={event => setAuthCode(event.target.value.replace(/\D/g, ""))} placeholder="Código de 6 dígitos" /></label>
-                      <Button variant="outline" className="google-button" disabled={authLoading || authCode.length < 6}>{authLoading ? "Verificando…" : "Validar y continuar"}</Button>
-                      <button type="button" className="booking-change-email" onClick={() => { setAuthCodeSent(false); setAuthCode(""); }}>Usar otro correo</button>
-                    </form>
-                  )}
-                  {authError ? <small className="auth-error">{authError}</small> : authCodeSent ? <small>Revisa tu correo. El código mantendrá esta reserva abierta.</small> : <small>Acceso protegido mediante Supabase Auth.</small>}
+                  <p>Usaremos tu cuenta únicamente para identificar tus citas y mantenerte informado.</p>
+                  <Button variant="outline" className="google-button" disabled={authLoading} onClick={signInWithGoogle}>
+                    <b>G</b> {authLoading ? "Conectando…" : "Continuar con Google"}
+                  </Button>
+                  {authError ? <small className="auth-error">{authError}</small> : <small>Acceso protegido mediante Supabase Auth.</small>}
                 </div>
               ) : (
                 <div className="contact-form">
