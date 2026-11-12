@@ -5,8 +5,8 @@ import { CalendarDays, Globe2 } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import salonHeader from '../../../assets/images/salon-header.jpg';
-import brandMark from '../../../assets/images/legend-club-icon.png';
+import salonHeader from '../../assets/images/salon-header.jpg';
+import brandMark from '../../assets/images/legend-club-icon.png';
 import { ActionButton, InlineMessage, palette } from '@/components/ui';
 import { publicSiteUrl } from '@/lib/links';
 import { authenticateWithGoogle } from '@/lib/google-auth';
