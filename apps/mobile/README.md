@@ -1,13 +1,13 @@
 # LEGEND CLUB Mobile
 
-Aplicación React Native con Expo, independiente del sitio Next.js. La app reutiliza el proyecto y la sesión de Supabase existentes; la web actual sigue disponible y los datos se comparten entre ambas.
+Aplicación Expo para Android y Huawei. Los módulos de cliente y peluquero se muestran dentro de la app desde el mismo sitio web responsivo, por lo que usan las mismas páginas, estilos, animaciones, reservas y funciones. La sesión y los datos se comparten con Supabase.
 
 ## Módulos incluidos
 
-- **Cliente:** próxima cita y sus acciones, catálogo, carrito y apartados, puntos por peluquero, código QR de recomendación, vinculación de comprobantes, perfil, notificaciones, preferencias y chat.
-- **Peluquero:** agenda de hoy y semanal, inicio de atención, inasistencia, envío a caja, catálogo, perfil público, publicación de trabajos y balance.
-- **Reserva nativa:** el cliente elige servicio, peluquero, día y horario, registra su teléfono y confirma las condiciones dentro del APK. La disponibilidad usa la agenda y las reglas actuales de Supabase.
-- **Sitio público:** los accesos abren la web actual en `EXPO_PUBLIC_SITE_URL`; su contenido se sigue administrando desde la web.
+- **Cliente:** se carga el portal web `mi-cuenta`, incluida la reserva, citas, catálogo, puntos, QR de recomendación, perfil, notificaciones, galería y chat.
+- **Peluquero:** se carga el portal web `barbero`, incluida la agenda, acciones de citas, catálogo, perfil público, trabajos y balance.
+- **Acceso:** se solicita el correo y se valida con un código dentro de la app. Las cuentas administrativas y de caja reciben el aviso para usar la versión web.
+- **Contenido:** se comparte en tiempo real con el sitio público y Supabase.
 
 Las fotos del perfil y de la galería se reducen a un máximo de 1600 px, se convierten a WebP y se guardan en el bucket `public-media` existente.
 
@@ -16,7 +16,7 @@ Las fotos del perfil y de la galería se reducen a un máximo de 1600 px, se con
 1. Instala Node.js 22.13 o posterior.
 2. Desde esta carpeta ejecuta `npm install`.
 3. Copia `.env.example` a `.env` si necesitas cambiar el proyecto de Supabase o el dominio público.
-4. Mantén Google configurado como proveedor en Supabase. El acceso móvil vuelve por el callback web /auth/callback?native=1 y entrega el código a legendclub://auth/callback sin crear una sesión dentro del navegador.
+4. En Supabase, habilita Email como proveedor y edita la plantilla **Magic Link** para incluir `{{ .Token }}` (código de acceso). La plantilla no debe depender únicamente de `{{ .ConfirmationURL }}`, porque el código se introduce dentro de la app.
 5. Ejecuta `npx expo start` y abre la app en un development build.
 
 El endpoint y la publishable key incluidos como respaldo son públicos, igual que en la web. No uses una clave `service_role` ni una `sb_secret` en esta app.

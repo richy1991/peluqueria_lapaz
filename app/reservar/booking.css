@@ -283,6 +283,10 @@
 .booking-shell .booking-summary span, .booking-shell .ticket span { color: var(--brand-muted); font-size: 9px; font-weight: 700; letter-spacing: .09em; }
 .booking-shell .booking-summary strong { color: var(--brand-ink); font-size: 12px; }
 .booking-shell .login-box, .booking-shell .contact-form { padding: 22px; border: 1px solid var(--brand-line); border-radius: 16px; background: #f8f5f0; }
+.booking-shell .booking-email-login { display: grid; gap: 12px; margin: 14px 0; }
+.booking-shell .booking-email-login > label { display: grid; gap: 7px; color: var(--brand-ink); font-size: 12px; font-weight: 750; }
+.booking-shell .booking-email-login input { min-height: 48px; width: 100%; padding: 0 12px; color: var(--brand-ink); border: 1px solid var(--brand-line); border-radius: 9px; background: #fff; font: inherit; font-size: 16px; }
+.booking-shell .booking-change-email { justify-self: center; padding: 7px; color: var(--brand-muted); border: 0; background: transparent; cursor: pointer; font: inherit; font-size: 12px; text-decoration: underline; }
 .booking-shell .login-box h3 { color: var(--brand-ink); font: 650 19px/1.3 var(--sans); }
 .booking-shell .login-box p { color: var(--brand-muted); line-height: 1.6; }
 .booking-shell .google-button { max-width: 360px; border-color: var(--brand-line); border-radius: 11px; background: #fffdfa; }
