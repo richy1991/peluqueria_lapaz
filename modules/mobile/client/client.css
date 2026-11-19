@@ -283,7 +283,7 @@
   --lc-secondary: #1A1A1A;
   --lc-accent: #D4A853;
   --lc-accent-dark: #B8860B;
-  --lc-surface: #F5F5F5;
+  --lc-surface: var(--brand-page);
   --lc-card: #FFFFFF;
   --lc-text: #1A1A1A;
   --lc-muted: #6B7280;
@@ -448,8 +448,8 @@
 .panel-theme.panel-theme[data-panel-theme="dark"] .panel-client-shell {
   --lc-primary: #0D0D0D;
   --lc-secondary: #1A1A1A;
-  --lc-surface: #0D0D0D;
-  --lc-card: #1A1A1A;
+  --lc-surface: #0B0D10;
+  --lc-card: #15181C;
   --lc-text: #F5F5F5;
   --lc-muted: #9CA3AF;
   --lc-border: rgba(229,231,235,.16);
@@ -457,11 +457,11 @@
   --client-accent-strong: #B8860B;
   --client-bg: var(--lc-surface);
   --client-card: var(--lc-card);
-  --client-card-muted: #1A1A1A;
+  --client-card-muted: #101216;
   --client-text: var(--lc-text);
   --client-muted: var(--lc-muted);
   --client-line: var(--lc-border);
-  --app-theme-color: #0D0D0D;
+  --app-theme-color: #0B0D10;
   color-scheme: dark;
 }
 .panel-theme.panel-theme[data-panel-theme="light"] .panel-client-shell .client-page-hero,
@@ -476,7 +476,7 @@
   --lc-secondary: #1A1A1A;
   --lc-accent: #D4A853;
   --lc-accent-dark: #B8860B;
-  --lc-surface: #F5F5F5;
+  --lc-surface: var(--brand-page);
   --lc-card: #FFFFFF;
   --lc-text: #1A1A1A;
   --lc-muted: #6B7280;
@@ -541,7 +541,7 @@
 
 /* Keep the light client surfaces above the legacy dashboard theme selectors. */
 .panel-theme.panel-theme[data-panel-theme="light"] .panel-client-shell {
-  --lc-surface: #F5F5F5;
+  --lc-surface: var(--brand-page);
   --lc-card: #FFFFFF;
   --lc-text: #1A1A1A;
   --lc-muted: #6B7280;
@@ -918,11 +918,12 @@
 /* La imagen del hero continúa por detrás del área segura superior cuando el sistema la hace translúcida. */
 html:has(.panel-client-shell),
 body:has(.panel-client-shell) {
-  background-color: #0D0D0D;
-  background-image: linear-gradient(rgba(13,13,13,.78),rgba(13,13,13,.78)),url("/brand/legend-club-salon-header.jpg");
-  background-position: center top,center top;
-  background-repeat: no-repeat;
-  background-size: cover,100% auto;
+  background-color: var(--brand-page);
+  background-image: none;
+}
+html:has(.panel-theme[data-panel-theme="dark"] .panel-client-shell),
+body:has(.panel-theme[data-panel-theme="dark"] .panel-client-shell) {
+  background-color: #0B0D10;
 }
 
 /* El selector de apariencia ocupa su propia fila para no comprimir ni superponer sus opciones. */
@@ -1136,3 +1137,69 @@ body:has(.panel-client-shell) {
 .panel-theme .panel-client-shell .catalog-reservations-empty,
 .panel-theme .panel-client-shell .catalog-reservation-feedback { margin: 10px 0 0; color: var(--lc-muted); font-size: 11px; line-height: 1.45; }
 .panel-theme .panel-client-shell .catalog-reservation-feedback { color: var(--lc-accent-dark); }
+
+/* Focused secondary client screens and notification controls. */
+.panel-theme .client-secondary-page { min-height: 100vh; padding-bottom: 36px; }
+.panel-theme .client-secondary-hero { position: sticky; top: 0; z-index: 30; min-height: 88px; height: 88px; display: flex; align-items: center; gap: 14px; padding: 12px max(18px, calc((100vw - 960px) / 2)); color: #fff; background-color: #151515; background-position: center 48%; background-size: cover; border-radius: 0 0 18px 18px; box-shadow: 0 8px 22px rgba(0,0,0,.18); }
+.panel-theme .client-secondary-hero h1 { margin: 0; color: #fff; font-size: clamp(22px,3vw,30px); letter-spacing: -.035em; }
+.panel-theme .client-secondary-hero > a { width: 42px; height: 42px; display: grid; place-items: center; flex: 0 0 42px; color: #fff; border: 1px solid #ffffff48; border-radius: 13px; background: #111a; }
+.panel-theme .client-secondary-content { width: min(900px,calc(100% - 32px)); margin: 20px auto; }
+.panel-theme .client-history-list { display: grid; gap: 14px; }
+.panel-theme .client-secondary-card { padding: 22px; border: 1px solid var(--client-line); border-radius: 18px; background: var(--client-card); box-shadow: 0 5px 20px #0000000d; }
+.panel-theme .client-secondary-card > h2 { margin: 0 0 6px; color: var(--client-text); }
+.panel-theme .client-secondary-card > p { color: var(--client-muted); }
+.panel-theme .client-history-row { display: flex; justify-content: space-between; gap: 14px; padding: 14px 0; border-top: 1px solid var(--client-line); }
+.panel-theme .client-history-row > div { display: grid; align-content: start; gap: 5px; }
+.panel-theme .client-history-row > div:last-child { text-align: right; white-space: nowrap; }
+.panel-theme .client-history-row strong { color: var(--client-text); }
+.panel-theme .client-history-row span,.panel-theme .client-history-row small,.panel-theme .client-history-row b { color: var(--client-muted); font-size: 12px; }
+.panel-theme .client-secondary-link { display: inline-flex; align-items: center; gap: 9px; margin-top: 16px; padding: 11px 13px; color: var(--client-text); border-radius: 11px; background: var(--client-card-muted); text-decoration: none; font-weight: 700; }
+.panel-theme .client-secondary-link svg { width: 17px; height: 17px; color: var(--client-accent); }
+.panel-theme .client-profile-section-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.panel-theme .client-profile-heading-actions { display:flex; gap:8px; }
+.panel-theme .client-profile-heading-actions a { width:40px; height:40px; display:grid; place-items:center; color:var(--client-accent); border:1px solid var(--client-line); border-radius:12px; background:var(--client-card-muted); }
+.panel-theme .client-profile-heading-actions svg { width:18px; height:18px; }
+.panel-theme .client-notification-inbox article { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 0; border-top:1px solid var(--client-line); }
+.panel-theme .client-notification-inbox article.is-unread { border-left:3px solid var(--client-accent); padding-left:12px; }
+.panel-theme .client-notification-inbox article > div { display:grid; gap:5px; }
+.panel-theme .client-notification-inbox article strong { color:var(--client-text); }
+.panel-theme .client-notification-inbox article span,.panel-theme .client-notification-inbox article time { color:var(--client-muted); font-size:13px; }
+.panel-theme .client-notification-actions { display:flex; gap:9px; margin:12px 0; }
+.panel-theme .client-notification-actions button,.panel-theme .client-notification-read { display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:9px 12px; color:var(--client-text); border:1px solid var(--client-line); border-radius:10px; background:var(--client-card-muted); font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+.panel-theme .client-notification-actions svg { width:15px; height:15px; }
+.panel-theme .client-edit-profile-form { display:grid; gap:14px; margin-top:18px; }
+.panel-theme .client-edit-profile-form label { display:grid; gap:7px; color:var(--client-text); font-size:13px; font-weight:700; }
+.panel-theme .client-edit-profile-form input { min-height:46px; padding:10px 12px; color:var(--client-text); border:1px solid var(--client-line); border-radius:10px; background:var(--client-card-muted); font:inherit; }
+.panel-theme .client-edit-profile-form input[readonly] { opacity:.72; }
+.panel-theme .client-edit-profile-form button { min-height:48px; color:#191714; border:0; border-radius:11px; background:var(--client-accent); font:inherit; font-weight:800; cursor:pointer; }
+.panel-theme .client-edit-profile-form button:disabled { opacity:.6; }
+.panel-theme .preferences-form { display:grid; gap:12px; margin-top:16px; }
+.panel-theme .preferences-form label,.panel-theme .push-notification-setup label { display:flex; align-items:center; gap:10px; min-height:44px; color:var(--client-text); }
+.panel-theme .preferences-form input[type="checkbox"],.panel-theme .push-notification-setup input[type="checkbox"] { width:21px; height:21px; accent-color:var(--client-accent-dark); }
+.panel-theme .preferences-form button { min-height:46px; color:#191714; border:0; border-radius:11px; background:var(--client-accent); font:inherit; font-weight:800; }
+.panel-theme .push-notification-setup { display:grid; gap:8px; margin-top:12px; }
+.panel-theme .push-notification-setup small { color:var(--client-muted); }
+.panel-theme .push-settings-hint { justify-self:start; padding:0; color:var(--client-accent-dark); border:0; background:none; font:inherit; text-decoration:underline; }
+@media (max-width: 600px) {
+  .panel-theme .client-secondary-hero { min-height:78px; height:78px; padding:10px 14px; border-radius:0 0 15px 15px; }
+  .panel-theme .client-secondary-hero > a { width:38px; height:38px; flex-basis:38px; }
+  .panel-theme .client-secondary-hero h1 { font-size:22px; }
+  .panel-theme .client-secondary-content { width:calc(100% - 22px); margin:12px auto; }
+  .panel-theme .client-secondary-card { padding:16px; }
+  .panel-theme .client-history-row { gap:8px; }
+  .panel-theme .client-history-row > div:last-child { white-space:normal; }
+  .panel-theme .client-notification-actions { flex-wrap:wrap; }
+}
+.panel-theme .panel-client-shell .client-notification-hero { position: sticky; top: 0; z-index: 35; min-height: 82px; height: 82px; padding: 10px max(16px, calc((100vw - 1120px) / 2)); border-radius: 0 0 18px 18px; background-position: center 48%; box-shadow: 0 8px 22px rgba(0,0,0,.18); }
+.panel-theme .client-notification-hero-content { display:flex; align-items:center; gap:13px; height:100%; }
+.panel-theme .client-notification-hero-content > a { width:40px; height:40px; display:grid; place-items:center; flex:0 0 40px; color:#fff; border:1px solid #ffffff48; border-radius:12px; background:#111a; }
+.panel-theme .client-notification-hero-content h1 { margin:0; color:#fff; font-size:24px; letter-spacing:-.035em; }
+@media (max-width: 760px) {
+  .panel-theme .panel-client-shell .client-notification-hero { min-height:76px; height:76px; padding:9px 14px; }
+  .panel-theme .client-notification-hero-content h1 { font-size:22px; }
+}
+@media (max-width: 760px) {
+  .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-page-hero { position: sticky; top: 0; z-index: 50; }
+}
+.panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-notification-hero { position:sticky; top:0; z-index:55; height:82px; min-height:82px; padding:10px max(16px,calc((100vw - 1120px)/2)); }
+@media (max-width:760px) { .panel-theme.panel-theme[data-panel-theme] .panel-client-shell .client-notification-hero { height:76px; min-height:76px; padding:9px 14px; } }

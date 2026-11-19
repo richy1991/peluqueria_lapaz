@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { ThemedText as Text } from '@/components/ThemedText';
 
 import { palette } from '@/components/ui';
 
@@ -82,9 +83,9 @@ export function BusinessStatusPill({ configuredStatus, statusMessage, timezone, 
 
 const styles = StyleSheet.create({
   pill: { alignSelf: 'flex-start', minHeight: 31, maxWidth: '100%', flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 11, borderRadius: 99, borderWidth: 1, borderColor: '#48c29255', backgroundColor: '#13362c' },
-  pillClosed: { borderColor: '#d9ad5d55', backgroundColor: '#34291f' },
+  pillClosed: { borderColor: '#D7DDE555', backgroundColor: '#20242A' },
   dot: { width: 7, height: 7, borderRadius: 99, backgroundColor: palette.green },
   dotClosed: { backgroundColor: palette.gold },
   label: { color: '#87e0bc', fontSize: 10, fontWeight: '800' },
-  labelClosed: { color: '#e4c27e' },
+  labelClosed: { color: '#D7DDE5' },
 });

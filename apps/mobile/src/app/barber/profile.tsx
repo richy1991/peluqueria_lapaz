@@ -1,5 +1,1 @@
-import { BarberProfileManager } from '@/components/BarberProfileManager';
-
-export default function BarberProfileScreen() {
-  return <BarberProfileManager view="profile" />;
-}
+export { default } from '@/features/barber/screens/BarberProfileScreen';

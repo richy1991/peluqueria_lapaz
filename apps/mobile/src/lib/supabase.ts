@@ -1,3 +1,6 @@
+import 'expo-sqlite/localStorage/install';
+
+import { AppState, Platform } from 'react-native';
 import { createClient } from '@supabase/supabase-js';
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'https://ggiajbauxczmqkylvjow.supabase.co';
@@ -6,13 +9,13 @@ const publishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
 const authStorage = {
   getItem(key: string) {
-    return typeof localStorage === 'undefined' ? null : localStorage.getItem(key);
+    return typeof globalThis.localStorage === 'undefined' ? null : globalThis.localStorage.getItem(key);
   },
   setItem(key: string, value: string) {
-    if (typeof localStorage !== 'undefined') localStorage.setItem(key, value);
+    if (typeof globalThis.localStorage !== 'undefined') globalThis.localStorage.setItem(key, value);
   },
   removeItem(key: string) {
-    if (typeof localStorage !== 'undefined') localStorage.removeItem(key);
+    if (typeof globalThis.localStorage !== 'undefined') globalThis.localStorage.removeItem(key);
   },
 };
 
@@ -25,3 +28,10 @@ export const supabase = createClient(url, publishableKey, {
     detectSessionInUrl: false,
   },
 });
+
+if (Platform.OS !== 'web') {
+  AppState.addEventListener('change', (state) => {
+    if (state === 'active') supabase.auth.startAutoRefresh();
+    else supabase.auth.stopAutoRefresh();
+  });
+}

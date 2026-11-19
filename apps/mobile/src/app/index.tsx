@@ -1,24 +1,27 @@
 import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { ActivityIndicator, Linking, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ActionButton, InlineMessage, palette } from '@/components/ui';
 import { useSession } from '@/lib/session';
 import { adminLoginUrl } from '@/lib/links';
 
 export default function IndexRoute() {
-  const { session, role, loading, roleError, refreshRole, signOut } = useSession();
+  const insets = useSafeAreaInsets();
+  const { session, role, profileComplete, loading, roleError, refreshRole, signOut } = useSession();
+  const contentInsets = { paddingTop: 28 + insets.top, paddingBottom: 28 + insets.bottom, paddingLeft: 28 + insets.left, paddingRight: 28 + insets.right };
 
   useEffect(() => {
     if (loading) return;
     if (!session) router.replace('/sign-in');
-    else if (role === 'client') router.replace('/client');
+    else if (role === 'client') router.replace(profileComplete ? '/client' : '/complete-profile');
     else if (role === 'barber') router.replace('/barber');
-  }, [loading, role, session]);
+  }, [loading, profileComplete, role, session]);
 
   if (role === 'unsupported' && !loading) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, contentInsets]}>
         <Text style={styles.brand}>LEGEND CLUB</Text>
         <Text style={styles.title}>Esta cuenta no puede usar esta app</Text>
         <Text style={styles.copy}>Inicia sesión desde la versión web de administración.</Text>
@@ -30,7 +33,7 @@ export default function IndexRoute() {
 
   if (roleError && !loading) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, contentInsets]}>
         <Text style={styles.brand}>LEGEND CLUB</Text>
         <Text style={styles.title}>No se pudo validar tu acceso</Text>
         <InlineMessage>{roleError}</InlineMessage>
@@ -40,7 +43,7 @@ export default function IndexRoute() {
     );
   }
 
-  return <View style={styles.center}><ActivityIndicator color={palette.gold} /><Text style={styles.copy}>Preparando tu cuenta…</Text></View>;
+  return <View style={[styles.center, contentInsets]}><ActivityIndicator color={palette.gold} /><Text style={styles.copy}>Preparando tu cuenta…</Text></View>;
 }
 
 const styles = StyleSheet.create({

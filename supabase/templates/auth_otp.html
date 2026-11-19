@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Acceso a LEGEND CLUB</title>
+  </head>
+  <body style="margin:0;background:#0b0d10;color:#f2f4f7;font-family:Arial,sans-serif;padding:32px 16px">
+    <main style="max-width:480px;margin:0 auto;padding:32px;border:1px solid #2c3138;border-radius:20px;background:#15181c">
+      <p style="margin:0 0 12px;color:#aab2bc;font-size:12px;font-weight:bold;letter-spacing:2px">LEGEND CLUB · LA PAZ</p>
+      <h1 style="margin:0 0 12px;font-size:24px">Confirma tu correo</h1>
+      <p style="margin:0;color:#a4acb6;font-size:15px;line-height:1.6">Toca el botón para confirmar tu correo y volver a la aplicación.</p>
+      <p style="margin:24px 0">
+        <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 20px;border-radius:12px;background:#d7dde5;color:#171a1f;font-size:14px;font-weight:bold;text-decoration:none">Confirmar correo y continuar</a>
+      </p>
+      <p style="margin:24px 0 8px;color:#a4acb6;font-size:13px;line-height:1.6">Si la aplicación te pide un código, también puedes escribir este:</p>
+      <p style="margin:0 0 22px;padding:18px;border:1px solid #343a43;border-radius:14px;background:#101216;color:#f2f4f7;font-size:32px;font-weight:bold;letter-spacing:10px;text-align:center">{{ .Token }}</p>
+      <p style="margin:0;color:#9aa2ac;font-size:13px;line-height:1.6">Si no solicitaste este acceso, puedes ignorar este correo.</p>
+    </main>
+  </body>
+</html>

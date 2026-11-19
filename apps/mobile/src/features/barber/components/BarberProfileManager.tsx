@@ -1,10 +1,12 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useState } from 'react';
-import { Image, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Linking, Pressable, StyleSheet, View } from 'react-native';
+import { ThemedText as Text } from '@/components/ThemedText';
 import { Camera, History, Images, Link2, UserRoundPen } from 'lucide-react-native';
 
 import { AppShell } from '@/components/AppShell';
-import { ActionButton, Card, CardTitle, EmptyState, InlineMessage, PageHeading, SwitchRow, TextField, palette } from '@/components/ui';
+import { ActionButton, Card, CardTitle, EmptyState, InlineMessage, PageHeading, SwitchRow, TextField, ThemePreferenceControl, palette } from '@/components/ui';
+import { useAppearance } from '@/lib/appearance';
 import { barberTabs } from '@/lib/navigation';
 import { publicPage } from '@/lib/links';
 import { useSession } from '@/lib/session';
@@ -18,6 +20,7 @@ type ManagerData = { profile: BarberProfile; gallery: GalleryPost[] };
 
 export function BarberProfileManager({ view }: { view: 'profile' | 'gallery' }) {
   const { barber, session } = useSession();
+  const { colors } = useAppearance();
   const barberId = barber?.id ?? '';
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
@@ -129,25 +132,26 @@ export function BarberProfileManager({ view }: { view: 'profile' | 'gallery' }) 
         <Card>
           <CardTitle icon={UserRoundPen} title="Perfil público" subtitle="Estos datos aparecen en la sección Equipo del sitio." />
           <View style={styles.profilePreview}>
-            {photo ? <Image source={{ uri: photo }} alt={`Perfil de ${profile?.display_name ?? barber?.display_name ?? 'peluquero'}`} style={styles.profilePhoto} /> : <View style={styles.photoPlaceholder}><Camera size={23} color={palette.gold} /></View>}
+            {photo ? <Image source={{ uri: photo }} alt={`Perfil de ${profile?.display_name ?? barber?.display_name ?? 'peluquero'}`} style={[styles.profilePhoto, { backgroundColor: colors.glassRaised }]} /> : <View style={[styles.photoPlaceholder, { backgroundColor: colors.glassRaised, borderColor: colors.glassBorder }]}><Camera size={23} color={colors.accent} /></View>}
             <View style={{ flex: 1, gap: 4 }}><Text style={styles.itemTitle}>{profile?.display_name ?? barber?.display_name}</Text><Text style={styles.muted}>{profile?.bio || 'Agrega una presentación para que los clientes te conozcan.'}</Text><Text style={styles.muted}>{profile?.specialties?.join(' · ') || 'Especialidades por definir'}</Text></View>
           </View>
           <TextField label="Nombre público" value={displayName} onChangeText={setDisplayName} maxLength={80} />
-          <View style={styles.field}><Text style={styles.fieldLabel}>Especialidades separadas por coma</Text><TextInput value={specialties} onChangeText={setSpecialties} placeholder="Degradados, barba, diseño" placeholderTextColor="#82776e" style={styles.input} /></View>
-          <View style={styles.field}><Text style={styles.fieldLabel}>Presentación</Text><TextInput value={bio} onChangeText={setBio} maxLength={500} multiline style={[styles.input, styles.multiline]} placeholder="Cuéntales sobre tu experiencia" placeholderTextColor="#82776e" /></View>
-          {profilePhoto ? <Image source={{ uri: profilePhoto.uri }} alt="Nueva foto de perfil" style={styles.photoPreview} /> : null}
+          <TextField label="Especialidades separadas por coma" value={specialties} onChangeText={setSpecialties} maxLength={160} placeholder="Degradados, barba, diseño" autoCapitalize="sentences" />
+          <TextField label="Presentación" value={bio} onChangeText={setBio} maxLength={500} multiline style={styles.multiline} placeholder="Cuéntales sobre tu experiencia" />
+          {profilePhoto ? <Image source={{ uri: profilePhoto.uri }} alt="Nueva foto de perfil" style={[styles.photoPreview, { backgroundColor: colors.glassRaised }]} /> : null}
           <ActionButton label={profilePhoto ? 'Cambiar fotografía seleccionada' : 'Elegir fotografía'} icon={Camera} tone="secondary" onPress={() => void chooseProfilePhoto()} />
           <ActionButton label="Guardar perfil" loading={busy} onPress={() => void saveProfile()} />
+          <View style={styles.appearanceSection}><Text style={[styles.itemTitle, { color: colors.text }]}>Apariencia</Text><Text style={styles.muted}>Elige el tema de la app o usa el de tu teléfono.</Text><ThemePreferenceControl /></View>
         </Card>
       ) : (
         <>
           <Card>
             <CardTitle icon={Images} title="Nueva publicación" subtitle="Se publicará en el portafolio y en el sitio público." />
             <TextField label="Título" value={title} onChangeText={setTitle} maxLength={120} placeholder="Ej. Degradado medio" />
-            <View style={styles.field}><Text style={styles.fieldLabel}>Descripción</Text><TextInput value={description} onChangeText={setDescription} maxLength={500} multiline style={[styles.input, styles.multiline]} placeholder="Detalles del corte o estilo" placeholderTextColor="#82776e" /></View>
+            <TextField label="Descripción" value={description} onChangeText={setDescription} maxLength={500} multiline style={styles.multiline} placeholder="Detalles del corte o estilo" />
             <View style={styles.choiceRow}>
-              <Pressable style={[styles.choiceButton, sourceType === 'own_work' && styles.choiceActive]} onPress={() => setSourceType('own_work')}><Text style={[styles.choiceText, sourceType === 'own_work' && styles.choiceTextActive]}>Trabajo propio</Text></Pressable>
-              <Pressable style={[styles.choiceButton, sourceType === 'reference' && styles.choiceActive]} onPress={() => setSourceType('reference')}><Text style={[styles.choiceText, sourceType === 'reference' && styles.choiceTextActive]}>Referencia</Text></Pressable>
+              <Pressable style={[styles.choiceButton, { backgroundColor: sourceType === 'own_work' ? colors.accentSoft : colors.glassRaised, borderColor: sourceType === 'own_work' ? colors.accent : colors.glassBorder }]} onPress={() => setSourceType('own_work')}><Text style={[styles.choiceText, { color: sourceType === 'own_work' ? colors.accent : colors.muted }]}>Trabajo propio</Text></Pressable>
+              <Pressable style={[styles.choiceButton, { backgroundColor: sourceType === 'reference' ? colors.accentSoft : colors.glassRaised, borderColor: sourceType === 'reference' ? colors.accent : colors.glassBorder }]} onPress={() => setSourceType('reference')}><Text style={[styles.choiceText, { color: sourceType === 'reference' ? colors.accent : colors.muted }]}>Referencia</Text></Pressable>
             </View>
             {sourceType === 'reference' ? <TextField label="Enlace de la fuente" value={sourceUrl} onChangeText={setSourceUrl} autoCapitalize="none" keyboardType="url" placeholder="https://…" /> : <SwitchRow label="Tengo autorización del cliente" value={clientConsent} onValueChange={setClientConsent} description="Necesario para compartir trabajos propios." />}
             {galleryImages.length ? <View style={styles.selectedImages}>{galleryImages.map((image, index) => <Image key={`${image.uri}-${index}`} source={{ uri: image.uri }} alt={`Imagen seleccionada ${index + 1}`} style={styles.selectedImage} />)}</View> : null}
@@ -169,20 +173,19 @@ export function BarberProfileManager({ view }: { view: 'profile' | 'gallery' }) 
 
 const styles = StyleSheet.create({
   profilePreview: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  profilePhoto: { width: 74, height: 74, borderRadius: 19, backgroundColor: palette.surfaceRaised },
-  photoPlaceholder: { width: 74, height: 74, borderRadius: 19, backgroundColor: palette.surfaceRaised, borderColor: palette.border, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  profilePhoto: { width: 74, height: 74, borderRadius: 19 },
+  photoPlaceholder: { width: 74, height: 74, borderRadius: 19, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   photoPreview: { width: 110, height: 110, borderRadius: 16, alignSelf: 'center' },
   itemTitle: { color: palette.text, fontSize: 13, fontWeight: '800' },
+  appearanceSection: { gap: 10, borderTopColor: palette.border, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 16, marginTop: 4 },
   muted: { color: palette.muted, fontSize: 11, lineHeight: 16 },
   field: { gap: 7 },
   fieldLabel: { color: palette.text, fontSize: 12, fontWeight: '700' },
-  input: { minHeight: 47, borderRadius: 12, borderWidth: 1, borderColor: palette.border, backgroundColor: '#191512', paddingHorizontal: 13, color: palette.text, fontSize: 14 },
+  input: { minHeight: 47, borderRadius: 12, borderWidth: 1, borderColor: palette.border, backgroundColor: '#121519', paddingHorizontal: 13, color: palette.text, fontSize: 14 },
   multiline: { minHeight: 85, textAlignVertical: 'top', paddingTop: 11 },
   choiceRow: { flexDirection: 'row', gap: 8 },
   choiceButton: { flex: 1, minHeight: 43, alignItems: 'center', justifyContent: 'center', borderColor: palette.border, borderWidth: 1, borderRadius: 12, backgroundColor: palette.surfaceRaised },
-  choiceActive: { borderColor: palette.gold, backgroundColor: '#3b2e1d' },
-  choiceText: { color: palette.muted, fontWeight: '700', fontSize: 12 },
-  choiceTextActive: { color: palette.gold },
+  choiceText: { fontWeight: '700', fontSize: 12 },
   selectedImages: { flexDirection: 'row', gap: 8 },
   selectedImage: { flex: 1, height: 90, borderRadius: 10, backgroundColor: palette.surfaceRaised },
   galleryRow: { flexDirection: 'row', alignItems: 'center', borderTopColor: palette.border, borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 12, gap: 8 },

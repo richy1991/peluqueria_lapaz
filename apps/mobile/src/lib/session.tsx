@@ -1,5 +1,5 @@
 import type { Session } from '@supabase/supabase-js';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { supabase } from '@/lib/supabase';
 
@@ -10,6 +10,7 @@ type SessionContextValue = {
   session: Session | null;
   role: AppRole | null;
   barber: BarberProfile | null;
+  profileComplete: boolean;
   loading: boolean;
   roleError: string;
   signOut: () => Promise<void>;
@@ -17,14 +18,17 @@ type SessionContextValue = {
 };
 
 const SessionContext = createContext<SessionContextValue | null>(null);
+const roleCheckTimeoutMs = 15_000;
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [barber, setBarber] = useState<BarberProfile | null>(null);
+  const [profileComplete, setProfileComplete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [roleError, setRoleError] = useState('');
   const requestId = useRef(0);
+  const authEventReceived = useRef(false);
 
   const loadRole = useCallback(async (current: Session | null) => {
     const currentRequest = ++requestId.current;
@@ -32,49 +36,77 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (!current) {
       setRole(null);
       setBarber(null);
+      setProfileComplete(false);
       setLoading(false);
       return;
     }
 
     setLoading(true);
-    const [adminResult, cashierResult, barberResult, rolesResult] = await Promise.all([
-      supabase.rpc('is_admin'),
-      supabase.rpc('is_cashier'),
-      supabase.from('barber_profiles').select('id,display_name').eq('user_id', current.user.id).eq('active', true).maybeSingle(),
-      supabase.from('user_roles').select('role').eq('user_id', current.user.id),
-    ]);
-    if (currentRequest !== requestId.current) return;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), roleCheckTimeoutMs);
+    try {
+      const [adminResult, cashierResult, barberResult, rolesResult, profileResult] = await Promise.all([
+        supabase.rpc('is_admin').abortSignal(controller.signal),
+        supabase.rpc('is_cashier').abortSignal(controller.signal),
+        supabase.from('barber_profiles').select('id,display_name').eq('user_id', current.user.id).eq('active', true).abortSignal(controller.signal).maybeSingle(),
+        supabase.from('user_roles').select('role').eq('user_id', current.user.id).abortSignal(controller.signal),
+        supabase.from('profiles').select('full_name,phone').eq('id', current.user.id).abortSignal(controller.signal).maybeSingle(),
+      ]);
+      if (currentRequest !== requestId.current) return;
 
-    if (adminResult.error || cashierResult.error || barberResult.error || rolesResult.error) {
-      setRoleError(adminResult.error?.message ?? cashierResult.error?.message ?? barberResult.error?.message ?? rolesResult.error?.message ?? 'No se pudo validar tu acceso.');
+      const queryError = adminResult.error ?? cashierResult.error ?? barberResult.error ?? rolesResult.error ?? profileResult.error;
+      if (queryError) {
+        setRoleError(queryError.message);
+        setRole(null);
+        setBarber(null);
+        setProfileComplete(false);
+      } else {
+        setProfileComplete(Boolean(profileResult.data?.full_name?.trim() && profileResult.data?.phone?.trim()));
+      }
+
+      if (!queryError && (adminResult.data || cashierResult.data)) {
+        setRole('unsupported');
+        setBarber(null);
+      } else if (!queryError && barberResult.data) {
+        setRole('barber');
+        setBarber({ id: barberResult.data.id, display_name: barberResult.data.display_name });
+      } else if (!queryError && (rolesResult.data ?? []).some((item) => item.role === 'client')) {
+        setRole('client');
+        setBarber(null);
+      } else if (!queryError) {
+        setRole('unsupported');
+        setBarber(null);
+      }
+    } catch (reason) {
+      if (currentRequest !== requestId.current) return;
+      setRoleError(controller.signal.aborted
+        ? 'La validación tardó demasiado. Revisa tu conexión e inténtalo de nuevo.'
+        : reason instanceof Error ? reason.message : 'No se pudo validar tu acceso. Revisa tu conexión e inténtalo de nuevo.');
       setRole(null);
       setBarber(null);
-    } else if (adminResult.data || cashierResult.data) {
-      setRole('unsupported');
-      setBarber(null);
-    } else if (barberResult.data) {
-      setRole('barber');
-      setBarber({ id: barberResult.data.id, display_name: barberResult.data.display_name });
-    } else if ((rolesResult.data ?? []).some((item) => item.role === 'client')) {
-      setRole('client');
-      setBarber(null);
-    } else {
-      setRole('unsupported');
-      setBarber(null);
+      setProfileComplete(false);
+    } finally {
+      clearTimeout(timeout);
+      if (currentRequest === requestId.current) setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
     let active = true;
     void supabase.auth.getSession().then(({ data, error }) => {
-      if (!active) return;
+      if (!active || authEventReceived.current) return;
       if (error) setRoleError(error.message);
       setSession(data.session);
       void loadRole(data.session);
+    }).catch((reason: unknown) => {
+      if (!active || authEventReceived.current) return;
+      setRoleError(reason instanceof Error ? reason.message : 'No se pudo recuperar la sesión.');
+      setLoading(false);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      authEventReceived.current = true;
       setSession(nextSession);
+      if (_event === 'TOKEN_REFRESHED' || _event === 'USER_UPDATED') return;
       setRole(null);
       setBarber(null);
       setLoading(true);
@@ -83,6 +115,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     });
     return () => {
       active = false;
+      requestId.current += 1;
       listener.subscription.unsubscribe();
     };
   }, [loadRole]);
@@ -93,9 +126,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshRole = useCallback(async () => loadRole(session), [loadRole, session]);
+  const value = useMemo(() => ({ session, role, barber, profileComplete, loading, roleError, signOut, refreshRole }), [session, role, barber, profileComplete, loading, roleError, signOut, refreshRole]);
 
   return (
-    <SessionContext.Provider value={{ session, role, barber, loading, roleError, signOut, refreshRole }}>
+    <SessionContext.Provider value={value}>
       {children}
     </SessionContext.Provider>
   );

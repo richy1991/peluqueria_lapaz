@@ -1,5 +1,1 @@
-import { SupportChat } from '@/components/SupportChat';
-
-export default function BarberChatScreen() {
-  return <SupportChat role="barber" />;
-}
+export { default } from '@/features/barber/screens/BarberChatScreen';

@@ -9,7 +9,7 @@ import { dispatchDashboardError, dispatchDashboardSuccess } from "@/lib/form-fee
 type Entity = "client" | "product" | "barber" | "gallery" | "service";
 
 const entities = {
-  client: { rpc: "clients", success: "Cliente eliminado de la base de datos.", detail: "Se eliminarán su cuenta de acceso y sus datos de cliente." },
+  client: { rpc: "clients", success: "Cliente y sus datos relacionados eliminados definitivamente.", detail: "Se eliminarán su cuenta, citas, puntos, apartados, ventas, cobros, comprobantes y demás datos relacionados." },
   product: { rpc: "products", success: "Producto eliminado de la base de datos.", detail: "El producto dejará de estar disponible en el catálogo." },
   barber: { rpc: "barbers", success: "Peluquero eliminado de la base de datos.", detail: "Se eliminarán su perfil de peluquero y su acceso como peluquero. Si tiene otros roles, los conservará." },
   gallery: { rpc: "gallery", success: "Publicación eliminada de la base de datos.", detail: "La publicación dejará de aparecer en la galería." },
@@ -62,7 +62,8 @@ export function AdminDeleteAction({ entity, id, label, disabled = false, confirm
     {!confirming ? <button type="button" className="dash-danger-action" disabled={disabled || busy} onClick={() => setConfirming(true)}><Trash2 aria-hidden="true" /><span>Eliminar</span></button> : <section className="admin-delete-confirmation" aria-labelledby={confirmationId} aria-busy={busy}>
       <h3 id={confirmationId}>Eliminar «{label}»</h3>
       <p>{config.detail} Esta acción es permanente.</p>
-      {entity !== "gallery" && <p>El historial de ventas y cobros se conserva.</p>}
+      {entity === "client" && <p>También se quitarán de las liquidaciones las comisiones vinculadas a sus ventas.</p>}
+      {entity !== "gallery" && entity !== "client" && <p>El historial de ventas y cobros se conserva.</p>}
       <div className="admin-confirm-actions">
         <button type="button" disabled={busy} onClick={() => { setConfirming(false); setError(""); }}>Cancelar</button>
         <button type="button" className="dash-danger-action" disabled={disabled || busy} onClick={removeRecord}><Trash2 aria-hidden="true" />{busy ? "Eliminando…" : "Sí, eliminar"}</button>

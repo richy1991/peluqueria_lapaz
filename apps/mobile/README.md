@@ -1,10 +1,20 @@
 # LEGEND CLUB Mobile
 
-Aplicación React Native con Expo, independiente del sitio Next.js. La app reutiliza el proyecto y la sesión de Supabase existentes; la web actual sigue disponible y los datos se comparten entre ambas.
+Aplicación React Native con Expo. Su código, dependencias y compilaciones viven dentro de `apps/mobile`; no importa pantallas ni funciones del sitio Next.js. La app y la web comparten autenticación, datos, almacenamiento y funciones de Supabase.
+
+## Organización del código
+
+- `src/app/` contiene las rutas de Expo Router y sus controles de acceso; las rutas de cliente y peluquero cargan las pantallas organizadas en `src/features/`.
+- `src/features/client/screens/` contiene las pantallas móviles propias del cliente.
+- `src/features/barber/screens/` contiene las pantallas móviles de peluquero; `src/features/barber/components/` guarda sus componentes de gestión.
+- `src/components/` contiene componentes nativos compartidos, como el catálogo y el chat, que reciben el rol para mostrar las acciones correspondientes.
+- `src/lib/` contiene sesión, conexión con Supabase, navegación y funciones comunes.
+
+Para mover la app a otro repositorio se necesita copiar esta carpeta completa y configurar las variables del backend. El paquete de la app es independiente del proyecto web, pero los inicios de sesión, citas, productos, fotos y funciones remotas necesitan un proyecto Supabase con las tablas, permisos, almacenamiento y funciones SQL que usa la app. Las variables se configuran en `apps/mobile/.env` (`EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`); `EXPO_PUBLIC_SITE_URL` solo define los enlaces que abren el sitio público.
 
 ## Módulos incluidos
 
-- **Cliente:** próxima cita y sus acciones, catálogo, carrito y apartados, puntos por peluquero, código QR de recomendación, vinculación de comprobantes, perfil, notificaciones, preferencias y chat.
+- **Cliente:** próxima cita y sus acciones, catálogo, carrito y apartados, puntos por peluquero, código QR de recomendación, vinculación de comprobantes, edición de nombre y teléfono, historial de citas, servicios y apartados, notificaciones, preferencias y chat.
 - **Peluquero:** agenda de hoy y semanal, inicio de atención, inasistencia, envío a caja, catálogo, perfil público, publicación de trabajos y balance.
 - **Reserva nativa:** el cliente elige servicio, peluquero, día y horario, registra su teléfono y confirma las condiciones dentro del APK. La disponibilidad usa la agenda y las reglas actuales de Supabase.
 - **Sitio público:** los accesos abren la web actual en `EXPO_PUBLIC_SITE_URL`; su contenido se sigue administrando desde la web.

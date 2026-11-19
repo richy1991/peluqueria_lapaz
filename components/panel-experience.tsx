@@ -153,7 +153,7 @@ export function PanelResponsiveSidebar({ children, variant = "operations" }: { c
   return mobile ? <PanelViewportPortal>{sidebar}</PanelViewportPortal> : sidebar;
 }
 
-export function PanelExperience({ children, chatInHeader = false }: { children: ReactNode; chatInHeader?: boolean }) {
+export function PanelExperience({ children, chatInHeader = false, hideFloatingTools = false }: { children: ReactNode; chatInHeader?: boolean; hideFloatingTools?: boolean }) {
   const value = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
   const [, resolved] = value.split(":") as [Preference, "light" | "dark"];
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -243,7 +243,7 @@ export function PanelExperience({ children, chatInHeader = false }: { children: 
         {children}
         <PanelExitGuard />
         <DashboardToastHost />
-        <PanelViewportPortal><aside className="panel-floating-tools" aria-label="Atención al cliente"><FloatingSupportChat /></aside></PanelViewportPortal>
+        {!hideFloatingTools && <PanelViewportPortal><aside className="panel-floating-tools" aria-label="Atención al cliente"><FloatingSupportChat /></aside></PanelViewportPortal>}
       </div>
     </MobileNavigationContext.Provider>
   );

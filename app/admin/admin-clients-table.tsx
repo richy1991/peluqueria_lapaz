@@ -77,7 +77,7 @@ function ClientDetails({ client, timezone }: { client: AdminClient; timezone: st
         {client.is_blacklisted && client.blacklist_reason && <div className="client-details-wide"><dt>Motivo del seguimiento</dt><dd>{client.blacklist_reason}</dd></div>}
         {client.updated_at && <div><dt>Última actualización</dt><dd>{date(client.updated_at)}</dd></div>}
       </dl>
-      <p className="client-details-help">Dar de baja desactiva la cuenta y permite reactivarla. Eliminar borra la cuenta permanentemente.</p>
+      <p className="client-details-help">Dar de baja desactiva la cuenta y permite reactivarla. Eliminar borra definitivamente la cuenta, sus citas, puntos, apartados, compras y demás datos asociados.</p>
       <ClientAdminActions id={client.id} name={client.full_name?.trim() || client.email} status={client.status} blocked={client.is_blocked} blockedReason={client.blocked_reason} />
     </div>
   );

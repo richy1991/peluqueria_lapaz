@@ -1,5 +1,1 @@
-import { SupportChat } from '@/components/SupportChat';
-
-export default function ClientChatScreen() {
-  return <SupportChat role="client" />;
-}
+export { default } from '@/features/client/screens/ClientChatScreen';

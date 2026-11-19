@@ -1,5 +1,1 @@
-import { ProductCatalogPanel } from '@/components/ProductCatalogPanel';
-
-export default function ClientProductsScreen() {
-  return <ProductCatalogPanel role="client" />;
-}
+export { default } from '@/features/client/screens/ClientProductsScreen';

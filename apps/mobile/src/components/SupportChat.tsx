@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ThemedText as Text } from '@/components/ThemedText';
 import type { ScrollViewInstance } from 'react-native';
 import { MessageCircle, Send } from 'lucide-react-native';
 import type { RealtimeChannel } from '@supabase/supabase-js';
@@ -30,10 +31,12 @@ export function SupportChat({ role }: { role: 'client' | 'barber' }) {
   const peerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadMessages = useCallback(async (id: string, markRead = false) => {
-    if (markRead) await supabase.rpc('mark_chat_conversation_read', { target_conversation: id });
-    const { data, error: loadError } = await supabase.from('messages').select('id,conversation_id,sender_id,body,created_at,read_at').eq('conversation_id', id).order('created_at');
+    if (markRead) {
+      try { await supabase.rpc('mark_chat_conversation_read', { target_conversation: id }); } catch { /* El chat sigue disponible aunque falle el contador de lectura. */ }
+    }
+    const { data, error: loadError } = await supabase.from('messages').select('id,conversation_id,sender_id,body,created_at,read_at').eq('conversation_id', id).order('created_at', { ascending: false }).limit(100);
     if (loadError) throw loadError;
-    setMessages((data ?? []) as ChatMessage[]);
+    setMessages(((data ?? []) as ChatMessage[]).reverse());
   }, []);
 
   useEffect(() => {
@@ -71,7 +74,7 @@ export function SupportChat({ role }: { role: 'client' | 'barber' }) {
         if (payload.eventType === 'INSERT') {
           const next = row as ChatMessage;
           setMessages((current) => current.some((item) => item.id === next.id) ? current : [...current, next]);
-          if (next.sender_id !== userId) void supabase.rpc('mark_chat_conversation_read', { target_conversation: conversationId });
+          if (next.sender_id !== userId) void Promise.resolve(supabase.rpc('mark_chat_conversation_read', { target_conversation: conversationId })).catch(() => undefined);
         } else if (payload.eventType === 'UPDATE') {
           setMessages((current) => current.map((item) => item.id === row.id ? { ...item, ...row } as ChatMessage : item));
         }
@@ -101,8 +104,8 @@ export function SupportChat({ role }: { role: 'client' | 'barber' }) {
     const channel = typingChannelRef.current;
     if (!channel) return;
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
-    if (draft.trim()) void channel.send({ type: 'broadcast', event: 'typing', payload: { userId, typing: true } });
-    typingTimerRef.current = setTimeout(() => void channel.send({ type: 'broadcast', event: 'typing', payload: { userId, typing: false } }), 1200);
+    if (draft.trim()) void Promise.resolve(channel.send({ type: 'broadcast', event: 'typing', payload: { userId, typing: true } })).catch(() => undefined);
+    typingTimerRef.current = setTimeout(() => void Promise.resolve(channel.send({ type: 'broadcast', event: 'typing', payload: { userId, typing: false } })).catch(() => undefined), 1200);
     return () => { if (typingTimerRef.current) clearTimeout(typingTimerRef.current); };
   }, [draft, conversationId, userId]);
 
@@ -110,15 +113,20 @@ export function SupportChat({ role }: { role: 'client' | 'barber' }) {
     const body = draft.trim();
     if (!conversationId || !body || busy) return;
     setBusy(true); setError('');
-    const { error: sendError } = await supabase.rpc('send_chat_message', { target_conversation: conversationId, message_body: body });
-    setBusy(false);
-    if (sendError) { setError(sendError.message); return; }
-    setDraft('');
-    try { await loadMessages(conversationId, false); } catch { /* El mensaje se sincroniza por tiempo real al reconectar. */ }
+    try {
+      const { error: sendError } = await supabase.rpc('send_chat_message', { target_conversation: conversationId, message_body: body });
+      if (sendError) throw sendError;
+      setDraft('');
+      try { await loadMessages(conversationId, false); } catch { /* El mensaje se sincroniza por tiempo real al reconectar. */ }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'No se pudo enviar el mensaje. Revisa tu conexión.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
-    <AppShell title="Atención al cliente" roleLabel="MENSAJERÍA" tabs={role === 'client' ? clientTabs : barberTabs} backHref={role === 'client' ? '/client' : '/barber'} showChat={false}>
+    <AppShell title="Atención al cliente" roleLabel="MENSAJERÍA" activeTab={role === 'client' ? 'inicio' : 'agenda'} tabs={role === 'client' ? clientTabs : barberTabs} backHref={role === 'client' ? '/client' : '/barber'} showChat={false}>
       <PageHeading eyebrow="Atención LEGEND" title="Conversación" description="Escribe a nuestro equipo. Tus mensajes se sincronizan con el soporte del sitio." />
       <Card style={styles.chatCard}>
         <CardTitle icon={MessageCircle} title="Soporte LEGEND CLUB" subtitle={connection} />
@@ -142,7 +150,7 @@ export function SupportChat({ role }: { role: 'client' | 'barber' }) {
           </ScrollView>
           {peerTyping ? <Text style={styles.typing}>LEGEND CLUB está escribiendo…</Text> : null}
           <View style={styles.composer}>
-            <TextInput value={draft} onChangeText={setDraft} placeholder="Escribe un mensaje…" placeholderTextColor="#82776e" style={styles.input} multiline maxLength={2000} editable={!loading && Boolean(conversationId)} />
+            <TextInput value={draft} onChangeText={setDraft} placeholder="Escribe un mensaje…" placeholderTextColor="#9AA2AC" style={styles.input} multiline maxLength={2000} editable={!loading && Boolean(conversationId)} returnKeyType="send" submitBehavior="submit" onSubmitEditing={() => void send()} />
             <ActionButton label="Enviar" icon={Send} compact disabled={!draft.trim() || !conversationId} loading={busy} onPress={() => void send()} />
           </View>
         </KeyboardAvoidingView>
@@ -153,19 +161,19 @@ export function SupportChat({ role }: { role: 'client' | 'barber' }) {
 
 const styles = StyleSheet.create({
   chatCard: { padding: 13 },
-  messages: { maxHeight: 390, minHeight: 180, backgroundColor: '#191512', borderRadius: 14, padding: 10 },
+  messages: { maxHeight: 390, minHeight: 180, backgroundColor: '#121519', borderRadius: 14, padding: 10 },
   messagesContent: { gap: 10, paddingBottom: 8 },
   messageRow: { width: '100%', flexDirection: 'row' },
   mineRow: { justifyContent: 'flex-end' },
   theirRow: { justifyContent: 'flex-start' },
   bubble: { maxWidth: '88%', minWidth: 100, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 9, gap: 5 },
-  mineBubble: { backgroundColor: '#6e4c29', borderBottomRightRadius: 4 },
-  theirBubble: { backgroundColor: '#29221c', borderColor: palette.border, borderWidth: 1, borderBottomLeftRadius: 4 },
+  mineBubble: { backgroundColor: '#343B45', borderBottomRightRadius: 4 },
+  theirBubble: { backgroundColor: '#20242A', borderColor: palette.border, borderWidth: 1, borderBottomLeftRadius: 4 },
   sender: { color: palette.gold, fontSize: 9, fontWeight: '900', letterSpacing: 0.6 },
-  senderMine: { color: '#f4d08a' },
+  senderMine: { color: '#D7DDE5' },
   messageText: { color: palette.text, fontSize: 13, lineHeight: 19 },
-  messageDate: { color: '#cfbda5', fontSize: 9, textAlign: 'right' },
+  messageDate: { color: '#9AA2AC', fontSize: 9, textAlign: 'right' },
   typing: { color: palette.gold, fontSize: 10, paddingVertical: 5 },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 10 },
-  input: { flex: 1, maxHeight: 110, minHeight: 44, borderColor: palette.border, borderWidth: 1, borderRadius: 13, backgroundColor: '#191512', color: palette.text, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, textAlignVertical: 'top' },
+  input: { flex: 1, maxHeight: 110, minHeight: 44, borderColor: palette.border, borderWidth: 1, borderRadius: 13, backgroundColor: '#121519', color: palette.text, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, textAlignVertical: 'top' },
 });

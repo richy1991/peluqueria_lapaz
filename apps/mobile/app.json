@@ -7,7 +7,7 @@
     "icon": "./assets/images/legend-club-icon.png",
     "scheme": "legendclub",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#171310",
+    "backgroundColor": "#0B0D10",
     "ios": {
       "bundleIdentifier": "com.legendclub.barberia",
       "supportsTablet": false
@@ -15,10 +15,9 @@
     "android": {
       "package": "com.legendclub.barberia",
       "adaptiveIcon": {
-        "backgroundColor": "#171310",
+        "backgroundColor": "#0B0D10",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
-      },
-      "edgeToEdgeEnabled": true
+      }
     },
     "web": {
       "output": "server",
@@ -26,10 +25,16 @@
     },
     "plugins": [
       "expo-router",
+        [
+          "expo-notifications",
+          {
+            "defaultChannel": "client-updates-v1"
+          }
+        ],
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#171310",
+          "backgroundColor": "#0B0D10",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 150
         }
@@ -42,7 +47,8 @@
           "cameraPermission": false,
           "microphonePermission": false
         }
-      ]
+      ],
+      "react-native-nitro-google-signin"
     ],
     "experiments": {
       "typedRoutes": true

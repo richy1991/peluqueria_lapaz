@@ -1,5 +1,1 @@
-import { ProductCatalogPanel } from '@/components/ProductCatalogPanel';
-
-export default function BarberProductsScreen() {
-  return <ProductCatalogPanel role="barber" />;
-}
+export { default } from '@/features/barber/screens/BarberProductsScreen';

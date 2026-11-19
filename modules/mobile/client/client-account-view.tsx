@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BadgeCheck, Bell, CalendarDays, ChevronRight, CircleAlert, Gift, Globe2, Home, Images, Mail, PackageCheck, Palette, Phone, Scissors, Star, UserRound } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Bell, CalendarDays, ChevronRight, CircleAlert, Gift, Globe2, History, Home, Images, Mail, PackageCheck, Palette, Phone, Scissors, Settings2, Star, UserRound, UserRoundPen } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { BusinessStatus } from "@/components/business-status";
 import { ModeSwitcher } from "@/components/mode-switcher";
@@ -12,8 +12,6 @@ import { getPublicGallery, getPublicProducts, type PublicGalleryItem } from "@/l
 import { DEFAULT_BUSINESS_TIMEZONE, resolveBusinessStatus, type BusinessHour } from "@/lib/business-hours";
 import { CancelAppointmentButton, ConfirmReassignmentButton } from "./appointment-actions";
 import { ClaimVisitForm } from "./loyalty-actions";
-import { PreferencesForm } from "./preferences-form";
-import { PushNotificationSetup } from "@/components/push-notification-setup";
 import { ReferralCode } from "./referral-code";
 import { WorkCarousel } from "./work-carousel";
 import { StaggerContainer } from "@/components/stagger-animations";
@@ -26,12 +24,13 @@ import {
   PanelViewportPortal,
 } from "@/components/panel-experience";
 import { CLIENT_NAVIGATION, type ClientSection } from "./contracts";
+import { ClientNotificationInbox } from "./notification-inbox";
 
 const sectionCopy: Record<ClientSection, { eyebrow: string; title: string; description: string }> = {
-  inicio: { eyebrow: "MODO CLIENTE", title: "Inicio", description: "Tu actividad, beneficios y próximos pasos en un solo lugar." },
+  inicio: { eyebrow: "", title: "Inicio", description: "Tu actividad, beneficios y próximos pasos en un solo lugar." },
   puntos: { eyebrow: "FIDELIZACIÓN", title: "Puntos y recompensas", description: "Consulta tus puntos con cada peluquero, metas y canjes activos." },
   productos: { eyebrow: "CATÁLOGO", title: "Mis productos", description: "Explora el catálogo disponible y aparta tus productos para recogerlos en el local." },
-  notificaciones: { eyebrow: "CENTRO DE AVISOS", title: "Notificaciones", description: "Revisa novedades y decide qué comunicaciones quieres recibir." },
+  notificaciones: { eyebrow: "", title: "Notificaciones", description: "Avisos y novedades que pueden interesarte." },
   perfil: { eyebrow: "CUENTA PERSONAL", title: "Mi perfil", description: "Consulta los datos asociados a tu cuenta LEGEND CLUB." },
   galeria: { eyebrow: "INSPIRACIÓN LEGEND", title: "Galería de trabajos", description: "Explora los cortes y estilos publicados por nuestro equipo." },
 };
@@ -48,14 +47,13 @@ export async function ClientAccountView({ section }: { section: ClientSection })
   if (section === "inicio" || section === "puntos") await supabase.rpc("refresh_my_barber_loyalty");
   const requestTime = new Date().toISOString();
   const activeReservationCutoff = requestTime;
-  const [profile, appointments, reservations, notifications, loyalty, transactions, preferences, availableProducts, businessSettings, businessHours, gallery] = await Promise.all([
+  const [profile, appointments, reservations, notifications, loyalty, transactions, availableProducts, businessSettings, businessHours, gallery] = await Promise.all([
     supabase.from("profiles").select("full_name,email,phone,avatar_url,status,no_show_count,is_blacklisted,is_blocked,referral_code").eq("id", user.id).single(),
     section === "inicio" ? supabase.from("appointments").select("id,starts_at,status,price_snapshot,service_name_snapshot,barber_name_snapshot,barber_profiles!appointments_barber_id_fkey(display_name)").eq("client_id", user.id).gte("starts_at", requestTime).in("status", ["requested", "confirmed", "in_progress", "pending_payment", "pending_client_confirmation", "needs_reschedule"]).order("starts_at", { ascending: true }).limit(1) : Promise.resolve({ data: [] }),
     section === "productos" ? supabase.from("product_reservations").select("id,quantity,price_snapshot,expires_at,products(name)").eq("client_id", user.id).eq("status", "reserved").gt("expires_at", activeReservationCutoff).order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
-    supabase.from("notifications").select("id,title,body,read_at,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
+    section === "notificaciones" ? supabase.from("notifications").select("id,type,title,body,read_at,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50) : Promise.resolve({ data: [] }),
     ["inicio", "puntos"].includes(section) ? supabase.from("customer_barber_loyalty_accounts").select("barber_id,balance,lifetime_earned,lifetime_redeemed,barber_profiles(display_name)").eq("user_id", user.id).order("balance", { ascending: false }) : Promise.resolve({ data: [] }),
     section === "puntos" ? supabase.from("loyalty_transactions").select("id,points,reason,created_at,barber_id_snapshot,barber_profiles(display_name)").eq("user_id", user.id).or("barber_id.not.is.null,barber_id_snapshot.not.is.null").order("created_at", { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
-    section === "notificaciones" ? supabase.from("notification_preferences").select("appointment_notifications,promotion_notifications,chat_notifications,system_notifications,muted_all").eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
     section === "productos" ? getPublicProducts() : Promise.resolve([]),
     supabase.from("business_settings").select("business_status,status_message,timezone").eq("id", true).maybeSingle(),
     supabase.from("business_hours").select("*").order("weekday"),
@@ -92,12 +90,14 @@ export async function ClientAccountView({ section }: { section: ClientSection })
   const clientConfiguredStatus = String(businessSettings.data?.business_status ?? "open");
   const clientInitialStatus = resolveBusinessStatus(clientConfiguredStatus, clientBusinessHours, clientBusinessTimezone);
 
-  return <PanelExperience chatInHeader><main className="portal-shell panel-client-shell">
-    <section className="client-page-hero" style={{ backgroundImage: `url(${JSON.stringify(clientHeroImage)})` }}>
+  return <PanelExperience chatInHeader={section !== "notificaciones"} hideFloatingTools={section === "notificaciones"}><main className="portal-shell panel-client-shell">
+    <section className={`client-page-hero${section === "notificaciones" ? " client-notification-hero" : ""}`} style={{ backgroundImage: `url(${JSON.stringify(clientHeroImage)})` }}>
       <div className="client-hero-shade" />
-      <div className="client-hero-top"><div className="client-hero-brand"><Brand linked={false} /><BusinessStatus configuredStatus={clientConfiguredStatus} initialStatus={clientInitialStatus} statusMessage={String(businessSettings.data?.status_message ?? "")} timezone={clientBusinessTimezone} hours={clientBusinessHours} variant="client" /></div><div className="client-hero-actions"><ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={capabilities.isCashier} /></div></div>
-      <div className="client-hero-content"><p className="eyebrow">{copy.eyebrow}</p><h1>{section === "inicio" ? `Hola, ${displayName}` : copy.title}</h1><p>{section === "inicio" ? "Tu próxima visita, tus beneficios y tu estilo en un solo lugar." : copy.description}</p></div>
-      <Link className="client-hero-public-link" href="/sitio"><Globe2 /><span>Ver sitio público</span></Link>
+      {section === "notificaciones" ? <div className="client-notification-hero-content"><Link href="/mi-cuenta/perfil" aria-label="Volver al perfil"><ArrowLeft /></Link><h1>Notificaciones</h1></div> : <>
+        <div className="client-hero-top"><div className="client-hero-brand"><Brand linked={false} /><BusinessStatus configuredStatus={clientConfiguredStatus} initialStatus={clientInitialStatus} statusMessage={String(businessSettings.data?.status_message ?? "")} timezone={clientBusinessTimezone} hours={clientBusinessHours} variant="client" /></div><div className="client-hero-actions"><ModeSwitcher current="client" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier={Boolean(capabilities.isCashier)} /></div></div>
+        <div className="client-hero-content">{copy.eyebrow && <p className="eyebrow">{copy.eyebrow}</p>}<h1>{section === "inicio" ? `Hola, ${displayName}` : copy.title}</h1><p>{section === "inicio" ? "Tu próxima visita, tus beneficios y tu estilo en un solo lugar." : copy.description}</p></div>
+        <Link className="client-hero-public-link" href="/sitio"><Globe2 /><span>Ver sitio público</span></Link>
+      </>}
     </section>
 
     {section === "inicio" && <StaggerContainer className="portal-grid client-home-dashboard">
@@ -124,8 +124,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
     </StaggerContainer>}
 
     {section === "notificaciones" && <StaggerContainer className="portal-grid client-section-grid">
-      <section className="portal-card portal-wide"><div className="portal-title"><Bell /><h2>Avisos recientes</h2></div><div className="portal-list">{notifications.data?.length ? notifications.data.map(item => <article key={item.id}><div><strong>{item.title}</strong><span>{item.body}</span></div></article>) : <p className="portal-empty">No tienes avisos nuevos.</p>}</div></section>
-      <section className="portal-card portal-wide"><div className="portal-title"><Bell /><h2>Preferencias</h2></div><PreferencesForm userId={user.id} current={preferences.data} /><PushNotificationSetup userId={user.id} /></section>
+      <section className="portal-card portal-wide"><div className="portal-title"><Bell /><div><small>CENTRO DE AVISOS</small><h2>Avisos recientes</h2></div></div><ClientNotificationInbox userId={user.id} items={(notifications.data ?? []).filter(item => isRelevantClientNotification(item.type))} /><Link className="client-secondary-link" href="/mi-cuenta/configuracion-avisos"><Settings2 /> Configurar avisos <ChevronRight /></Link></section>
     </StaggerContainer>}
 
     {section === "perfil" && <StaggerContainer className="portal-grid client-section-grid client-profile-page">
@@ -135,7 +134,7 @@ export async function ClientAccountView({ section }: { section: ClientSection })
         <h2>{displayName}</h2>
       </section>
       <section className="portal-card portal-wide client-profile-card">
-        <div className="client-profile-section-heading"><h2>Tu cuenta</h2><span>Datos de tu perfil</span></div>
+        <div className="client-profile-section-heading"><div><h2>Tu cuenta</h2><span>Datos de tu perfil</span></div><div className="client-profile-heading-actions"><Link href="/mi-cuenta/editar-perfil" aria-label="Editar perfil" title="Editar perfil"><UserRoundPen /></Link><Link href="/mi-cuenta/notificaciones" aria-label="Ver notificaciones" title="Ver notificaciones"><Bell /></Link><Link href="/mi-cuenta/configuracion-avisos" aria-label="Configurar avisos" title="Configurar avisos"><Settings2 /></Link></div></div>
         <dl>
           <div className="client-profile-email-row"><dt><Mail />Correo</dt><dd>{person?.email ?? "Pendiente de registrar"}</dd></div>
           <div><dt><Phone />Teléfono</dt><dd>{person?.phone ?? "Pendiente de registrar"}</dd></div>
@@ -148,15 +147,22 @@ export async function ClientAccountView({ section }: { section: ClientSection })
         <div className="client-profile-section-heading"><h2>Preferencias y ayuda</h2></div>
         <div className="client-profile-actions">
           <div className="client-profile-action-row client-profile-theme-row"><div className="client-profile-action-label"><Palette /><span>Apariencia</span></div><PanelThemeSelector compact /></div>
+          <Link href="/mi-cuenta/historial"><History /><span>Historial</span><ChevronRight /></Link>
+          <Link href="/mi-cuenta/notificaciones"><Bell /><span>Notificaciones</span><ChevronRight /></Link>
+          <Link href="/mi-cuenta/configuracion-avisos"><Settings2 /><span>Configuración de avisos</span><ChevronRight /></Link>
           <Link href="/sitio"><Globe2 /><span>Sitio público</span><ChevronRight /></Link>
           <PanelMobileLogout />
         </div>
       </section>
     </StaggerContainer>}
   </main>
-  <PanelViewportPortal>
+  {section !== "notificaciones" && <PanelViewportPortal>
     <ClientMainNavigation section={section} replaceNavigation={replaceNavigation} variant="mobile" />
-  </PanelViewportPortal></PanelExperience>;
+  </PanelViewportPortal>}</PanelExperience>;
+}
+
+function isRelevantClientNotification(type: string | null) {
+  return ["promotion", "points", "reward", "chat", "message", "appointment", "appointment_confirmed", "appointment_rescheduled", "appointment_no_show", "appointment_update"].includes(type ?? "");
 }
 
 const clientNavigationIcons = { inicio: Home, productos: PackageCheck, puntos: Star, perfil: UserRound } as const;

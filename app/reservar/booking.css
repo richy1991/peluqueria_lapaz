@@ -449,3 +449,15 @@
   .booking-shell .booking-panel { padding: 21px 17px; border-radius: 20px; }
   .booking-shell .booking-steps li.active > span, .booking-shell .booking-steps li.done > span { color: #0D0D0D; }
 }
+.booking-shell .booking-mobile-step-title { display: none; }
+.booking-shell .booking-saved-phone { margin: 0; color: var(--brand-muted); font-size: 12px; }
+.booking-shell .booking-steps li.done > span { color: #167342; border-color: #68bf8d; background: #e5f7ec; }
+@media (max-width: 800px) {
+  .booking-shell .booking-topbar { position: sticky; top: 0; z-index: 40; }
+  .booking-shell .booking-topbar > .brand { display: none; }
+  .booking-shell .booking-mobile-step-title { display: block; margin-right: auto; color: #fff; font-size: 19px; letter-spacing: -.02em; }
+  .booking-shell .booking-topbar .close-booking { margin-left: 12px; }
+  .booking-shell .booking-main { padding-top: 30px; }
+  .booking-shell .panel-copy { display: none; }
+  .booking-shell .booking-steps li.done > span { color: #167342; border-color: #68bf8d; background: #e5f7ec; }
+}

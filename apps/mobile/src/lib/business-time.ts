@@ -8,18 +8,26 @@ type ZonedParts = {
 };
 
 const DEFAULT_TIMEZONE = 'America/La_Paz';
+const formatterCache = new Map<string, Intl.DateTimeFormat>();
+
+function formatterFor(timezone: string): Intl.DateTimeFormat {
+  const cached = formatterCache.get(timezone);
+  if (cached) return cached;
+  let formatter: Intl.DateTimeFormat;
+  try {
+    formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+    });
+  } catch {
+    formatter = formatterFor(DEFAULT_TIMEZONE);
+  }
+  formatterCache.set(timezone, formatter);
+  return formatter;
+}
 
 function partsInTimezone(value: Date, timezone: string): ZonedParts {
-  let safeTimezone = timezone;
-  try {
-    new Intl.DateTimeFormat('en-US', { timeZone: timezone }).format(value);
-  } catch {
-    safeTimezone = DEFAULT_TIMEZONE;
-  }
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: safeTimezone,
-    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
-  }).formatToParts(value);
+  const parts = formatterFor(timezone).formatToParts(value);
   const number = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find((part) => part.type === type)?.value ?? 0);
   return { year: number('year'), month: number('month'), day: number('day'), hour: number('hour'), minute: number('minute'), second: number('second') };
 }
@@ -27,6 +35,11 @@ function partsInTimezone(value: Date, timezone: string): ZonedParts {
 export function businessDateKey(value = new Date(), timezone = DEFAULT_TIMEZONE) {
   const { year, month, day } = partsInTimezone(value, timezone);
   return [year, String(month).padStart(2, '0'), String(day).padStart(2, '0')].join('-');
+}
+
+export function businessTimeLabel(value: Date | string, timezone = DEFAULT_TIMEZONE) {
+  const { hour, minute } = partsInTimezone(typeof value === 'string' ? new Date(value) : value, timezone);
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
 export function zonedDateTimeToDate(localValue: string, timezone = DEFAULT_TIMEZONE) {
