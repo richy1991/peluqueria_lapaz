@@ -16,6 +16,7 @@ import { InstallAppButton } from "@/components/install-app-button";
 import { BARBER_NAVIGATION, type BarberSection } from "./contracts";
 import { StaggerContainer } from "@/components/stagger-animations";
 import { PanelBottomNavigation, type PanelNavigationItem } from "@/components/panel-bottom-navigation";
+import { BarberFinancialRealtime } from "@/components/barber-financial-realtime";
 
 export const dynamic = "force-dynamic";
 
@@ -92,11 +93,12 @@ export async function BarberView({ section }: { section: BarberSection }) {
   const { date: workDate, start, end } = businessDayRange(now, businessTimezone);
   const weekEnd = new Date(end.getTime() + 6 * 24 * 60 * 60 * 1000);
   const monthStart = zonedDateTimeToDate(`${workDate.slice(0, 8)}01T00:00:00`, businessTimezone);
-  const [appointmentsResult, weekAppointmentsResult, earnings, payouts, profileResult, galleryResult, servicesResult, productsResult, monthlyEarnings, discounts, availableProducts] = await Promise.all([
+  const [appointmentsResult, weekAppointmentsResult, earnings, payouts, balanceSummary, profileResult, galleryResult, servicesResult, productsResult, monthlyEarnings, discounts, availableProducts] = await Promise.all([
     supabase.from("appointments").select("id,service_id,starts_at,ends_at,status,service_name_snapshot,client_name_snapshot,notes,reference_image_path").eq("barber_id", capabilities.barber.id).gte("starts_at", start.toISOString()).lt("starts_at", end.toISOString()).order("starts_at"),
     section === "agenda" ? supabase.from("appointments").select("id,starts_at,status,service_name_snapshot,client_name_snapshot").eq("barber_id", capabilities.barber.id).gte("starts_at", requestTime).lt("starts_at", weekEnd.toISOString()).order("starts_at") : Promise.resolve({ data: [] }),
     section === "balance" ? supabase.from("barber_earnings").select("id,kind,amount,status,created_at,sale_items(name_snapshot,unit_price_snapshot,discount_amount,barber_discount_share)").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(50) : Promise.resolve({ data: [] }),
     section === "balance" ? supabase.from("payouts").select("id,period_start,period_end,commission_amount,incentive_amount,deduction_amount,total_amount,status,paid_at").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(20) : Promise.resolve({ data: [] }),
+    section === "balance" ? supabase.rpc("barber_get_balance_summary", { target_barber: capabilities.barber.id, month_start: `${workDate.slice(0, 7)}-01`, work_date: workDate }) : Promise.resolve({ data: null }),
     ["perfil", "trabajos"].includes(section) ? supabase.from("barber_profiles").select("id,display_name,bio,specialties,photo_path").eq("id", capabilities.barber.id).single() : Promise.resolve({ data: null }),
     ["perfil", "trabajos"].includes(section) ? supabase.from("gallery_posts").select("id,title,status,source_type,created_at").eq("barber_id", capabilities.barber.id).order("created_at", { ascending: false }).limit(12) : Promise.resolve({ data: [] }),
     section === "agenda" ? supabase.from("services").select("id,name,price").eq("status", "active").order("name") : Promise.resolve({ data: [] }),
@@ -118,7 +120,9 @@ export async function BarberView({ section }: { section: BarberSection }) {
   const weekAppointments = weekAppointmentsResultData.filter(item => !["canceled", "completed", "no_show", "needs_reschedule"].includes(item.status));
   const weekAppointmentGroups = groupAppointmentsByBusinessDay(weekAppointments, businessTimezone);
   const nextAppointment = weekAppointments.find(item => new Date(item.starts_at).getTime() >= now.getTime());
-  const pendingTotal = (earnings.data ?? []).filter((item) => ["pending", "approved"].includes(item.status)).reduce((sum, item) => sum + Number(item.amount), 0);
+  const balanceTotals = balanceSummary.data as { pending_total?: number; paid_month_total?: number } | null;
+  const pendingTotal = Number(balanceTotals?.pending_total ?? 0);
+  const paidMonthTotal = Number(balanceTotals?.paid_month_total ?? 0);
   const monthProductEarnings=(monthlyEarnings.data??[]).filter(item=>item.kind==="product_incentive");
   const monthProductSales=monthProductEarnings.reduce((sum,item)=>sum+Number(item.base_amount),0);
   const monthProductCommission=monthProductEarnings.reduce((sum,item)=>sum+Number(item.amount),0);
@@ -148,6 +152,7 @@ export async function BarberView({ section }: { section: BarberSection }) {
       <PanelMobileScrim />
       </PanelResponsiveSidebar>
       <section className="barber-content">
+        {section === "balance" && <BarberFinancialRealtime barberId={capabilities.barber.id} />}
         <section className="portal-hero dash-role-hero"><div><p className="eyebrow">{info.eyebrow}</p><h1>{info.title}</h1><p>{info.description}</p><InstallAppButton compact /></div><div className="barber-pulse"><span><i />{active.length} citas activas</span>{section === "agenda" ? <Clock3 /> : section === "productos" ? <PackageOpen /> : section === "balance" ? <Banknote /> : section === "trabajos" ? <Images /> : <UserRoundPen />}</div></section>
         <StaggerContainer className="portal-grid dash-portal-grid">
           {section === "agenda" && <>
@@ -164,7 +169,7 @@ export async function BarberView({ section }: { section: BarberSection }) {
           {section === "trabajos" && profileResult.data && <section className="portal-card portal-wide"><PublicProfileManager userId={user.id} profile={profileResult.data} gallery={galleryResult.data ?? []} view="gallery" timezone={businessTimezone} /></section>}
 
           {section === "balance" && <>
-            <section className="portal-card portal-wide barber-money-summary"><article><span>Liquidación pendiente</span><strong>Bs {pendingTotal.toFixed(2)}</strong><small>Saldo por recibir</small></article><article><span>Productos vendidos</span><strong>Bs {monthProductSales.toFixed(2)}</strong><small>Este mes</small></article><article><span>Incentivo por productos</span><strong>Bs {monthProductCommission.toFixed(2)}</strong><small>Bs 5 por unidad vendida</small></article></section>
+            <section className="portal-card portal-wide barber-money-summary"><article><span>Saldo por recibir</span><strong>Bs {pendingTotal.toFixed(2)}</strong><small>Comisiones e incentivos pendientes</small></article><article><span>Liquidado este mes</span><strong>Bs {paidMonthTotal.toFixed(2)}</strong><small>Pagos confirmados por Caja</small></article><article><span>Productos vendidos</span><strong>Bs {monthProductSales.toFixed(2)}</strong><small>Este mes</small></article><article><span>Incentivo por productos</span><strong>Bs {monthProductCommission.toFixed(2)}</strong><small>Bs 5 por unidad vendida</small></article></section>
             <section className="portal-card portal-wide"><div className="portal-title"><Banknote /><h2>Comisiones económicas</h2></div><p>Este registro monetario es independiente de los puntos de fidelidad de clientes.</p><div className="portal-list">{earnings.data?.length ? earnings.data.map((item) => <article key={item.id}><div><strong>{(item.sale_items as unknown as { name_snapshot?: string } | null)?.name_snapshot ?? item.kind}</strong><span>{item.kind === "product_incentive" ? "Venta de producto" : "Servicio"} · {item.status} · {new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeZone: businessTimezone }).format(new Date(item.created_at))}</span></div><b>Bs {Number(item.amount).toFixed(2)}</b></article>) : <p className="portal-empty">Aún no existen comisiones registradas.</p>}</div></section>
             <section className="portal-card portal-wide"><div className="portal-title"><Sparkles /><h2>Descuentos compartidos</h2></div><p>Cada registro muestra cuánto asumiste tú y cuánto asumió el local.</p><div className="portal-list">{discounts.data?.length?discounts.data.map(item=><article key={item.id}><div><strong>{item.name_snapshot}</strong><span>Base Bs {Number(item.eligible_base).toFixed(2)} · descuento total Bs {Number(item.discount_amount).toFixed(2)} · {new Intl.DateTimeFormat("es-BO",{dateStyle:"medium",timeZone:businessTimezone}).format(new Date(item.created_at))}</span></div><b>Tú: Bs {Number(item.barber_discount_share).toFixed(2)} · Local: Bs {Number(item.business_discount_share).toFixed(2)}</b></article>):<p className="portal-empty">Este mes todavía no asumiste descuentos.</p>}</div></section>
             <section className="portal-card"><div className="portal-title"><History /><h2>Liquidaciones</h2></div><div className="portal-list">{payouts.data?.length ? payouts.data.map((item) => <article key={item.id}><div><strong>{item.period_start}</strong><span>Servicios Bs {Number(item.commission_amount).toFixed(2)} · incentivo Bs {Number(item.incentive_amount).toFixed(2)} · {item.status === "paid" ? "pagada" : "preparada"}</span></div><b>Bs {Number(item.total_amount).toFixed(2)}</b></article>) : <p className="portal-empty">Aún no existen liquidaciones.</p>}</div></section>

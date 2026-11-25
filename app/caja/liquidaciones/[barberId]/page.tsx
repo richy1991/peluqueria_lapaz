@@ -22,7 +22,7 @@ export default async function SettlementPage({ params }: { params: Promise<{ bar
   const [barberResult, shiftResult, detailResult, historyResult] = await Promise.all([
     supabase.from("barber_profiles").select("id,display_name").eq("id", barberId).eq("active", true).maybeSingle(),
     supabase.from("cash_shifts").select("id").eq("opened_by", user.id).eq("status", "open").maybeSingle(),
-    supabase.rpc("cashier_get_barber_settlement_detail", { target_barber: barberId, work_date: workDate }),
+    supabase.rpc("cashier_get_barber_settlement_detail_v2", { target_barber: barberId, work_date: workDate }),
     supabase.from("payouts").select("id,period_start,commission_amount,incentive_amount,deduction_amount,total_amount,status,paid_at,includes_accumulated_incentives").eq("barber_id", barberId).order("created_at", { ascending: false }).limit(12),
   ]);
 
@@ -74,6 +74,8 @@ export type SettlementDetail = {
   work_date: string;
   payout: SettlementPayout | null;
   services: SettlementLine[];
+  new_services: SettlementLine[];
+  new_commission_total: number;
   incentives: SettlementLine[];
   expenses: SettlementExpense[];
   commission_total: number;

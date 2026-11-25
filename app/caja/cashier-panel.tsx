@@ -1,11 +1,12 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Calculator, CirclePlus, Gift, History, LockKeyhole, PackageCheck, PackageOpen, Printer, ReceiptText, RotateCcw, Scissors, Sparkles, Trash2, WalletCards } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { DashboardModal } from "@/components/dashboard-modal";
+import { BarberFinancialRealtime } from "@/components/barber-financial-realtime";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelResponsiveSidebar, PanelThemeSelector } from "@/components/panel-experience";
 import { clearFormErrors, dispatchDashboardError, dispatchDashboardSuccess, reportFormError } from "@/lib/form-feedback";
@@ -79,6 +80,13 @@ export function CashierPanel(props: Props) {
       }
       return;
     }
+    const referralSearch = form.elements.namedItem("referral_search") as HTMLInputElement | null;
+    if (data.get("customer_mode") === "new" && data.get("referral_required") === "on" && !data.get("referral_code")) {
+      referralSearch?.setCustomValidity("Selecciona un cliente de los resultados de búsqueda.");
+      referralSearch?.reportValidity();
+      return;
+    }
+    referralSearch?.setCustomValidity("");
     const searchInput = form.elements.namedItem("client_search") as HTMLInputElement | null;
     if (!data.get("appointment_id") && data.get("customer_mode") === "existing" && !data.get("client_id")) {
       searchInput?.setCustomValidity("Selecciona un cliente de los resultados de búsqueda.");
@@ -92,15 +100,16 @@ export function CashierPanel(props: Props) {
     const chargeDescriptions = data.getAll("charge_description").map(String);
     const chargeAmounts = data.getAll("charge_amount").map(Number);
     const chargeBarbers = data.getAll("charge_barber_id").map(String);
-    const response = await call("register_counter_service_sale_v5", {
+    const productIds = data.getAll("product_id").map(String);
+    const productQuantities = data.getAll("quantity").map(Number);
+    const response = await call("register_counter_service_sale_v6", {
       target_appointment_id: String(data.get("appointment_id") ?? "") || null,
       target_client_id: String(data.get("client_id") ?? "") || null,
       guest_name: String(data.get("guest_name") ?? "") || null,
       guest_phone: String(data.get("guest_phone") ?? "") || null,
       service_lines: serviceIds.map((serviceId, index) => ({ service_id: serviceId, barber_id: serviceBarbers[index], attendee_label: attendeeLabels[index] })),
       custom_charges: chargeDescriptions.map((description, index) => ({ description, amount: chargeAmounts[index], barber_id: chargeBarbers[index] })),
-      target_product_id: String(data.get("product_id") ?? "") || null,
-      product_quantity: Number(data.get("quantity") ?? 1),
+      product_lines: productIds.map((product_id, index) => ({ product_id, quantity: productQuantities[index] })),
       recommended_by_barber_id: String(data.get("recommended_by") ?? "") || null,
       payment_method: String(data.get("payment_method") ?? "cash"),
       payment_reference: String(data.get("payment_reference") ?? "") || null,
@@ -154,7 +163,11 @@ export function CashierPanel(props: Props) {
   }
 
   const pendingByBarber = new Map<string, number>();
-  earnings.filter(item => item.status === "pending" && item.kind === "service_commission").forEach(item => pendingByBarber.set(String(item.barber_id), (pendingByBarber.get(String(item.barber_id)) ?? 0) + Number(item.amount)));
+  const pendingIncentivesByBarber = new Map<string, number>();
+  earnings.filter(item => item.status === "pending").forEach(item => {
+    const target = item.kind === "service_commission" ? pendingByBarber : item.kind === "product_incentive" ? pendingIncentivesByBarber : null;
+    if (target) target.set(String(item.barber_id), (target.get(String(item.barber_id)) ?? 0) + Number(item.amount));
+  });
   const titles: Record<CashierSection, string> = { servicios: "Cobro de servicios", productos: "Venta de productos", movimientos: "Libro diario", liquidaciones: "Liquidaciones diarias", historial: "Historial de ventas" };
   const replaceNavigation = section !== "servicios";
 
@@ -175,7 +188,7 @@ export function CashierPanel(props: Props) {
           {section === "productos" && <ProductDashboard products={products} barbers={barbers} clients={clients} busy={busy} onSubmit={sell} />}
           {section === "reservas" && <ReservationDashboard reservations={productReservations} barbers={barbers} busy={busy} onCollect={collectReservation} timezone={businessTimezone} />}
           {section === "movimientos" && <DailyLedger movements={movements} shift={shift} operator={userEmail} busy={busy} onMovement={movement} onClose={close} workDate={workDate} timezone={businessTimezone} />}
-          {section === "liquidaciones" && <Settlements barbers={barbers} payouts={payouts} pendingByBarber={pendingByBarber} workDate={workDate} />}
+          {section === "liquidaciones" && <Settlements barbers={barbers} payouts={payouts} pendingByBarber={pendingByBarber} pendingIncentivesByBarber={pendingIncentivesByBarber} workDate={workDate} />}
           {section === "historial" && <SalesHistory sales={sales} busy={busy} onReverse={reverseSale} timezone={businessTimezone} />}
         </>}
       </section>
@@ -265,25 +278,110 @@ function ClientFields({ clients, mode, onModeChange, onClientChange }: { clients
         {searching && <p>Buscando…</p>}
       </div>}
     </div>}
-    {mode === "new" && <label className="wide cashier-product-toggle cashier-referral-toggle"><input type="checkbox" checked={referred} onChange={event => setReferred(event.target.checked)} /> Viene recomendado por otro cliente</label>}
-    {mode === "new" && referred && <label className="wide">Código del cliente que lo recomendó<input name="referral_code" placeholder="LC-..." autoCapitalize="characters" required /></label>}
+    {mode === "new" && <label className="wide cashier-product-toggle cashier-referral-toggle"><input name="referral_required" type="checkbox" checked={referred} onChange={event => setReferred(event.target.checked)} /> Viene recomendado por otro cliente</label>}
+    {mode === "new" && referred && <ReferralClientSearch clients={clients} />}
   </fieldset>;
 }
+
+function ReferralClientSearch({ clients }: { clients: Row[] }) {
+  const listId = useId();
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<Row | null>(null);
+  const [results, setResults] = useState<Row[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    const normalized = query.trim().toLocaleLowerCase("es");
+    if (normalized.length < 2 || selected) {
+      setResults([]);
+      setSearching(false);
+      return;
+    }
+    const search = query.trim().replace(/[,%()"\\]/g, " ").trim();
+    if (!search) {
+      setResults([]);
+      setSearching(false);
+      return;
+    }
+    const localMatches = clients.filter(client =>
+      String(client.full_name ?? "").toLocaleLowerCase("es").includes(normalized)
+      || String(client.referral_code ?? "").toLocaleLowerCase("es").includes(normalized),
+    ).slice(0, 8);
+    let active = true;
+    setResults(localMatches);
+    setSearching(true);
+    const timer = window.setTimeout(async () => {
+      const { data } = await createClient().from("profiles")
+        .select("id,full_name,email,referral_code")
+        .eq("status", "active")
+        .or(`full_name.ilike.%${search}%,referral_code.ilike.%${search}%`)
+        .order("full_name")
+        .limit(8);
+      if (active) {
+        setResults((data as Row[] | null) ?? localMatches);
+        setSearching(false);
+      }
+    }, 220);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [clients, query, selected]);
+
+  const visibleResults = query.trim().length >= 2 && !selected;
+
+  return <div className="wide cashier-client-search">
+    <input type="hidden" name="referral_code" value={String(selected?.referral_code ?? "")} />
+    {selected ? <div className="cashier-client-selected">
+      <span><strong>{String(selected.full_name ?? selected.email ?? "Cliente")}</strong><small>Código: {String(selected.referral_code ?? "")}</small></span>
+      <button type="button" onClick={() => { setSelected(null); setQuery(""); }}>Cambiar</button>
+    </div> : <>
+      <label htmlFor={`${listId}-search`}>Buscar al cliente que lo recomendó (obligatorio)</label>
+      <input id={`${listId}-search`} name="referral_search" type="search" autoComplete="off" autoCapitalize="none" aria-controls={visibleResults ? listId : undefined} value={query}
+        onChange={event => {
+          event.currentTarget.setCustomValidity("");
+          const nextQuery = event.target.value;
+          const normalized = nextQuery.trim().toLocaleLowerCase("es");
+          setQuery(nextQuery);
+          setSelected(null);
+          setResults(normalized.length >= 2 ? clients.filter(client =>
+            String(client.full_name ?? "").toLocaleLowerCase("es").includes(normalized)
+            || String(client.referral_code ?? "").toLocaleLowerCase("es").includes(normalized),
+          ).slice(0, 8) : []);
+          setSearching(normalized.length >= 2);
+        }} placeholder="Nombre o código (ej. LC-...)" required />
+      {visibleResults && <div id={listId} className="cashier-client-results" role="group" aria-label="Clientes que pueden recomendar">
+        {results.map(client => <button type="button" key={client.id} onClick={event => {
+          (event.currentTarget.form?.elements.namedItem("referral_search") as HTMLInputElement | null)?.setCustomValidity("");
+          setSelected(client);
+          setQuery("");
+          setResults([]);
+          setSearching(false);
+        }}><strong>{String(client.full_name ?? "Sin nombre")}</strong><small>Código: {String(client.referral_code ?? "")}</small></button>)}
+        {!searching && results.length === 0 && <p>No encontramos clientes con ese nombre o código.</p>}
+        {searching && <p>Buscando…</p>}
+      </div>}
+    </>}
+  </div>;
+}
+
 function PaymentFields({ allowPromotion = false }: { allowPromotion?: boolean }) {
   const [method, setMethod] = useState("cash");
   const [promotion, setPromotion] = useState(false);
-  return <>{allowPromotion && <label className="wide cashier-product-toggle"><input type="checkbox" checked={promotion} onChange={event => setPromotion(event.target.checked)} /> Aplicar promoción</label>}{promotion && <label className="wide">Código de promoción<input name="promotion_code" autoCapitalize="characters" required /></label>}<label>Forma de pago<select name="payment_method" value={method} onChange={event => setMethod(event.target.value)}><option value="cash">Efectivo</option><option value="qr">QR</option><option value="transfer">Transferencia</option><option value="card">Tarjeta</option><option value="other">Otro</option></select></label>{method !== "cash" && <label>Referencia del pago<input name="payment_reference" required /></label>}</>;
+  return <>{allowPromotion && <label className="wide cashier-product-toggle"><input type="checkbox" checked={promotion} onChange={event => setPromotion(event.target.checked)} /> Aplicar promoción</label>}{promotion && <label className="wide">Código de promoción<input name="promotion_code" autoCapitalize="characters" required /></label>}<label>Forma de pago<select name="payment_method" value={method} onChange={event => setMethod(event.target.value)}><option value="cash">Efectivo</option><option value="transfer">Transferencia</option></select></label>{method !== "cash" && <label>Referencia del pago<input name="payment_reference" required /></label>}</>;
 }
 
 type ServiceLine = { key: string; serviceId: string; barberId: string; attendeeLabel: string };
 type CustomCharge = { key: string; description: string; amount: string; barberId: string };
+type CashierProductLine = { key: string; productId: string; quantity: number };
+
+function newCashierProductLine(productId = "", quantity = 1): CashierProductLine {
+  return { key: `product-${Date.now()}-${Math.random().toString(36).slice(2)}`, productId, quantity };
+}
 
 function ServiceSaleForm({ appointment, checkout, clients, visitHistory, services, barbers, products, busy, onSubmit }: { appointment?: Row; checkout?: Row | null; clients: Row[]; visitHistory: Row[]; services: Row[]; barbers: Row[]; products: Row[]; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
   const [customerMode, setCustomerMode] = useState<"new" | "existing">("new");
   const [clientId, setClientId] = useState(String(appointment?.client_id ?? ""));
-  const [addProduct, setAddProduct] = useState(Boolean(checkout?.suggested_product_id));
-  const [selectedProductId, setSelectedProductId] = useState(String(checkout?.suggested_product_id ?? ""));
-  const [selectedProductQuantity, setSelectedProductQuantity] = useState(Number(checkout?.product_quantity ?? 1));
+  const [productLines, setProductLines] = useState<CashierProductLine[]>(() => checkout?.suggested_product_id
+    ? [{ key: "suggested-product", productId: String(checkout.suggested_product_id), quantity: Number(checkout.product_quantity ?? 1) }]
+    : []);
   const [benefitMode, setBenefitMode] = useState<"none" | "points" | "promotion" | "code">("none");
   const [rewardQuotes, setRewardQuotes] = useState<RewardQuote[]>([]);
   const [quotedFingerprint, setQuotedFingerprint] = useState("");
@@ -310,12 +408,13 @@ function ServiceSaleForm({ appointment, checkout, clients, visitHistory, service
   }, [clientId, serviceLines, quoteFingerprint]);
   function updateServiceLine(key: string, field: keyof Omit<ServiceLine, "key">, value: string) { setServiceLines(lines => lines.map(line => line.key === key ? { ...line, [field]: value } : line)); }
   function updateCharge(key: string, field: keyof Omit<CustomCharge, "key">, value: string) { setCharges(items => items.map(item => item.key === key ? { ...item, [field]: value } : item)); }
+  function updateProductLine(key: string, field: "productId" | "quantity", value: string | number) { setProductLines(lines => lines.map(line => line.key === key ? { ...line, [field]: value } : line)); }
   const quoteInputValid=Boolean(clientId) && serviceLines.every(line=>line.serviceId&&line.barberId);
   const chosenQuote = quoteInputValid&&quotedFingerprint===quoteFingerprint?rewardQuotes.find(item => `${item.reward_id}:${item.barber_id}` === selectedReward):undefined;
   const pointsRewards = quoteInputValid&&quotedFingerprint===quoteFingerprint ? rewardQuotes.filter(item => [50,100].includes(item.points_cost)) : [];
   const serviceSubtotal = serviceLines.reduce((sum, line) => sum + Number(services.find(service => service.id === line.serviceId)?.price ?? 0), 0);
   const chargesSubtotal = charges.reduce((sum, charge) => sum + (Number(charge.amount) || 0), 0);
-  const productSubtotal = addProduct ? Number(products.find(product => product.id === selectedProductId)?.price ?? 0) * selectedProductQuantity : 0;
+  const productSubtotal = productLines.reduce((sum, line) => sum + Number(products.find(product => product.id === line.productId)?.price ?? 0) * line.quantity, 0);
   const monthlyVisits = visitHistory.filter(item => String(item.client_id ?? "") === clientId);
   const manualDiscount = vipDiscount && monthlyVisits.length > 0 ? 5 : 0;
   const estimatedTotal = Math.max(0, serviceSubtotal + chargesSubtotal + productSubtotal - manualDiscount - (benefitMode === "points" ? Number(chosenQuote?.discount_amount ?? 0) : 0));
@@ -331,8 +430,16 @@ function ServiceSaleForm({ appointment, checkout, clients, visitHistory, service
       <span className="cashier-line-number">Cargo {index + 1}</span><label>Justificación<input name="charge_description" value={charge.description} onChange={event => updateCharge(charge.key, "description", event.target.value)} required placeholder="Detalle realizado" /></label><label>Monto Bs<input name="charge_amount" type="number" min="0.5" step="0.5" value={charge.amount} onChange={event => updateCharge(charge.key, "amount", event.target.value)} required /></label><label>Peluquero<select name="charge_barber_id" value={charge.barberId} onChange={event => updateCharge(charge.key, "barberId", event.target.value)} required><option value="">Seleccionar</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label><button type="button" className="cashier-remove-line" onClick={() => setCharges(items => items.filter(item => item.key !== charge.key))}><Trash2 /> Quitar</button>
     </div>)}</fieldset>}
     {charges.length === 0 && <button type="button" className="wide cashier-add-line cashier-optional-action" onClick={() => setCharges([{ key: `charge-${Date.now()}`, description: "", amount: "", barberId: serviceLines[0]?.barberId ?? "" }])}><CirclePlus /> Agregar cargo imprevisto</button>}
-    <label className="wide cashier-product-toggle"><input type="checkbox" checked={addProduct} onChange={event => setAddProduct(event.target.checked)} /> Añadir producto a este cobro</label>
-    {addProduct && <><label>Producto<select name="product_id" value={selectedProductId} onChange={event => setSelectedProductId(event.target.value)} required><option value="">Seleccionar producto</option>{products.map(product => <option key={product.id} value={product.id}>{String(product.name)} · Bs {String(product.price)} · stock {String(product.stock)}</option>)}</select></label><label>Cantidad<input name="quantity" type="number" min="1" max="20" value={selectedProductQuantity} onChange={event => setSelectedProductQuantity(Number(event.target.value))} /></label><label>Recomendado por<select name="recommended_by" defaultValue={String(appointment?.barber_id ?? "")}><option value="">Sin recomendador</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label></>}
+    <label className="wide cashier-product-toggle"><input type="checkbox" checked={productLines.length > 0} onChange={event => setProductLines(current => event.target.checked ? current.length ? current : [newCashierProductLine()] : [])} /> Añadir productos a este cobro</label>
+    {productLines.length > 0 && <>
+      <fieldset className="wide cashier-line-group"><legend>Productos agregados</legend>{productLines.map((line, index) => <div className="cashier-service-line" key={line.key}>
+        <span className="cashier-line-number">Producto {index + 1}</span>
+        <label>Producto<select name="product_id" value={line.productId} onChange={event => updateProductLine(line.key, "productId", event.target.value)} required><option value="">Seleccionar producto</option>{products.map(product => <option key={product.id} value={product.id}>{String(product.name)} · Bs {String(product.price)} · stock {String(product.stock)}</option>)}</select></label>
+        <label>Cantidad<input name="quantity" type="number" min="1" max={Math.min(100, Number(products.find(product => product.id === line.productId)?.stock ?? 100))} value={line.quantity} onChange={event => updateProductLine(line.key, "quantity", Number(event.target.value))} required /></label>
+        <button type="button" className="cashier-remove-line" onClick={() => setProductLines(lines => lines.filter(item => item.key !== line.key))}><Trash2 /> Quitar</button>
+      </div>)}<button type="button" className="cashier-add-line" disabled={productLines.length >= 100} onClick={() => setProductLines(lines => [...lines, newCashierProductLine()])}><CirclePlus /> Agregar otro producto</button></fieldset>
+      <label className="wide">Recomendado por<select name="recommended_by" defaultValue={String(appointment?.barber_id ?? "")}><option value="">Sin recomendador</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label>
+    </>}
     {(Boolean(appointment) || customerMode === "existing") && <fieldset className="wide cashier-benefits"><legend>Beneficio (opcional)</legend><div className="cashier-benefit-modes"><button type="button" className={benefitMode === "none" ? "active" : ""} onClick={() => setBenefitMode("none")}>Sin beneficio</button>{pointsRewards.length > 0 && <button type="button" className={benefitMode === "points" ? "active" : ""} onClick={() => { setBenefitMode("points"); setSelectedReward(`${pointsRewards[0].reward_id}:${pointsRewards[0].barber_id}`); }}><Gift /> Canjear puntos</button>}<button type="button" className={benefitMode === "promotion" ? "active" : ""} onClick={() => setBenefitMode("promotion")}>Promoción</button><button type="button" className={benefitMode === "code" ? "active" : ""} onClick={() => setBenefitMode("code")}>Código</button></div>{benefitMode === "points" && <div className="cashier-reward-options">{pointsRewards.map(reward => <label className={selectedReward === `${reward.reward_id}:${reward.barber_id}` ? "selected" : ""} key={`${reward.reward_id}:${reward.barber_id}`}><input type="radio" name="reward_choice" checked={selectedReward === `${reward.reward_id}:${reward.barber_id}`} onChange={() => setSelectedReward(`${reward.reward_id}:${reward.barber_id}`)} /><span><strong>{reward.points_cost === 50 ? "50% de descuento" : "Descuento de Bs 25"}</strong><small>{reward.barber_name} · usa {reward.points_cost} de {reward.balance} puntos</small></span><b>- Bs {Number(reward.discount_amount).toFixed(2)}</b></label>)}</div>}{benefitMode === "promotion" && <label>Código de promoción<input name="promotion_code" autoCapitalize="characters" required /></label>}{benefitMode === "code" && <label>Código mostrado por el cliente<input name="redemption_code" autoCapitalize="characters" required /></label>}</fieldset>}
     {clientId && <section className="wide cashier-vip-panel"><div><strong>Historial VIP del mes</strong><span>{monthlyVisits.length} visita(s) registrada(s)</span></div>{monthlyVisits.length > 0 && <label><input type="checkbox" checked={vipDiscount} onChange={event => setVipDiscount(event.target.checked)} /> Aplicar descuento manual de Bs 5</label>}{monthlyVisits.length > 0 && <ul>{monthlyVisits.slice(0, 5).map(item => <li key={String(item.id)}>{new Intl.DateTimeFormat("es-BO", { dateStyle: "medium" }).format(new Date(String(item.starts_at)))} · {String(item.service_name_snapshot ?? "Servicio")} · {String(item.barber_name_snapshot ?? "Peluquero")}</li>)}</ul>}</section>}
     <input type="hidden" name="manual_discount" value={manualDiscount} /><div className="wide cashier-total-preview"><span>Subtotal estimado <b>Bs {(serviceSubtotal + chargesSubtotal + productSubtotal).toFixed(2)}</b></span>{manualDiscount > 0 && <span>Descuento VIP <b>− Bs {manualDiscount.toFixed(2)}</b></span>}{benefitMode === "points" && <span>Canje de {chosenQuote?.points_cost ?? "—"} puntos <b>− Bs {Number(chosenQuote?.discount_amount ?? 0).toFixed(2)}</b></span>}<strong>Total estimado a cobrar <b>Bs {estimatedTotal.toFixed(2)}</b></strong></div><PaymentFields /><button className="button button-dark wide" disabled={busy || (benefitMode === "points" && !chosenQuote)}><ReceiptText /> Confirmar pago y emitir comprobante · Bs {estimatedTotal.toFixed(2)}</button></form>;
@@ -362,14 +469,14 @@ function ReservationDashboard({ reservations, barbers, busy, onCollect, timezone
 }
 
 function ProductSaleForm({ products, barbers, clients, busy, onSubmit }: { products: Row[]; barbers: Row[]; clients: Row[]; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
-  const [lines, setLines] = useState([{ key: "product-line-1", productId: "", quantity: 1 }]);
+  const [lines, setLines] = useState<CashierProductLine[]>([{ key: "product-line-1", productId: "", quantity: 1 }]);
   const [clientId, setClientId] = useState("");
   const [barberId, setBarberId] = useState("");
   const total = lines.reduce((sum, line) => sum + Number(products.find(product => product.id === line.productId)?.price ?? 0) * line.quantity, 0);
   const units = lines.reduce((sum, line) => sum + (line.productId ? line.quantity : 0), 0);
   function updateLine(key: string, field: "productId" | "quantity", value: string | number) { setLines(current => current.map(line => line.key === key ? { ...line, [field]: value } : line)); }
   return <form className="admin-form" onSubmit={onSubmit}><input type="hidden" name="sale_kind" value="product" />
-    <fieldset className="wide cashier-line-group"><legend>Productos</legend>{lines.map((line, index) => <div className="cashier-service-line" key={line.key}><span className="cashier-line-number">Producto {index + 1}</span><label>Producto<select name="product_id" value={line.productId} onChange={event => updateLine(line.key, "productId", event.target.value)} required><option value="">Seleccionar producto</option>{products.map(product => <option key={product.id} value={product.id}>{String(product.name)} · Bs {String(product.price)} · stock {String(product.stock)}</option>)}</select></label><label>Cantidad<input name="quantity" type="number" min="1" max={Math.min(100, Number(products.find(product => product.id === line.productId)?.stock ?? 100))} value={line.quantity} onChange={event => updateLine(line.key, "quantity", Number(event.target.value))} required /></label>{lines.length > 1 && <button type="button" className="cashier-remove-line" onClick={() => setLines(current => current.filter(item => item.key !== line.key))}><Trash2 /> Quitar</button>}</div>)}<button type="button" className="cashier-add-line" onClick={() => setLines(current => [...current, { key: `product-line-${Date.now()}`, productId: "", quantity: 1 }])}><CirclePlus /> Agregar producto</button></fieldset>
+    <fieldset className="wide cashier-line-group"><legend>Productos</legend>{lines.map((line, index) => <div className="cashier-service-line" key={line.key}><span className="cashier-line-number">Producto {index + 1}</span><label>Producto<select name="product_id" value={line.productId} onChange={event => updateLine(line.key, "productId", event.target.value)} required><option value="">Seleccionar producto</option>{products.map(product => <option key={product.id} value={product.id}>{String(product.name)} · Bs {String(product.price)} · stock {String(product.stock)}</option>)}</select></label><label>Cantidad<input name="quantity" type="number" min="1" max={Math.min(100, Number(products.find(product => product.id === line.productId)?.stock ?? 100))} value={line.quantity} onChange={event => updateLine(line.key, "quantity", Number(event.target.value))} required /></label>{lines.length > 1 && <button type="button" className="cashier-remove-line" onClick={() => setLines(current => current.filter(item => item.key !== line.key))}><Trash2 /> Quitar</button>}</div>)}<button type="button" className="cashier-add-line" disabled={lines.length >= 100} onClick={() => setLines(current => [...current, newCashierProductLine()])}><CirclePlus /> Agregar otro producto</button></fieldset>
     <label className="wide">Cliente (opcional)<select name="client_id" value={clientId} onChange={event => setClientId(event.target.value)}><option value="">Consumidor final</option>{clients.map(client => <option key={client.id} value={client.id}>{String(client.full_name ?? client.email ?? "Cliente")}{client.phone ? ` · ${String(client.phone)}` : ""}</option>)}</select></label>
     <label className="wide">Vendido o recomendado por<select name="recommended_by" value={barberId} onChange={event => setBarberId(event.target.value)} required={Boolean(clientId)}><option value="">Sin peluquero asociado</option>{barbers.map(barber => <option key={barber.id} value={barber.id}>{String(barber.display_name)}</option>)}</select></label>
     <div className="wide cashier-total-preview"><span>Unidades <b>{units}</b></span>{clientId && <span>Puntos al cliente <b>+{units * 5}</b></span>}{clientId && !barberId && <span>Selecciona el peluquero para asociar puntos.</span>}<strong>Total a cobrar <b>Bs {total.toFixed(2)}</b></strong></div><PaymentFields allowPromotion /><button className="button button-dark wide" disabled={busy || lines.some(line => !line.productId) || Boolean(clientId && !barberId)}><ReceiptText /> Cobrar {units} producto(s) · Bs {total.toFixed(2)}</button></form>;
@@ -380,28 +487,36 @@ function DailyLedger({ movements, shift, operator, busy, onMovement, onClose, wo
   const income = movements.reduce((sum, item) => sum + Math.max(Number(item.amount), 0), 0);
   const expenses = movements.reduce((sum, item) => sum + Math.abs(Math.min(Number(item.amount), 0)), 0);
   const cash = opening + movements.filter(item => item.payment_method === "cash").reduce((sum, item) => sum + Number(item.amount), 0);
-  const qr = movements.filter(item => item.payment_method === "qr").reduce((sum, item) => sum + Number(item.amount), 0);
+  const transfer = movements.filter(item => item.payment_method === "transfer").reduce((sum, item) => sum + Number(item.amount), 0);
   const registered = opening + income - expenses;
-  return <section className="admin-panel cashier-ledger"><div className="cashier-print-header"><Brand linked={false} /><div><small>LIBRO DIARIO DE CAJA</small><strong>{workDate}</strong></div></div><div className="dash-list-head"><div><small>TURNO · {workDate}</small><h2>Movimientos del turno</h2></div><div className="dash-row-actions no-print"><button onClick={() => window.print()}><Printer /> Imprimir</button><DashboardModal title="Registrar movimiento" description="Todo movimiento requiere una glosa clara." triggerLabel="Nuevo movimiento" variant="secondary"><MovementForm busy={busy} onSubmit={onMovement} /></DashboardModal></div></div><div className="cashier-ledger-meta"><span>Operador: {operator}</span><span>Apertura: {new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeStyle: "short", timeZone: timezone }).format(new Date(String(shift.opened_at)))}</span><span>Monto inicial: Bs {opening.toFixed(2)}</span></div><section className="cashier-ledger-summary" aria-label="Resumen del turno"><article><span>Ingresos</span><strong>Bs {income.toFixed(2)}</strong></article><article><span>Egresos</span><strong>Bs {expenses.toFixed(2)}</strong></article><article><span>Total efectivo</span><strong>Bs {cash.toFixed(2)}</strong></article><article><span>Total QR</span><strong>Bs {qr.toFixed(2)}</strong></article><article className="ledger-grand-total"><span>Total registrado</span><strong>Bs {registered.toFixed(2)}</strong></article></section><div className="cashier-ledger-table"><div className="ledger-row ledger-head"><span>Hora</span><span>Movimiento</span><span>Glosa</span><span>Método</span><span>Importe</span></div>{movements.length ? movements.map(item => <div className="ledger-row" key={item.id}><span>{new Intl.DateTimeFormat("es-BO", { timeStyle: "short", timeZone: timezone }).format(new Date(String(item.created_at)))}</span><span>{movementLabel(String(item.kind))}</span><span>{String(item.reason ?? "Sin glosa")}</span><span>{paymentLabel(String(item.payment_method))}</span><b>Bs {Number(item.amount).toFixed(2)}</b></div>) : <p className="admin-help">Aún no existen movimientos en este turno.</p>}</div><div className="cashier-ledger-signatures"><span>Firma cajero/a</span><span>Firma administrador/a</span></div><div className="cashier-close-action no-print"><DashboardModal title="Cerrar y conciliar caja" description="Realiza esta acción al finalizar el turno." triggerLabel="Cerrar turno" variant="ghost"><form className="admin-form" onSubmit={onClose}><label className="wide">Efectivo contado Bs<input name="counted" type="number" min="0" step="0.5" required /></label><label className="wide">Glosa de cierre<input name="notes" required /></label><button className="button button-dark wide" disabled={busy}>Cerrar y conciliar</button></form></DashboardModal></div></section>;
+  return <section className="admin-panel cashier-ledger"><div className="cashier-print-header"><Brand linked={false} /><div><small>LIBRO DIARIO DE CAJA</small><strong>{workDate}</strong></div></div><div className="dash-list-head"><div><small>TURNO · {workDate}</small><h2>Movimientos del turno</h2></div><div className="dash-row-actions no-print"><button onClick={() => window.print()}><Printer /> Imprimir</button><DashboardModal title="Registrar movimiento" description="Todo movimiento requiere una glosa clara." triggerLabel="Nuevo movimiento" variant="secondary"><MovementForm busy={busy} onSubmit={onMovement} /></DashboardModal></div></div><div className="cashier-ledger-meta"><span>Operador: {operator}</span><span>Apertura: {new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeStyle: "short", timeZone: timezone }).format(new Date(String(shift.opened_at)))}</span><span>Monto inicial: Bs {opening.toFixed(2)}</span></div><section className="cashier-ledger-summary" aria-label="Resumen del turno"><article><span>Ingresos</span><strong>Bs {income.toFixed(2)}</strong></article><article><span>Egresos</span><strong>Bs {expenses.toFixed(2)}</strong></article><article><span>Total efectivo</span><strong>Bs {cash.toFixed(2)}</strong></article><article><span>Total transferencia</span><strong>Bs {transfer.toFixed(2)}</strong></article><article className="ledger-grand-total"><span>Total registrado</span><strong>Bs {registered.toFixed(2)}</strong></article></section><div className="cashier-ledger-table"><div className="ledger-row ledger-head"><span>Hora</span><span>Movimiento</span><span>Glosa</span><span>Método</span><span>Importe</span></div>{movements.length ? movements.map(item => <div className="ledger-row" key={item.id}><span>{new Intl.DateTimeFormat("es-BO", { timeStyle: "short", timeZone: timezone }).format(new Date(String(item.created_at)))}</span><span>{movementLabel(String(item.kind))}</span><span>{String(item.reason ?? "Sin glosa")}</span><span>{paymentLabel(String(item.payment_method))}</span><b>Bs {Number(item.amount).toFixed(2)}</b></div>) : <p className="admin-help">Aún no existen movimientos en este turno.</p>}</div><div className="cashier-ledger-signatures"><span>Firma cajero/a</span><span>Firma administrador/a</span></div><div className="cashier-close-action no-print"><DashboardModal title="Cerrar y conciliar caja" description="Realiza esta acción al finalizar el turno." triggerLabel="Cerrar turno" variant="ghost"><form className="admin-form" onSubmit={onClose}><label className="wide">Efectivo contado Bs<input name="counted" type="number" min="0" step="0.5" required /></label><label className="wide">Glosa de cierre<input name="notes" required /></label><button className="button button-dark wide" disabled={busy}>Cerrar y conciliar</button></form></DashboardModal></div></section>;
 }
 
-function MovementForm({ busy, onSubmit }: { busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) { return <form className="admin-form" onSubmit={onSubmit}><label>Tipo<select name="kind"><option value="income">Ingreso</option><option value="expense">Egreso</option><option value="adjustment">Ajuste</option></select></label><label>Monto Bs<input name="amount" type="number" min="0.5" step="0.5" required /></label><label>Método<select name="method"><option value="cash">Efectivo</option><option value="qr">QR</option><option value="transfer">Transferencia</option></select></label><label>Glosa<input name="reason" required placeholder="Concepto y responsable" /></label><button className="button button-dark wide" disabled={busy}>Registrar en libro diario</button></form>; }
+function MovementForm({ busy, onSubmit }: { busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) { return <form className="admin-form" onSubmit={onSubmit}><label>Tipo<select name="kind"><option value="income">Ingreso</option><option value="expense">Egreso</option><option value="adjustment">Ajuste</option></select></label><label>Monto Bs<input name="amount" type="number" min="0.5" step="0.5" required /></label><label>Método<select name="method"><option value="cash">Efectivo</option><option value="transfer">Transferencia</option></select></label><label>Glosa<input name="reason" required placeholder="Concepto y responsable" /></label><button className="button button-dark wide" disabled={busy}>Registrar en libro diario</button></form>; }
 function movementLabel(kind: string) { return ({ sale: "Venta", income: "Ingreso", expense: "Egreso", refund: "Devolución", adjustment: "Ajuste" } as Record<string, string>)[kind] ?? kind; }
 function paymentLabel(method: string) { return ({ cash: "Efectivo", qr: "QR", transfer: "Transferencia", card: "Tarjeta", other: "Otro" } as Record<string, string>)[method] ?? method; }
 
-function Settlements({ barbers, payouts, pendingByBarber, workDate }: { barbers: Row[]; payouts: Row[]; pendingByBarber: Map<string, number>; workDate: string }) {
+function Settlements({ barbers, payouts, pendingByBarber, pendingIncentivesByBarber, workDate }: { barbers: Row[]; payouts: Row[]; pendingByBarber: Map<string, number>; pendingIncentivesByBarber: Map<string, number>; workDate: string }) {
   const archivedPayouts = payouts.filter(payout => !barbers.some(barber => barber.id === payout.barber_id));
-  const pendingTotal = [...pendingByBarber.values()].reduce((total, amount) => total + amount, 0);
+  const pendingTotal = [...pendingByBarber.values(), ...pendingIncentivesByBarber.values()].reduce((total, amount) => total + amount, 0)
+    + payouts.filter(payout => payout.status === "approved").reduce((total, payout) => total + Number(payout.total_amount), 0);
   const paidCount = payouts.filter(payout => payout.status === "paid").length;
   const recordCount = barbers.length + archivedPayouts.length;
   return <section className="admin-panel cashier-team-panel">
+    <BarberFinancialRealtime />
     <div className="dash-list-head"><div><small>CIERRE DEL EQUIPO · {workDate}</small><h2>Cierre por peluquero</h2></div><Calculator /></div>
     <p className="admin-help">Revisa cada cuenta antes de preparar el pago. Los servicios se liquidan por jornada y el incentivo de ventas se agrega cuando Caja lo confirma.</p>
     <div className="cashier-settlement-overview"><article><span>Personas en el cierre</span><strong>{recordCount}</strong></article><article><span>Saldo pendiente</span><strong>Bs {pendingTotal.toFixed(2)}</strong></article><article><span>Pagadas hoy</span><strong>{paidCount}</strong></article></div>
     {recordCount ? <div className="cashier-settlement-summary">{barbers.map(barber => {
-      const payout = payouts.find(item => item.barber_id === barber.id);
-      const commission = pendingByBarber.get(barber.id) ?? Number(payout?.commission_amount ?? 0);
-      return <article key={barber.id}><div><strong>{String(barber.display_name)}</strong><span>Saldo pendiente: Bs {commission.toFixed(2)}</span>{payout && <span className={`cashier-settlement-state ${String(payout.status)}`}>{payout.status === "paid" ? "Pagada" : "Preparada"} · Bs {Number(payout.total_amount).toFixed(2)}</span>}</div><Link className="cashier-detail-link" href={`/caja/liquidaciones/${barber.id}`}>Ver detalle <ArrowRight /></Link></article>;
+      const barberPayouts = payouts.filter(item => item.barber_id === barber.id);
+      const preparedPayouts = barberPayouts.filter(item => item.status === "approved");
+      const paidTodayPayouts = barberPayouts.filter(item => item.status === "paid");
+      const pendingCommission = pendingByBarber.get(barber.id) ?? 0;
+      const pendingIncentive = pendingIncentivesByBarber.get(barber.id) ?? 0;
+      const preparedAmount = preparedPayouts.reduce((total, payout) => total + Number(payout.total_amount), 0);
+      const paidTodayAmount = paidTodayPayouts.reduce((total, payout) => total + Number(payout.total_amount), 0);
+      const balance = pendingCommission + pendingIncentive + preparedAmount;
+      return <article key={barber.id}><div><strong>{String(barber.display_name)}</strong><span>Saldo por recibir: Bs {balance.toFixed(2)}</span>{pendingCommission > 0 && <span>Servicios pendientes: Bs {pendingCommission.toFixed(2)}</span>}{pendingIncentive > 0 && <span>Incentivos acumulados: Bs {pendingIncentive.toFixed(2)}</span>}{preparedAmount > 0 && <span className="cashier-settlement-state approved">Liquidación preparada · Bs {preparedAmount.toFixed(2)}</span>}{paidTodayAmount > 0 && <span className="cashier-settlement-state paid">Pagado hoy · Bs {paidTodayAmount.toFixed(2)}</span>}</div><Link className="cashier-detail-link" href={`/caja/liquidaciones/${barber.id}`}>Ver detalle <ArrowRight /></Link></article>;
     })}{archivedPayouts.map(payout => <article key={payout.id}><div><strong>{String((payout.barber_profiles as Row | null)?.display_name ?? payout.barber_name_snapshot ?? "Peluquero eliminado")}</strong><span>Comisiones: Bs {Number(payout.commission_amount).toFixed(2)} · Incentivos: Bs {Number(payout.incentive_amount).toFixed(2)}</span><span className={`cashier-settlement-state ${String(payout.status)}`}>{payout.status === "paid" ? "Pagada" : payout.status === "canceled" ? "Cancelada" : "Preparada"} · Bs {Number(payout.total_amount).toFixed(2)}</span></div><span>Registro histórico</span></article>)}</div> : <div className="cashier-empty-state"><Calculator/><strong>No hay liquidaciones para este cierre</strong><span>Los importes por peluquero se mostrarán cuando existan comisiones, incentivos o pagos registrados.</span></div>}
   </section>;
 }
