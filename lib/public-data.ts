@@ -25,6 +25,7 @@ export type PublicBarber = {
   role: string;
   specialties: string;
   image: string;
+  serviceSlugs?: string[];
 };
 
 export type PublicGalleryItem = {
@@ -119,16 +120,20 @@ async function getPublicServices(supabase: SupabaseClient) {
 
 async function getPublicBarbers(supabase: SupabaseClient) {
   const { data, error } = await supabase.from("barber_profiles")
-    .select("slug,display_name,bio,photo_path,specialties")
+    .select("slug,display_name,bio,photo_path,specialties,barber_services(services(slug))")
     .eq("active", true).order("display_name");
-  const barbers: PublicBarber[] = (data ?? []).map((item) => ({
-    id: item.slug,
-    name: item.display_name,
-    role: item.bio ?? "Barbero LEGEND CLUB",
-    specialties: (item.specialties ?? []).join(", "),
-    image: publicMediaUrl(item.photo_path) ??
-      fallbackBarbers.find((barber) => barber.id === item.slug)?.image ?? fallbackBarbers[0].image,
-  }));
+  const barbers: PublicBarber[] = (data ?? []).map((item) => {
+    const assignments = item.barber_services as unknown as Array<{ services?: { slug?: string } | null }> | null;
+    return {
+      id: item.slug,
+      name: item.display_name,
+      role: item.bio ?? "Barbero LEGEND CLUB",
+      specialties: (item.specialties ?? []).join(", "),
+      image: publicMediaUrl(item.photo_path) ??
+        fallbackBarbers.find((barber) => barber.id === item.slug)?.image ?? fallbackBarbers[0].image,
+      serviceSlugs: (assignments ?? []).flatMap((assignment) => assignment.services?.slug ? [assignment.services.slug] : []),
+    };
+  });
   return { barbers, error };
 }
 

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Banknote, Calculator, CheckCircle2, History, PackageCheck, PackageOpen, ReceiptText, Scissors, Sparkles } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { DashboardModal } from "@/components/dashboard-modal";
-import { BarberFinancialRealtime } from "@/components/barber-financial-realtime";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelResponsiveSidebar, PanelThemeSelector } from "@/components/panel-experience";
 import { clearFormErrors, dispatchDashboardError, dispatchDashboardSuccess, reportFormError } from "@/lib/form-feedback";
@@ -28,7 +27,6 @@ export function CashierSettlementDetail({ userEmail, capabilities, shiftOpen, de
   const [error, setError] = useState("");
   const projectedTotal = useMemo(() => Math.max(Number(detail.commission_total) + (includeIncentives ? Number(detail.incentive_total) : 0), 0), [detail, includeIncentives]);
   const legacyPayout = Boolean(detail.payout && Number(detail.payout.reimbursement_amount) > 0 && Number(detail.payout.deduction_amount) === 0);
-  const pendingServiceTotal = detail.payout ? Number(detail.new_commission_total ?? 0) : Number(detail.commission_total);
 
   async function rpc(name: string, args: Record<string, unknown>, form?: HTMLFormElement) {
     if (form) clearFormErrors(form);
@@ -63,7 +61,6 @@ export function CashierSettlementDetail({ userEmail, capabilities, shiftOpen, de
   }
 
   return <main className="admin-shell dash-workspace cashier-shell">
-    <BarberFinancialRealtime barberId={detail.barber.id} />
     <header className="admin-header dash-header"><PanelMobileMenuButton /><div className="dash-brand"><Brand linked={false} /><span className="dash-live"><i /> CAJA CONECTADA</span></div><ModeSwitcher current="cashier" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier showClient={false} /><div className="dash-user"><span className="dash-avatar">{userEmail.slice(0, 2).toUpperCase()}</span><span>{userEmail}<small>Operador de caja</small></span></div></header>
     <div className="admin-layout cashier-layout"><PanelResponsiveSidebar><aside className="admin-nav dash-sidebar"><div className="dash-sidebar-head"><p>TERMINAL POS</p><PanelMobileSidebarClose /></div><nav>
       <Link replace href="/caja"><Scissors /><span>Cobrar servicios</span></Link><Link replace href="/caja/productos"><PackageOpen /><span>Venta de productos</span></Link><Link replace href="/caja/reservas"><PackageCheck /><span>Reservas</span></Link><Link replace href="/caja/movimientos"><ReceiptText /><span>Libro diario</span></Link><Link replace className="active" href="/caja/liquidaciones"><Calculator /><span>Liquidaciones</span><i /></Link><Link replace href="/caja/historial"><History /><span>Historial</span></Link>
@@ -73,7 +70,7 @@ export function CashierSettlementDetail({ userEmail, capabilities, shiftOpen, de
         <div className="dash-page-heading"><div className="admin-title"><Calculator /><div><p>CIERRE DEL TURNO · {detail.work_date}</p><h1>{detail.barber.name}</h1></div></div><span className={`dash-status-pill ${shiftOpen ? "online" : "offline"}`}><i />{shiftOpen ? "Turno abierto" : "Turno cerrado"}</span></div>
         {error && <p className="admin-error">{error}</p>}
         <section className="settlement-metrics" aria-label="Resumen de liquidación">
-          <article><span>Servicios por liquidar</span><strong>{money(pendingServiceTotal)}</strong></article>
+          <article><span>Servicios pendientes</span><strong>{money(detail.commission_total)}</strong></article>
           <article><span>{detail.payout ? "Incentivo incluido" : "Incentivo acumulado"}</span><strong>{money(detail.payout ? detail.payout.incentive_amount : detail.incentive_total)}</strong>{Boolean(detail.payout && detail.remaining_incentive_total > 0) && <small>{money(detail.remaining_incentive_total)} sigue acumulado</small>}</article>
           <article className="net"><span>{detail.payout ? "Total liquidación" : "Pago diario"}</span><strong>{money(detail.payout?.total_amount ?? projectedTotal)}</strong></article>
         </section>
@@ -81,19 +78,17 @@ export function CashierSettlementDetail({ userEmail, capabilities, shiftOpen, de
         {legacyPayout && <p className="settlement-warning">Esta liquidación pertenece a una regla anterior y conserva un ajuste histórico de {money(detail.payout?.reimbursement_amount ?? 0)}.</p>}
 
         <div className="settlement-columns">
-          <ConceptPanel icon={<Scissors />} title={detail.payout ? "Servicios de esta liquidación" : "Servicios por liquidar"} hint={`${detail.services.length} atención(es)`} items={detail.services} empty="No hay comisiones de servicios pendientes." timezone={timezone} />
-          {detail.payout && <ConceptPanel icon={<Scissors />} title="Servicios nuevos pendientes" hint={`${detail.new_services.length} atención(es)`} items={detail.new_services} empty="No hay nuevos servicios pendientes después de esta liquidación." timezone={timezone} />}
+          <ConceptPanel icon={<Scissors />} title="Servicios por liquidar" hint={`${detail.services.length} atención(es)`} items={detail.services} empty="No hay comisiones de servicios pendientes." timezone={timezone} />
           <ConceptPanel icon={<PackageOpen />} title="Incentivos de ventas" hint="Acumulado mensual" items={detail.incentives} empty={detail.payout && detail.remaining_incentive_total > 0 ? `Quedan ${money(detail.remaining_incentive_total)} acumulados para una próxima liquidación.` : "No hay incentivos de productos pendientes."} timezone={timezone} />
         </div>
 
-        <section className="admin-panel settlement-action-panel"><div className="dash-list-head"><div><small>CONFIRMACIÓN DE CAJA</small><h2>{detail.payout ? "Liquidación registrada" : "Preparar pago"}</h2></div><Banknote /></div>
-          {detail.payout && pendingServiceTotal > 0 && <p className="settlement-warning">Hay {money(pendingServiceTotal)} en servicios nuevos que aún no están incluidos en esta liquidación. Quedan como saldo pendiente para el próximo cierre.</p>}
+        <section className="admin-panel settlement-action-panel"><div className="dash-list-head"><div><small>CONFIRMACIÓN DE CAJA</small><h2>{detail.payout ? "Liquidación preparada" : "Preparar pago"}</h2></div><Banknote /></div>
           {!detail.payout ? <form className="settlement-prepare-form" onSubmit={prepare}>
             {detail.incentive_total > 0 && <label className="settlement-incentive-check"><input type="checkbox" checked={includeIncentives} onChange={event => setIncludeIncentives(event.target.checked)} /><span><strong>Agregar incentivo de ventas acumulado</strong><small>Opcional · normalmente se paga una vez al mes</small></span><b>+ {money(detail.incentive_total)}</b></label>}
             <div className="settlement-net-preview"><span>Servicios {money(detail.commission_total)}</span>{includeIncentives && <span>Incentivo +{money(detail.incentive_total)}</span>}<strong>Neto {money(projectedTotal)}</strong></div>
             {!shiftOpen && <p className="settlement-warning">Abre un turno de caja para preparar y pagar.</p>}
             <button className="button button-dark" disabled={busy || !shiftOpen || projectedTotal <= 0}>Preparar liquidación</button>
-          </form> : <div className="settlement-payment-summary"><div><span>Servicios</span><b>{money(detail.payout.commission_amount)}</b></div>{detail.payout.includes_accumulated_incentives && <div><span>Incentivo acumulado</span><b>+ {money(detail.payout.incentive_amount)}</b></div>}<div className="total"><span>Total neto</span><strong>{money(detail.payout.total_amount)}</strong></div>{detail.payout.status === "approved" ? <DashboardModal title="Confirmar pago de liquidación" description={`Se registrará un egreso por ${money(detail.payout.total_amount)}. Esta acción no debe repetirse.`} triggerLabel="Registrar pago" triggerIcon={<CheckCircle2 />}><form className="admin-form" onSubmit={pay}><label className="wide">Forma de pago<select name="payment_method" required><option value="cash">Efectivo</option><option value="transfer">Transferencia</option></select></label><button className="button button-dark wide" disabled={busy}>Confirmar pago y egreso</button></form></DashboardModal> : <span className="cashier-paid-mark"><CheckCircle2 /> Pagada {detail.payout.paid_at ? date(detail.payout.paid_at, timezone) : ""}</span>}</div>}
+          </form> : <div className="settlement-payment-summary"><div><span>Servicios</span><b>{money(detail.payout.commission_amount)}</b></div>{detail.payout.includes_accumulated_incentives && <div><span>Incentivo acumulado</span><b>+ {money(detail.payout.incentive_amount)}</b></div>}<div className="total"><span>Total neto</span><strong>{money(detail.payout.total_amount)}</strong></div>{detail.payout.status === "approved" ? <DashboardModal title="Confirmar pago de liquidación" description={`Se registrará un egreso por ${money(detail.payout.total_amount)}. Esta acción no debe repetirse.`} triggerLabel="Registrar pago" triggerIcon={<CheckCircle2 />}><form className="admin-form" onSubmit={pay}><label className="wide">Forma de pago<select name="payment_method" required><option value="cash">Efectivo</option><option value="qr">QR</option></select></label><button className="button button-dark wide" disabled={busy}>Confirmar pago y egreso</button></form></DashboardModal> : <span className="cashier-paid-mark"><CheckCircle2 /> Pagada {detail.payout.paid_at ? date(detail.payout.paid_at, timezone) : ""}</span>}</div>}
         </section>
 
         <section className="admin-panel settlement-history"><div className="dash-list-head"><div><small>TRAZABILIDAD</small><h2>Historial reciente</h2></div><History /></div><div className="settlement-concept-list">{history.length ? history.map(item => <article key={item.id}><div><strong>{date(zonedDateTimeToDate(`${item.period_start}T12:00:00`, timezone), timezone)}</strong><span>Servicios {money(item.commission_amount)} · incentivo {money(item.incentive_amount)}</span></div><div className="settlement-row-amount"><b>{money(item.total_amount)}</b><small>{item.status === "paid" ? "Pagada" : "Preparada"}</small></div></article>) : <p className="admin-help">Todavía no existen liquidaciones.</p>}</div></section>

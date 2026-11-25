@@ -217,6 +217,9 @@
   transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 .booking-shell .choice-card:hover { border-color: var(--public-accent); box-shadow: 0 10px 28px #0003; transform: translateY(-2px); }
+.booking-shell .choice-card[aria-pressed="true"] { border-color: var(--public-action); background: var(--booking-accent-wash); box-shadow: inset 0 0 0 1px var(--public-action); }
+.booking-shell .choice-card[aria-pressed="true"] .choice-price { color: var(--public-accent); }
+.booking-shell .booking-service-add { color: var(--public-accent); font-size: 11px; font-weight: 700; }
 .booking-shell .choice-card > div:first-child > span { color: var(--brand-primary); font-size: 9px; letter-spacing: .12em; }
 .booking-shell .choice-card h3 { margin: 6px 0; color: var(--brand-ink); font: 650 17px/1.25 var(--sans); }
 .booking-shell .choice-card p { max-width: 470px; color: var(--brand-muted); font-size: 11px; line-height: 1.5; }
@@ -308,20 +311,12 @@
 .booking-shell .booking-opening-hours { margin-top: 12px; color: var(--brand-muted); font-size: 12px; line-height: 1.5; font-variant-numeric: tabular-nums; }
 .booking-shell .booking-opening-hours p { margin: 0; }
 .booking-shell .booking-opening-hours strong { margin-right: 4px; color: var(--brand-ink); }
-.booking-shell .booking-opening-hours .booking-shift-break { margin-top: 3px; color: var(--public-accent); }
 .booking-shell .booking-chosen-time { display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; color: var(--public-accent); border-radius: 8px; background: var(--booking-accent-wash); font-size: 12px; white-space: nowrap; }
 .booking-shell .booking-time-choices { display: grid; gap: 12px; }
-.booking-shell .booking-time-periods {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
-  padding: 4px;
-  border: 1px solid var(--public-line);
-  border-radius: 14px;
-  background: var(--public-ink);
-}
+.booking-shell .booking-time-legend { margin: 0; display: flex; justify-content: space-between; gap: 10px; color: var(--brand-muted); font-size: 11px; }
+.booking-shell .booking-time-legend strong { color: var(--public-accent); font-weight: 700; }
 .booking-shell .booking-time-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px; }
-.booking-shell :is(.booking-time-periods, .booking-time-grid) button {
+.booking-shell .booking-time-grid button {
   min-height: 44px;
   padding: 0 4px;
   display: flex;
@@ -335,13 +330,11 @@
   font-size: 13px;
   font-weight: 650;
 }
-.booking-shell .booking-time-periods button { color: var(--public-muted); border-color: transparent; background: transparent; }
-.booking-shell .booking-time-periods button[aria-pressed="true"] { color: var(--public-accent); border-color: var(--booking-accent-line); background: var(--booking-accent-wash); }
-.booking-shell .booking-time-periods button:disabled { opacity: .45; cursor: not-allowed; }
-.booking-shell .booking-period-count { min-width: 22px; padding: 2px 4px; border-radius: 999px; background: var(--public-raised); font-size: 10px; font-variant-numeric: tabular-nums; }
-.booking-shell .booking-time-grid button { font-size: 14px; font-variant-numeric: tabular-nums; }
+.booking-shell .booking-time-grid button { min-height: 52px; flex-direction: column; gap: 1px; font-size: 14px; font-variant-numeric: tabular-nums; }
 .booking-shell .booking-time-grid button[aria-pressed="true"] { color: var(--public-ink); border-color: var(--public-action); background: var(--public-action); }
-.booking-shell :is(.booking-time-periods, .booking-time-grid, .booking-page-actions) button:hover:not(:disabled) { border-color: var(--public-accent); }
+.booking-shell .booking-time-grid button[data-available="false"] { color: var(--public-muted); border-style: dashed; background: var(--public-raised); cursor: not-allowed; }
+.booking-shell .booking-time-grid button[data-available="false"] small { font-size: 9px; font-weight: 600; }
+.booking-shell .booking-time-grid button:hover:not(:disabled), .booking-shell .booking-page-actions button:hover:not(:disabled) { border-color: var(--public-accent); }
 
 @media (prefers-reduced-motion: no-preference) {
   .booking-shell .booking-content-height { transition: height .32s ease-in-out; }
@@ -353,11 +346,11 @@
   .booking-shell .booking-schedule-enter[data-slide="next"] { --booking-slide-start: 14px 0; }
   .booking-shell .booking-schedule-enter[data-slide="previous"] { --booking-slide-start: -14px 0; }
 
-  .booking-shell :is(.booking-time-periods, .booking-time-grid, .booking-page-actions) button {
+  .booking-shell :is(.booking-time-grid, .booking-page-actions) button {
     transition: background-color .17s ease, border-color .17s ease, color .17s ease, scale .13s ease-out;
   }
 
-  .booking-shell :is(.booking-time-periods, .booking-time-grid, .booking-page-actions, .date-strip) button:active:not(:disabled) {
+  .booking-shell :is(.booking-time-grid, .booking-page-actions, .date-strip) button:active:not(:disabled) {
     scale: .96;
   }
 

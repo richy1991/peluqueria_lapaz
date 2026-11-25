@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { BackHandler, Image, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText as Text } from '@/components/ThemedText';
-import { CalendarCheck, CalendarDays, Check, Mail, Scissors, Sun, Sunset } from 'lucide-react-native';
+import { CalendarCheck, CalendarDays, Check, Clock3, Mail, Scissors } from 'lucide-react-native';
 
 import { ActionButton, EmptyState, InlineMessage, TextField, palette } from '@/components/ui';
 import { businessDateKey, businessTimeLabel, zonedDateTimeToDate } from '@/lib/business-time';
@@ -17,11 +17,11 @@ import { AppShell } from '@/components/AppShell';
 import { ClientPageHeader } from '@/components/ClientPageHeader';
 
 type Service = { slug: string; name: string; description: string | null; category: string | null; price: number; duration_minutes: number };
-type Barber = { slug: string; display_name: string; bio: string | null; photo_path: string | null; specialties: string[] | null };
+type Barber = { slug: string; display_name: string; bio: string | null; photo_path: string | null; specialties: string[] | null; service_slugs: string[] };
 type BusinessHour = { weekday: number; opens_at: string; closes_at: string; afternoon_opens_at: string | null; afternoon_closes_at: string | null; active: boolean };
 type BookingDay = { id: string; label: string; number: string; month: string; weekday: number };
 type BookingData = { services: Service[]; barbers: Barber[]; timezone: string; businessStatus: string; hours: BusinessHour[]; reservedDayKeys: string[]; phone: string };
-type AvailableSlot = { startsAt: string; time: string };
+type AvailableSlot = { startsAt: string; time: string; isAvailable: boolean };
 
 function datesFor(timezone: string): BookingDay[] {
   const [year, month, day] = businessDateKey(new Date(), timezone).split('-').map(Number);
@@ -55,7 +55,7 @@ export default function ClientBookingScreen() {
   const compactHeaderHeight = insets.top + 76;
   const userId = session?.user.id ?? '';
   const [step, setStep] = useState(1);
-  const [serviceSlug, setServiceSlug] = useState('');
+  const [serviceSlugs, setServiceSlugs] = useState<string[]>([]);
   const [barberSlug, setBarberSlug] = useState('');
   const [dayKey, setDayKey] = useState('');
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
@@ -81,12 +81,16 @@ export default function ClientBookingScreen() {
     const [settingsResult, servicesResult, barbersResult, profileResult] = await Promise.all([
       supabase.from('business_settings').select('timezone,business_status').eq('id', true).maybeSingle(),
       supabase.from('services').select('slug,name,description,category,price,duration_minutes').eq('status', 'active').order('price'),
-      supabase.from('barber_profiles').select('slug,display_name,bio,photo_path,specialties').eq('active', true).order('display_name'),
+      supabase.from('barber_profiles').select('slug,display_name,bio,photo_path,specialties,barber_services(services(slug))').eq('active', true).order('display_name'),
       userId ? supabase.from('profiles').select('phone').eq('id', userId).maybeSingle() : Promise.resolve({ data: null, error: null }),
     ]);
     if (settingsResult.error) throw new Error(settingsResult.error.message);
     const services = requireData(servicesResult) as Service[];
-    const barbers = requireData(barbersResult) as Barber[];
+    const barberRows = requireData(barbersResult) as unknown as Array<Omit<Barber, 'service_slugs'> & { barber_services?: Array<{ services?: { slug?: string } | null }> }>;
+    const barbers: Barber[] = barberRows.map((barber) => ({
+      ...barber,
+      service_slugs: (barber.barber_services ?? []).flatMap((assignment) => assignment.services?.slug ? [assignment.services.slug] : []),
+    }));
     const settings = settingsResult.data;
     const timezone = settings?.timezone ?? 'America/La_Paz';
     const days = datesFor(timezone);
@@ -114,15 +118,15 @@ export default function ClientBookingScreen() {
 
   const data = query.data;
   const days = useMemo(() => datesFor(data?.timezone ?? 'America/La_Paz'), [data?.timezone]);
-  const selectedService = data?.services.find((item) => item.slug === serviceSlug);
-  const selectedBarber = data?.barbers.find((item) => item.slug === barberSlug);
+  const selectedServices = useMemo(() => (data?.services ?? []).filter((item) => serviceSlugs.includes(item.slug)), [data?.services, serviceSlugs]);
+  const selectedServiceNames = selectedServices.map((item) => item.name).join(' + ');
+  const selectedDuration = selectedServices.reduce((total, item) => total + item.duration_minutes, 0);
+  const selectedPrice = selectedServices.reduce((total, item) => total + Number(item.price), 0);
+  const eligibleBarbers = (data?.barbers ?? []).filter((item) => selectedServices.length > 0 && selectedServices.every((service) => item.service_slugs.includes(service.slug)));
+  const selectedBarber = eligibleBarbers.find((item) => item.slug === barberSlug);
   const selectedDay = days.find((item) => item.id === dayKey);
   const selectedHours = data?.hours.find((item) => item.weekday === selectedDay?.weekday);
   const bookingClosed = data?.businessStatus === 'closed' || data?.businessStatus === 'emergency_closed';
-  const hasAfternoon = Boolean(selectedHours?.afternoon_opens_at && selectedHours.afternoon_closes_at);
-  const afternoonStart = selectedHours?.afternoon_opens_at?.slice(0, 5) ?? '';
-  const morningSlots = hasAfternoon ? availableSlots.filter((item) => item.time < afternoonStart) : availableSlots;
-  const afternoonSlots = hasAfternoon ? availableSlots.filter((item) => item.time >= afternoonStart) : [];
   const selectedTime = selectedSlot?.time ?? '';
   const needsPhone = !data?.phone.trim();
 
@@ -144,7 +148,7 @@ export default function ClientBookingScreen() {
   }, [data, query.loading, userId]);
 
   useEffect(() => {
-    if (!data || !dayKey || !serviceSlug || !barberSlug) return;
+    if (!data || !dayKey || !serviceSlugs.length || !barberSlug) return;
     const reserved = data.reservedDayKeys.includes(dayKey);
     const unavailable = reserved || bookingClosed || !selectedHours?.active;
     if (unavailable) {
@@ -168,8 +172,8 @@ export default function ClientBookingScreen() {
       setSlotsLoading(true);
       setBookingError('');
       try {
-        const { data: result, error } = await supabase.rpc('get_available_slots', {
-          p_service_slug: serviceSlug,
+        const { data: result, error } = await supabase.rpc('get_booking_slots_for_services', {
+          p_service_slugs: serviceSlugs,
           p_barber_slug: barberSlug,
           p_date: dayKey,
         });
@@ -180,14 +184,14 @@ export default function ClientBookingScreen() {
           return;
         }
         const slotsByInstant = new Map<number, AvailableSlot>();
-        for (const slot of (result ?? []) as Array<{ starts_at: string }>) {
+        for (const slot of (result ?? []) as Array<{ starts_at: string; is_available: boolean }>) {
           const instant = Date.parse(slot.starts_at);
-          if (Number.isFinite(instant)) slotsByInstant.set(instant, { startsAt: slot.starts_at, time: formatSlot(slot.starts_at, timezone) });
+          if (Number.isFinite(instant)) slotsByInstant.set(instant, { startsAt: slot.starts_at, time: formatSlot(slot.starts_at, timezone), isAvailable: slot.is_available });
         }
         const slots = [...slotsByInstant.entries()].sort(([left], [right]) => left - right).map(([, slot]) => slot);
         setAvailableSlots(slots);
         const selected = selectedSlotRef.current;
-        if (selected && !slots.some((slot) => Date.parse(slot.startsAt) === Date.parse(selected.startsAt))) {
+        if (selected && !slots.some((slot) => slot.isAvailable && Date.parse(slot.startsAt) === Date.parse(selected.startsAt))) {
           setSelectedSlot(null);
           selectedSlotRef.current = null;
           setBookingError('Ese horario ya no está disponible. Elige otro para continuar.');
@@ -203,17 +207,28 @@ export default function ClientBookingScreen() {
     }
     void loadAvailability();
     return () => { active = false; };
-  }, [availabilityVersion, barberSlug, bookingClosed, data, dayKey, selectedHours?.active, serviceSlug]);
+  }, [availabilityVersion, barberSlug, bookingClosed, data, dayKey, selectedHours?.active, serviceSlugs]);
 
   function selectService(slug: string) {
-    setServiceSlug(slug);
+    const alreadySelected = serviceSlugs.includes(slug);
+    if (!alreadySelected) {
+      const service = data?.services.find((item) => item.slug === slug);
+      if (serviceSlugs.length >= 12) {
+        setBookingError('Puedes combinar hasta 12 servicios en una cita.');
+        return;
+      }
+      if (service && selectedDuration + service.duration_minutes > 480) {
+        setBookingError('La duración total de una cita no puede superar 8 horas.');
+        return;
+      }
+    }
+    setServiceSlugs((current) => current.includes(slug) ? current.filter((item) => item !== slug) : [...current, slug]);
     setBarberSlug('');
     setDayKey('');
     setSelectedSlot(null);
     selectedSlotRef.current = null;
     setAvailableSlots([]);
     setBookingError('');
-    setStep(2);
   }
 
   function selectBarber(slug: string) {
@@ -226,7 +241,7 @@ export default function ClientBookingScreen() {
   }
 
   async function confirmBooking() {
-    if (!data || !selectedService || !selectedBarber || !dayKey || !selectedSlot) {
+    if (!data || !selectedServices.length || !selectedBarber || !dayKey || !selectedSlot?.isAvailable) {
       setBookingError('Vuelve a elegir un horario disponible para continuar.');
       setStep(3);
       return;
@@ -236,8 +251,8 @@ export default function ClientBookingScreen() {
     setBookingLoading(true);
     setBookingError('');
     try {
-      const { error } = await supabase.rpc('create_appointment', {
-        p_service_slug: selectedService.slug,
+      const { error } = await supabase.rpc('create_appointment_with_services', {
+        p_service_slugs: selectedServices.map((item) => item.slug),
         p_barber_slug: selectedBarber.slug,
         p_starts_at: selectedSlot.startsAt,
         p_phone: contactPhone,
@@ -321,8 +336,8 @@ export default function ClientBookingScreen() {
     return () => subscription.remove();
   }, [confirmed, onBack, step]);
 
-  const prompts = ['Elige un servicio', 'Elige tu peluquero', 'Elige tu horario', 'Confirma tu cita'];
-  const stepLabels = ['Servicio', 'Peluquero', 'Horario', 'Confirmar'];
+  const prompts = ['Elige tus servicios', 'Elige tu peluquero', 'Elige tu horario', 'Confirma tu cita'];
+  const stepLabels = ['Servicios', 'Peluquero', 'Horario', 'Confirmar'];
 
   return (
     <AppShell
@@ -333,15 +348,16 @@ export default function ClientBookingScreen() {
       floatingHeaderHeight={compactHeaderHeight}
       floatingHeader={(scrollY) => <ClientPageHeader scrollY={scrollY} expandedHeight={compactHeaderHeight} eyebrow="RESERVA DE CITA" title={confirmed ? 'Cita confirmada' : prompts[step - 1]} description="" compact onBack={onBack} showChat={false} />}>
       <View style={styles.flowContent}>
-        {confirmed && selectedService ? (
+        {confirmed && selectedServices.length > 0 ? (
           <View style={styles.stepContent}>
             <View style={[styles.confirmedMark, { backgroundColor: colors.successSoft, borderColor: colors.successBorder }]}><Check size={30} color={colors.success} strokeWidth={2.5} /></View>
             <Text style={[styles.confirmedTitle, { color: colors.text }]}>¡Nos vemos pronto!</Text>
             <View style={[styles.confirmationCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <SummaryRow label="Servicio" value={selectedService.name} />
+              <SummaryRow label="Servicios" value={selectedServiceNames} />
               <SummaryRow label="Peluquero" value={selectedBarber?.display_name ?? ''} />
               <SummaryRow label="Fecha y hora" value={displayDate(selectedDay) + ' · ' + selectedTime} />
-              <SummaryRow label="Precio" value={'Bs ' + Number(selectedService.price).toFixed(2)} />
+              <SummaryRow label="Duración" value={selectedDuration + ' min'} />
+              <SummaryRow label="Precio total" value={'Bs ' + selectedPrice.toFixed(2)} />
             </View>
             <ActionButton label="Ver mi cuenta" icon={CalendarDays} onPress={() => router.replace('/client')} />
           </View>
@@ -365,34 +381,38 @@ export default function ClientBookingScreen() {
             {query.loading && !data ? <EmptyState title="Cargando…" /> : null}
             {!query.loading && data && step === 1 ? (
               <View style={styles.stepContent}>
+                <Text style={styles.muted}>Elige uno o varios servicios. Sumaremos el tiempo para buscar un horario que alcance para toda la cita.</Text>
                 {data.services.length ? data.services.map((service) => (
-                  <Pressable key={service.slug} onPress={() => selectService(service.slug)} style={[styles.choiceCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                  <Pressable key={service.slug} accessibilityRole="checkbox" accessibilityState={{ checked: serviceSlugs.includes(service.slug) }} accessibilityLabel={`${service.name}, ${service.duration_minutes} minutos, Bs ${Number(service.price).toFixed(2)}`} onPress={() => selectService(service.slug)} style={[styles.choiceCard, { backgroundColor: colors.surface, borderColor: serviceSlugs.includes(service.slug) ? colors.accent : colors.border }, serviceSlugs.includes(service.slug) && { backgroundColor: colors.accentSoft }]}>
                     <View style={styles.choiceCopy}>
                       <Text style={styles.choiceEyebrow}>{service.category || 'Servicio'}</Text>
                       <Text style={styles.choiceTitle}>{service.name}</Text>
                       {service.description ? <Text style={styles.muted}>{service.description}</Text> : null}
                     </View>
-                    <View style={styles.choiceMeta}><Text style={styles.price}>Bs {Number(service.price).toFixed(2)}</Text><Text style={styles.muted}>{service.duration_minutes} min</Text></View>
+                    <View style={styles.choiceMeta}><Text style={styles.price}>Bs {Number(service.price).toFixed(2)}</Text><Text style={styles.muted}>{service.duration_minutes} min</Text>{serviceSlugs.includes(service.slug) ? <Check size={18} color={colors.accent} /> : <Text style={styles.addLabel}>Agregar</Text>}</View>
                   </Pressable>
                 )) : <EmptyState title="No hay servicios disponibles" />}
+                {selectedServices.length > 0 ? <View style={[styles.selectionSummary, { backgroundColor: colors.accentSoft }]}><Scissors size={15} color={colors.accent} /><Text style={styles.selectionText}>{selectedServices.length} servicio(s) · {selectedDuration} min</Text><Text style={styles.muted}>Bs {selectedPrice.toFixed(2)}</Text></View> : null}
+                {bookingError ? <InlineMessage>{bookingError}</InlineMessage> : null}
+                <ActionButton label="Elegir peluquero" icon={CalendarDays} disabled={!selectedServices.length} onPress={() => { setBookingError(''); setStep(2); }} />
               </View>
             ) : null}
             {!query.loading && data && step === 2 ? (
               <View style={styles.stepContent}>
-                {data.barbers.map((barber) => (
+                {eligibleBarbers.map((barber) => (
                   <Pressable key={barber.slug} onPress={() => selectBarber(barber.slug)} style={[styles.barberChoice, { backgroundColor: colors.surface, borderColor: colors.border }, barberSlug === barber.slug && { backgroundColor: colors.accentSoft, borderColor: colors.accent }]}>
                     {publicMediaUrl(barber.photo_path) ? <Image source={{ uri: publicMediaUrl(barber.photo_path)! }} alt={barber.display_name} style={styles.barberImage} /> : <View style={styles.barberPlaceholder}><Scissors size={18} color={palette.gold} /></View>}
                     <View style={styles.choiceCopy}><Text style={styles.choiceTitle}>{barber.display_name}</Text><Text style={styles.muted}>{(barber.specialties ?? []).join(', ') || barber.bio || 'Barbero LEGEND CLUB'}</Text></View>
                     {barberSlug === barber.slug ? <Check size={19} color={colors.success} strokeWidth={3} /> : null}
                   </Pressable>
                 ))}
-                {data.barbers.length === 0 ? <EmptyState title="No hay peluqueros disponibles" /> : null}
+                {eligibleBarbers.length === 0 ? <EmptyState title={data.barbers.length ? 'Ningún peluquero realiza todos los servicios elegidos' : 'No hay peluqueros disponibles'} /> : null}
                 <ActionButton label="Continuar" icon={CalendarDays} disabled={!barberSlug} onPress={() => { setBookingError(''); setStep(3); }} />
               </View>
             ) : null}
             {!query.loading && data && step === 3 ? (
               <View style={styles.stepContent}>
-                <View style={styles.selectionSummary}><Scissors size={15} color={palette.gold} /><Text style={styles.selectionText}>{selectedService?.name || 'Servicio'}</Text><Text style={styles.muted}>{selectedBarber?.display_name || ''}</Text></View>
+                <View style={styles.selectionSummary}><Scissors size={15} color={palette.gold} /><Text style={styles.selectionText}>{selectedServiceNames}</Text><Text style={styles.muted}>{selectedDuration} min · {selectedBarber?.display_name || ''}</Text></View>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateStrip}>
                   {days.map((item) => {
                     const reserved = data.reservedDayKeys.includes(item.id);
@@ -411,28 +431,25 @@ export default function ClientBookingScreen() {
                 {dayKey && selectedHours?.active ? (
                   <>
                     <View style={[styles.hoursCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                      <View style={styles.hoursRow}><Sun size={15} color={palette.gold} /><Text style={styles.muted}>Mañana</Text><Text style={styles.hourValue}>{selectedHours.opens_at.slice(0, 5)}–{selectedHours.closes_at.slice(0, 5)}</Text></View>
-                      {hasAfternoon ? <View style={styles.hoursRow}><Sunset size={15} color={palette.gold} /><Text style={styles.muted}>Tarde</Text><Text style={styles.hourValue}>{selectedHours.afternoon_opens_at?.slice(0, 5)}–{selectedHours.afternoon_closes_at?.slice(0, 5)}</Text></View> : null}
+                      <View style={styles.hoursRow}><Clock3 size={15} color={palette.gold} /><Text style={styles.muted}>Jornada continua</Text><Text style={styles.hourValue}>{selectedHours.opens_at.slice(0, 5)}–{selectedHours.closes_at.slice(0, 5)}</Text></View>
                     </View>
                     {slotsLoading ? <EmptyState title="Buscando horarios…" /> : availableSlots.length ? (
-                      <>
-                        <TimeOptions title={hasAfternoon ? 'Turno mañana' : 'Horarios disponibles'} slots={morningSlots} selected={selectedSlot?.startsAt ?? ''} onSelect={(value) => { setSelectedSlot(value); setBookingError(''); }} />
-                        {hasAfternoon ? <TimeOptions title="Turno tarde" slots={afternoonSlots} selected={selectedSlot?.startsAt ?? ''} onSelect={(value) => { setSelectedSlot(value); setBookingError(''); }} /> : null}
-                      </>
+                      <TimeOptions title={`Inicio de cita · ${selectedDuration} min`} slots={availableSlots} selected={selectedSlot?.startsAt ?? ''} onSelect={(value) => { setSelectedSlot(value); setBookingError(''); }} />
                     ) : <EmptyState title="No hay horarios disponibles" />}
                   </>
                 ) : null}
                 {bookingError ? <InlineMessage>{bookingError}</InlineMessage> : null}
-                <ActionButton label="Continuar" icon={Check} disabled={!dayKey || !selectedSlot || slotsLoading} onPress={() => setStep(4)} />
+                <ActionButton label="Continuar" icon={Check} disabled={!dayKey || !selectedSlot?.isAvailable || slotsLoading} onPress={() => setStep(4)} />
               </View>
             ) : null}
-            {!query.loading && data && step === 4 && selectedService ? (
+            {!query.loading && data && step === 4 && selectedServices.length > 0 ? (
               <View style={styles.stepContent}>
                 <View style={[styles.confirmationCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                  <SummaryRow label="Servicio" value={selectedService.name} />
+                  <SummaryRow label="Servicios" value={selectedServiceNames} />
                   <SummaryRow label="Peluquero" value={selectedBarber?.display_name ?? ''} />
                   <SummaryRow label="Fecha y hora" value={displayDate(selectedDay) + ' · ' + selectedTime} />
-                  <SummaryRow label="Precio" value={'Bs ' + Number(selectedService.price).toFixed(2)} />
+                  <SummaryRow label="Duración total" value={selectedDuration + ' min'} />
+                  <SummaryRow label="Precio total" value={'Bs ' + selectedPrice.toFixed(2)} />
                 </View>
                 {!session ? (
                   <View style={styles.loginBox}>
@@ -465,7 +482,7 @@ export default function ClientBookingScreen() {
                 )}
               </View>
             ) : null}
-            {step === 4 && !selectedService ? <InlineMessage>Vuelve a elegir un servicio para reservar.</InlineMessage> : null}
+            {step === 4 && !selectedServices.length ? <InlineMessage>Vuelve a elegir un servicio para reservar.</InlineMessage> : null}
           </>
         )}
       </View>
@@ -476,9 +493,11 @@ export default function ClientBookingScreen() {
 function TimeOptions({ title, slots, selected, onSelect }: { title: string; slots: AvailableSlot[]; selected: string; onSelect: (value: AvailableSlot) => void }) {
   const { colors } = useAppearance();
   if (!slots.length) return null;
-  return <View style={styles.timeSection}><Text style={styles.sectionLabel}>{title}</Text><View style={styles.timeGrid}>{slots.map((slot) => {
+  const availableCount = slots.filter((slot) => slot.isAvailable).length;
+  const occupiedCount = slots.length - availableCount;
+  return <View style={styles.timeSection}><Text style={styles.sectionLabel}>{title}</Text><Text style={styles.muted}>{availableCount} disponibles{occupiedCount > 0 ? ` · ${occupiedCount} ocupados` : ''}</Text><View style={styles.timeGrid}>{slots.map((slot) => {
     const isSelected = selected === slot.startsAt;
-    return <Pressable key={slot.startsAt} onPress={() => onSelect(slot)} style={[styles.timeButton, { backgroundColor: colors.surface, borderColor: colors.border }, isSelected && { backgroundColor: colors.accentSoft, borderColor: colors.accent }]}><Text style={[styles.timeText, { color: isSelected ? colors.accent : colors.text }]}>{slot.time}</Text></Pressable>;
+    return <Pressable key={slot.startsAt} disabled={!slot.isAvailable} accessibilityRole="button" accessibilityLabel={`${slot.time}, ${slot.isAvailable ? 'disponible' : 'ocupado'}`} accessibilityState={{ disabled: !slot.isAvailable, selected: isSelected }} onPress={() => onSelect(slot)} style={[styles.timeButton, { backgroundColor: colors.surface, borderColor: colors.border }, isSelected && { backgroundColor: colors.accentSoft, borderColor: colors.accent }, !slot.isAvailable && { backgroundColor: colors.raised, borderColor: colors.border, opacity: 0.72 }]}><Text style={[styles.timeText, { color: isSelected ? colors.accent : slot.isAvailable ? colors.text : colors.muted }]}>{slot.time}</Text>{!slot.isAvailable ? <Text style={[styles.timeStatus, { color: colors.muted }]}>Ocupado</Text> : null}</Pressable>;
   })}</View></View>;
 }
 
@@ -500,6 +519,7 @@ const styles = StyleSheet.create({
   choiceTitle: { color: palette.text, fontSize: 14, fontWeight: '800' },
   muted: { color: palette.muted, fontSize: 11, lineHeight: 16 },
   choiceMeta: { alignItems: 'flex-end', gap: 5 },
+  addLabel: { color: palette.gold, fontSize: 10, fontWeight: '800' },
   price: { color: palette.gold, fontSize: 13, fontWeight: '800' },
   barberChoice: { minHeight: 67, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 13, borderColor: palette.border, borderWidth: 1, backgroundColor: '#15181C' },
   barberImage: { width: 43, height: 43, borderRadius: 12, backgroundColor: palette.surfaceRaised },
@@ -518,8 +538,9 @@ const styles = StyleSheet.create({
   hourValue: { marginLeft: 'auto', color: palette.text, fontSize: 12, fontWeight: '800' },
   timeSection: { gap: 8 },
   timeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  timeButton: { minWidth: 69, paddingVertical: 10, paddingHorizontal: 12, alignItems: 'center', borderRadius: 10, backgroundColor: '#15181C', borderWidth: 1, borderColor: palette.border },
+  timeButton: { minWidth: 69, minHeight: 48, paddingVertical: 7, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: '#15181C', borderWidth: 1, borderColor: palette.border },
   timeText: { color: palette.text, fontSize: 12, fontWeight: '700' },
+  timeStatus: { fontSize: 9, fontWeight: '700' },
   summaryRow: { minHeight: 39, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderBottomColor: palette.border, borderBottomWidth: StyleSheet.hairlineWidth },
   summaryValue: { flex: 1, color: palette.text, fontSize: 12, fontWeight: '800', textAlign: 'right' },
   confirmationCard: { gap: 3, borderWidth: 1, borderRadius: 16, paddingHorizontal: 15, paddingVertical: 5 },

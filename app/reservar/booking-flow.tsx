@@ -36,6 +36,8 @@ type SignedUser = {
   initials: string;
 };
 
+type SlotChoice = { starts_at: string; time: string; is_available: boolean };
+
 function availableDays(timezone: string) {
   const [year, month, day] = businessDateKey(new Date(), timezone).split("-").map(Number);
   const weekdayFormatter = new Intl.DateTimeFormat("es-BO", { weekday: "short", timeZone: "UTC" });
@@ -71,7 +73,7 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
   const requestedReturn = params.get("return") ?? "/";
   const returnPath = requestedReturn.startsWith("/") && !requestedReturn.startsWith("//") ? requestedReturn : "/";
   const [step, setStep] = useState(initialService ? 2 : 1);
-  const [serviceId, setServiceId] = useState(initialService);
+  const [serviceIds, setServiceIds] = useState<string[]>(() => initialService ? [initialService] : []);
   const [barberId, setBarberId] = useState(initialBarber);
   const [reservedDayKeys, setReservedDayKeys] = useState<string[]>([]);
   const [day, setDay] = useState("");
@@ -84,7 +86,7 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
   const [phone, setPhone] = useState("");
   const [hasRegisteredPhone, setHasRegisteredPhone] = useState(false);
   const [confirmedBooking, setConfirmedBooking] = useState<ConfirmedBooking | null>(null);
-  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const [availableTimes, setAvailableTimes] = useState<SlotChoice[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [availabilityVersion, setAvailabilityVersion] = useState(0);
   const [bookingError, setBookingError] = useState("");
@@ -94,8 +96,14 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
   const previousStep = useRef(step);
   const days = useMemo(() => availableDays(timezone), [timezone]);
 
-  const service = services.find((item) => item.id === serviceId);
-  const barber = barbers.find((item) => item.id === barberId);
+  const selectedServices = serviceIds.map((id) => services.find((item) => item.id === id)).filter((item): item is PublicService => Boolean(item));
+  const serviceName = selectedServices.map((item) => item.name).join(" + ");
+  const serviceDuration = selectedServices.reduce((total, item) => total + item.duration, 0);
+  const servicePrice = selectedServices.reduce((total, item) => total + item.price, 0);
+  const bookableBarbers = selectedServices.length
+    ? barbers.filter((item) => item.serviceSlugs === undefined || selectedServices.every((service) => item.serviceSlugs?.includes(service.id)))
+    : barbers;
+  const barber = bookableBarbers.find((item) => item.id === barberId);
   const selectedDay = days.find((item) => item.id === day);
   const selectedDatePage = Math.max(0, Math.floor(days.findIndex((item) => item.id === day) / daysPerPage));
   const firstShownDay = (datePage?.index ?? selectedDatePage) * daysPerPage;
@@ -106,7 +114,7 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
   const localWeekday = selectedDay ? new Date(`${selectedDay.id}T12:00:00Z`).getUTCDay() : -1;
   const selectedBusinessDay = businessHours.find((item) => item.weekday === localWeekday);
   const bookingClosed = businessStatus === "closed" || businessStatus === "emergency_closed";
-  const canContinueFromSchedule = Boolean(day) && !slotsLoading && availableTimes.includes(time);
+  const canContinueFromSchedule = Boolean(day) && !slotsLoading && availableTimes.some((slot) => slot.time === time && slot.is_available);
 
   useEffect(() => {
     selectedTimeRef.current = time;
@@ -130,10 +138,12 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
         const stored = window.sessionStorage.getItem(pendingBookingKey);
         if (stored) {
           try {
-            const pending = JSON.parse(stored) as { serviceId: string; barberId: string; day: string; time: string };
-            if (services.some((item) => item.id === pending.serviceId)) {
-              setServiceId(pending.serviceId);
-              const savedBarber = barbers.find((item) => item.id === pending.barberId);
+            const pending = JSON.parse(stored) as { serviceId?: string; serviceIds?: string[]; barberId: string; day: string; time: string };
+            const pendingServiceIds = Array.isArray(pending.serviceIds) ? pending.serviceIds : pending.serviceId ? [pending.serviceId] : [];
+            if (pendingServiceIds.length && pendingServiceIds.every((id) => services.some((item) => item.id === id))) {
+              setServiceIds(pendingServiceIds);
+              const savedBarber = barbers.find((item) => item.id === pending.barberId
+                && (item.serviceSlugs === undefined || pendingServiceIds.every((id) => item.serviceSlugs?.includes(id))));
               if (savedBarber) {
                 setBarberId(savedBarber.id);
                 if (days.some((item) => item.id === pending.day) && /^\d{2}:\d{2}$/.test(pending.time)) {
@@ -199,16 +209,24 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
 
   useEffect(() => {
     if (!day || !reservedDayKeys.includes(day)) return;
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (!active) return;
     setDay("");
     setTime("");
     setAvailableTimes([]);
     setStep(3);
     setBookingError("Ya tienes una cita para esta fecha. Solo puedes reservar una por día.");
+    });
+    return () => { active = false; };
   }, [day, reservedDayKeys]);
 
   useEffect(() => {
-    if (!day || !serviceId || !barberId) return;
+    if (!day || !serviceIds.length || !barberId) return;
     if (bookingClosed || !selectedBusinessDay?.active) {
+      let active = true;
+      void Promise.resolve().then(() => {
+        if (!active) return;
       setAvailableTimes([]);
       setSlotsLoading(false);
       setBookingError("");
@@ -219,15 +237,16 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
           ? "El negocio pausó las reservas. Elige otra fecha más adelante."
           : "El local no atiende en esta fecha. Elige otro día.");
       }
-      return;
+      });
+      return () => { active = false; };
     }
     let active = true;
 
     async function loadAvailability() {
       setSlotsLoading(true);
       const supabase = createClient();
-      const { data, error } = await supabase.rpc("get_available_slots", {
-        p_service_slug: serviceId,
+      const { data, error } = await supabase.rpc("get_booking_slots_for_services", {
+        p_service_slugs: serviceIds,
         p_barber_slug: barberId,
         p_date: day,
       });
@@ -247,13 +266,15 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
           hourCycle: "h23",
           timeZone: timezone,
         });
-        const slots = (data ?? []) as Array<{ starts_at: string }>;
-        const uniqueTimes = [...new Set<string>(
-          slots.map((slot) => formatter.format(new Date(slot.starts_at))),
-        )];
+        const slots = (data ?? []) as Array<{ starts_at: string; is_available: boolean }>;
+        const uniqueTimes = [...new Map(slots.map((slot) => [formatter.format(new Date(slot.starts_at)), {
+          starts_at: slot.starts_at,
+          time: formatter.format(new Date(slot.starts_at)),
+          is_available: slot.is_available,
+        }])).values()];
         setAvailableTimes(uniqueTimes);
         const selectedTime = selectedTimeRef.current;
-        if (selectedTime && !uniqueTimes.includes(selectedTime)) {
+        if (selectedTime && !uniqueTimes.some((slot) => slot.time === selectedTime && slot.is_available)) {
           setTime("");
           setBookingError("Ese horario ya no está disponible. Elige otro para continuar.");
           setStep(3);
@@ -266,13 +287,13 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
     return () => {
       active = false;
     };
-  }, [availabilityVersion, barberId, bookingClosed, day, selectedBusinessDay?.active, serviceId, timezone]);
+  }, [availabilityVersion, barberId, bookingClosed, day, selectedBusinessDay?.active, serviceIds, timezone]);
 
   async function signInWithGoogle() {
     setAuthLoading(true);
     window.sessionStorage.setItem(
       pendingBookingKey,
-      JSON.stringify({ serviceId, barberId, day, time }),
+      JSON.stringify({ serviceIds, barberId, day, time }),
     );
 
     const bookingReturn = returnPath === "/" ? "/reservar?auth=complete" : `/reservar?auth=complete&return=${encodeURIComponent(returnPath)}`;
@@ -280,7 +301,7 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
   }
 
   async function confirmAppointment() {
-    if (!service || !barber || !day || !time) {
+    if (!selectedServices.length || !barber || !day || !time || !availableTimes.some((slot) => slot.time === time && slot.is_available)) {
       setBookingError("Vuelve a elegir un horario disponible para continuar.");
       setStep(3);
       return;
@@ -291,8 +312,8 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
 
     const supabase = createClient();
     const startsAt = zonedDateTimeToDate(`${day}T${time}:00`, timezone).toISOString();
-    const { data: appointmentId, error } = await supabase.rpc("create_appointment", {
-      p_service_slug: service.id,
+    const { data: appointmentId, error } = await supabase.rpc("create_appointment_with_services", {
+      p_service_slugs: selectedServices.map((item) => item.id),
       p_barber_slug: barberId,
       p_starts_at: startsAt,
       p_phone: phone,
@@ -313,21 +334,31 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
     window.sessionStorage.removeItem(pendingBookingKey);
     setConfirmedBooking({
       id: typeof appointmentId === "string" ? appointmentId : undefined,
-      serviceName: service.name,
+      serviceName,
       barberName: barber.name,
       dateAndTime: formatBookingDateTime(new Date(startsAt), timezone),
-      price: service.price,
+      price: servicePrice,
     });
     setBookingLoading(false);
   }
 
   function chooseService(id: string) {
-    if (id !== serviceId) {
-      setServiceId(id);
-      clearSchedule();
+    const alreadySelected = serviceIds.includes(id);
+    if (!alreadySelected) {
+      const service = services.find((item) => item.id === id);
+      if (serviceIds.length >= 12) {
+        setBookingError("Puedes combinar hasta 12 servicios en una reserva.");
+        return;
+      }
+      if (service && serviceDuration + service.duration > 480) {
+        setBookingError("La duración total de una cita no puede superar 8 horas.");
+        return;
+      }
     }
+    setServiceIds((current) => current.includes(id) ? current.filter((serviceId) => serviceId !== id) : [...current, id]);
+    setBarberId("");
+    clearSchedule();
     setBookingError("");
-    setStep(2);
   }
 
   function chooseBarber(id: string) {
@@ -367,11 +398,6 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
     if (canContinueFromSchedule) setStep(4);
   }
 
-  const afternoonOpensAt = selectedBusinessDay?.afternoon_opens_at?.slice(0, 5);
-  const afternoonClosesAt = selectedBusinessDay?.afternoon_closes_at?.slice(0, 5);
-  const hasSplitBusinessDay = Boolean(afternoonOpensAt && afternoonClosesAt);
-  const afternoonStart = afternoonOpensAt ?? "12:00";
-
   const backButton = (
     <Button variant="ghost" className="booking-back" onClick={() => setStep((current) => current - 1)}>
       <ChevronLeft size={18} aria-hidden="true" /> Atrás
@@ -394,7 +420,7 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
           <h1>Tu próxima<br /><em>visita.</em></h1>
           <ol className="booking-steps">
             {[
-              { number: 1, label: "Servicio", copy: "¿Qué necesitas?" },
+              { number: 1, label: "Servicios", copy: "Elige uno o varios" },
               { number: 2, label: "Barbero", copy: "Elige con quién ir" },
               { number: 3, label: "Fecha y hora", copy: "Encuentra tu momento" },
               { number: 4, label: "Confirmar", copy: "Revisa los datos de tu cita" },
@@ -414,15 +440,20 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
         <section className="booking-main">
           {step === 1 && (
             <Card className="booking-panel">
-              <div className="panel-heading"><span><Scissors /></span><div><p>PASO 1 DE 4</p><h2 ref={stepTitle} tabIndex={-1}>¿Qué te gustaría hacerte?</h2></div></div>
-              <p className="panel-copy">Elige lo que necesitas para calcular el tiempo de tu cita. Puedes cambiarlo antes de confirmar.</p>
+              <div className="panel-heading"><span><Scissors /></span><div><p>PASO 1 DE 4</p><h2 ref={stepTitle} tabIndex={-1}>¿Qué servicios necesitas?</h2></div></div>
+              <p className="panel-copy">Selecciona uno o varios servicios. Sumaremos su duración para mostrar horarios donde quepa toda la cita.</p>
+              {bookingError && <p className="booking-error" role="alert">{bookingError}</p>}
               <div className="choice-list">
                 {services.map((item) => (
-                  <Button variant="unstyled" key={item.id} onClick={() => chooseService(item.id)} className="choice-card">
+                  <Button variant="unstyled" key={item.id} aria-pressed={serviceIds.includes(item.id)} onClick={() => chooseService(item.id)} className={`choice-card${serviceIds.includes(item.id) ? " selected" : ""}`}>
                     <div><span>{item.category}</span><h3>{item.name}</h3><p>{item.description}</p></div>
-                    <div className="choice-price"><strong>Bs {item.price}</strong><span>{item.duration} min</span><ArrowRight size={18} /></div>
+                    <div className="choice-price"><strong>Bs {item.price}</strong><span>{item.duration} min</span>{serviceIds.includes(item.id) ? <Check size={18} aria-hidden="true" /> : <span className="booking-service-add">Agregar</span>}</div>
                   </Button>
                 ))}
+              </div>
+              {selectedServices.length > 0 && <div className="booking-selection-summary"><Scissors size={15} aria-hidden="true" /><strong>{selectedServices.length} servicio(s) · {serviceDuration} min</strong><i aria-hidden="true" /><span>Total Bs {servicePrice.toFixed(2)}</span></div>}
+              <div className="panel-actions">
+                <Button className="button button-dark" disabled={!selectedServices.length} onClick={() => setStep(2)}>Elegir peluquero <ArrowRight size={17} /></Button>
               </div>
             </Card>
           )}
@@ -431,7 +462,7 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
             <Card className="booking-panel">
               <div className="panel-heading"><span><UserRound /></span><div><p>PASO 2 DE 4</p><h2 ref={stepTitle} tabIndex={-1}>Elige a tu barbero</h2></div></div>
               <div className="barber-choice-grid">
-                {barbers.map((item) => (
+                {bookableBarbers.map((item) => (
                   <Button variant="unstyled" aria-pressed={barberId === item.id} className={`barber-choice ${barberId === item.id ? "selected" : ""}`} onClick={() => chooseBarber(item.id)} key={item.id}>
                     <span className="barber-choice-photo" aria-hidden="true" style={{ backgroundImage: `url(${JSON.stringify(item.image)})` }} />
                     <span className="barber-choice-copy">
@@ -441,6 +472,7 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
                     <i aria-hidden="true">{barberId === item.id && <Check size={14} />}</i>
                   </Button>
                 ))}
+                {selectedServices.length > 0 && bookableBarbers.length === 0 && <p className="booking-error">Ningún peluquero tiene asignados todos los servicios seleccionados. Cambia tu selección.</p>}
               </div>
               <div className="panel-actions">
                 {backButton}
@@ -452,7 +484,7 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
           {step === 3 && (
             <Card className="booking-panel">
               <div className="panel-heading"><span><Clock3 /></span><div><p>PASO 3 DE 4</p><h2 ref={stepTitle} tabIndex={-1}>¿Cuándo te queda bien?</h2></div></div>
-              <div className="booking-selection-summary"><Scissors size={15} /><strong>{service?.name}</strong><span>{service?.duration} min</span><i /><span>{barber?.name}</span></div>
+              <div className="booking-selection-summary"><Scissors size={15} aria-hidden="true" /><strong>{serviceName}</strong><span>{serviceDuration} min en total</span><i aria-hidden="true" /><span>{barber?.name}</span></div>
               <div className="booking-schedule-grid">
                 <section className="booking-schedule-block" aria-labelledby="booking-date-title">
                   <div className="booking-schedule-heading">
@@ -481,8 +513,7 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
                   <BookingContentHeight>
                     {selectedBusinessDay?.active && (
                       <div className="booking-opening-hours">
-                        <p><strong>Horario del local</strong> {selectedBusinessDay.opens_at.slice(0, 5)}–{selectedBusinessDay.closes_at.slice(0, 5)}{hasSplitBusinessDay && ` · ${afternoonOpensAt}–${afternoonClosesAt}`}</p>
-                        {hasSplitBusinessDay && <p className="booking-shift-break">Pausa entre turnos {selectedBusinessDay.closes_at.slice(0, 5)}–{afternoonOpensAt}</p>}
+                        <p><strong>Jornada continua</strong> {selectedBusinessDay.opens_at.slice(0, 5)}–{selectedBusinessDay.closes_at.slice(0, 5)}</p>
                       </div>
                     )}
                   </BookingContentHeight>
@@ -492,7 +523,7 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
                   <div className="booking-schedule-heading">
                     <div>
                       <h3 id="booking-time-title"><Clock3 size={16} aria-hidden="true" /> Elige una hora</h3>
-                      <span>Hora de {timezone.split("/").at(-1)?.replaceAll("_", " ") ?? timezone}</span>
+                      <span>Bloques de {serviceDuration} min · hora de {timezone.split("/").at(-1)?.replaceAll("_", " ") ?? timezone}</span>
                     </div>
                     <span aria-live="polite">
                       {time && <strong key={time} className="booking-chosen-time"><Check size={14} aria-hidden="true" /> {time}</strong>}
@@ -509,7 +540,7 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
                     ) : slotsLoading ? (
                       <div className="empty-times" role="status"><span className="booking-spinner" aria-hidden="true" /> Consultando horarios…</div>
                     ) : availableTimes.length ? (
-                      <BookingTimeChoices key={day} times={availableTimes} afternoonStart={afternoonStart} value={time} onChange={(value) => { setTime(value); setBookingError(""); }} />
+                      <BookingTimeChoices key={`${day}-${serviceIds.join("|")}`} times={availableTimes} value={time} onChange={(value) => { setTime(value); setBookingError(""); }} />
                     ) : !bookingError && (
                       <div className="empty-times" role="status">
                         <strong>{day === days[0].id ? "No hay horarios disponibles para hoy" : "No hay horarios disponibles para esta fecha"}</strong>
@@ -531,10 +562,11 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
             <Card className="booking-panel">
               <div className="panel-heading"><span><ShieldCheck /></span><div><p>PASO 4 DE 4</p><h2 ref={stepTitle} tabIndex={-1}>Revisa tu cita</h2></div></div>
               <div className="booking-summary">
-                <div><span>Servicio</span><strong>{service?.name}</strong><Button variant="unstyled" className="booking-edit" onClick={() => setStep(1)}>Cambiar servicio</Button></div>
+                <div><span>Servicios</span><strong>{serviceName}</strong><Button variant="unstyled" className="booking-edit" onClick={() => setStep(1)}>Cambiar servicios</Button></div>
                 <div><span>Barbero</span><strong>{barber?.name}</strong><Button variant="unstyled" className="booking-edit" onClick={() => setStep(2)}>Cambiar barbero</Button></div>
                 <div><span>Horario</span><strong>{selectedDay?.day} {selectedDay?.number} {selectedDay?.month} · {time}</strong><Button variant="unstyled" className="booking-edit" onClick={() => setStep(3)}>Cambiar horario</Button></div>
-                <div><span>Precio</span><strong>Bs {service?.price}</strong></div>
+                <div><span>Duración total</span><strong>{serviceDuration} min</strong></div>
+                <div><span>Precio total</span><strong>Bs {servicePrice.toFixed(2)}</strong></div>
               </div>
               {!signedIn ? (
                 <GoogleSignInCard
@@ -555,7 +587,7 @@ export function BookingFlow({ services, barbers, timezone, businessHours, busine
                   {bookingError && <p className="booking-error">{bookingError}</p>}
                   <div className="panel-actions booking-confirm-actions">
                     {backButton}
-                    <Button disabled={!service || !barber || !day || !time || phone.trim().replace(/\D/g, "").length < 7 || bookingLoading} className="button button-dark confirm-button" onClick={confirmAppointment}>{bookingLoading ? "Confirmando…" : "Confirmar reserva"} <CalendarCheck size={17} /></Button>
+                    <Button disabled={!selectedServices.length || !barber || !day || !time || phone.trim().replace(/\D/g, "").length < 7 || bookingLoading} className="button button-dark confirm-button" onClick={confirmAppointment}>{bookingLoading ? "Confirmando…" : "Confirmar reserva"} <CalendarCheck size={17} /></Button>
                   </div>
                 </div>
               )}

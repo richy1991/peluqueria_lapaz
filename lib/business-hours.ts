@@ -30,21 +30,12 @@ function shortTime(value: string) {
   return value.slice(0, 5);
 }
 
-export function getBusinessHourError(day: BusinessHour): { field: "opens_at" | "closes_at" | "afternoon_opens_at" | "afternoon_closes_at"; message: string } | null {
+export function getBusinessHourError(day: BusinessHour): { field: "opens_at" | "closes_at"; message: string } | null {
   const validTime = (value: string | null): value is string => Boolean(value && /^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(value));
-  if (!validTime(day.opens_at)) return { field: "opens_at", message: "Completa la apertura del turno mañana." };
-  if (!validTime(day.closes_at)) return { field: "closes_at", message: "Completa el cierre del turno mañana." };
+  if (!validTime(day.opens_at)) return { field: "opens_at", message: "Completa la apertura de la jornada." };
+  if (!validTime(day.closes_at)) return { field: "closes_at", message: "Completa el cierre de la jornada." };
   if (minutesFromTime(day.opens_at) >= minutesFromTime(day.closes_at)) {
-    return { field: "closes_at", message: "El cierre de la mañana debe ser posterior a su apertura." };
-  }
-  if (!day.afternoon_opens_at && !day.afternoon_closes_at) return null;
-  if (!validTime(day.afternoon_opens_at)) return { field: "afternoon_opens_at", message: "Completa la apertura del turno tarde o deja ambas horas de la tarde vacías." };
-  if (!validTime(day.afternoon_closes_at)) return { field: "afternoon_closes_at", message: "Completa el cierre del turno tarde o deja ambas horas de la tarde vacías." };
-  if (minutesFromTime(day.afternoon_opens_at) <= minutesFromTime(day.closes_at)) {
-    return { field: "afternoon_opens_at", message: "La tarde debe comenzar después del cierre de la mañana para dejar un descanso." };
-  }
-  if (minutesFromTime(day.afternoon_closes_at) <= minutesFromTime(day.afternoon_opens_at)) {
-    return { field: "afternoon_closes_at", message: "El cierre de la tarde debe ser posterior a su apertura." };
+    return { field: "closes_at", message: "El cierre debe ser posterior a la apertura." };
   }
   return null;
 }
@@ -61,17 +52,13 @@ export function prepareBusinessHourForSave(day: BusinessHour, saved?: BusinessHo
     active: day.active,
     opens_at: shortTime(source.opens_at),
     closes_at: shortTime(source.closes_at),
-    afternoon_opens_at: source.afternoon_opens_at ? shortTime(source.afternoon_opens_at) : null,
-    afternoon_closes_at: source.afternoon_closes_at ? shortTime(source.afternoon_closes_at) : null,
+    afternoon_opens_at: null,
+    afternoon_closes_at: null,
   };
 }
 
 function windowsForDay(day: BusinessHour) {
-  const windows = [{ opens_at: day.opens_at, closes_at: day.closes_at }];
-  if (day.afternoon_opens_at && day.afternoon_closes_at) {
-    windows.push({ opens_at: day.afternoon_opens_at, closes_at: day.afternoon_closes_at });
-  }
-  return windows;
+  return [{ opens_at: day.opens_at, closes_at: day.closes_at }];
 }
 
 export function isBusinessOpenNow(
@@ -131,9 +118,7 @@ export function formatBusinessHours(hours: BusinessHour[]) {
     const isConsecutive = previousDay !== undefined
       && orderedDays.indexOf(item.weekday) === orderedDays.indexOf(previousDay) + 1;
     const sameHours = current?.[0]?.opens_at === item.opens_at
-      && current?.[0]?.closes_at === item.closes_at
-      && current?.[0]?.afternoon_opens_at === item.afternoon_opens_at
-      && current?.[0]?.afternoon_closes_at === item.afternoon_closes_at;
+      && current?.[0]?.closes_at === item.closes_at;
     if (current && isConsecutive && sameHours) current.push(item);
     else groups.push([item]);
   });
@@ -143,10 +128,7 @@ export function formatBusinessHours(hours: BusinessHour[]) {
     const last = dayNames[group[group.length - 1].weekday];
     const days = group.length === 1 ? first : group.length === 2 ? `${first} y ${last}` : `${first} a ${last}`;
     const day = group[0];
-    const morning = `${shortTime(day.opens_at)}–${shortTime(day.closes_at)}`;
-    const afternoon = day.afternoon_opens_at && day.afternoon_closes_at
-      ? ` y ${shortTime(day.afternoon_opens_at)}–${shortTime(day.afternoon_closes_at)} (descanso: ${shortTime(day.closes_at)}–${shortTime(day.afternoon_opens_at)})`
-      : "";
-    return `${days[0].toUpperCase()}${days.slice(1)} · ${morning}${afternoon}`;
+    const hoursText = `${shortTime(day.opens_at)}–${shortTime(day.closes_at)}`;
+    return `${days[0].toUpperCase()}${days.slice(1)} · ${hoursText}`;
   }).join("; ");
 }
