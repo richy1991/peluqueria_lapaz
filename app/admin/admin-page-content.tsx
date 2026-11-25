@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ShieldAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { AdminDashboard } from "./admin-dashboard";
+import { AdminAccessFrame } from "./admin-access-frame";
 import { getUserCapabilities } from "@/lib/user-capabilities";
+import { DEFAULT_BUSINESS_TIMEZONE, resolveBusinessStatus } from "@/lib/business-hours";
+import { businessDateKey } from "@/lib/business-time";
 import type { AnalyticsData } from "./admin-analytics";
 import {PanelExperience} from "@/components/panel-experience";
 import type { AdminClient } from "./admin-clients-table";
@@ -13,6 +17,14 @@ type AdminPageContentProps = {
   clientPage?: number;
 };
 
+function getAgendaTimezone(timezone: string) {
+  try {
+    return new Intl.DateTimeFormat("es-BO", { timeZone: timezone }).resolvedOptions().timeZone;
+  } catch {
+    return DEFAULT_BUSINESS_TIMEZONE;
+  }
+}
+
 export async function AdminPageContent({
   initialSection,
   clientSearch = "",
@@ -20,16 +32,20 @@ export async function AdminPageContent({
 }: AdminPageContentProps = {}) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/admin/login");
+  const destination = initialSection ? `/admin/${initialSection}` : "/admin";
+  if (!user) redirect(`/admin/login?next=${encodeURIComponent(destination)}`);
 
   const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
   if (roleError || !isAdmin) {
     return (
-      <main className="admin-denied">
-        <h1>Cuenta sin acceso administrativo</h1>
-        <p>La cuenta {user.email} inició sesión correctamente, pero todavía no tiene el rol administrador.</p>
-        <Link className="button button-dark" href="/">Volver al inicio</Link>
-      </main>
+      <AdminAccessFrame>
+        <section className="admin-access-notice" aria-labelledby="admin-access-title">
+          <ShieldAlert size={26} aria-hidden="true" />
+          <h1 id="admin-access-title">{roleError ? "No pudimos verificar el acceso" : "Acceso reservado al equipo"}</h1>
+          <p>{roleError ? "Vuelve a intentarlo para comprobar los permisos de tu cuenta." : <>La cuenta <strong>{user.email ?? "con la que iniciaste sesión"}</strong> necesita permisos de administrador.</>}</p>
+          {roleError ? <a href={destination}>Volver a intentar</a> : <Link href="/panel" replace>Ir a mi panel</Link>}
+        </section>
+      </AdminAccessFrame>
     );
   }
 
@@ -50,10 +66,10 @@ export async function AdminPageContent({
     resolvedSection === "equipo" ? supabase.from("cashier_profiles").select("id,user_id,active,created_at,updated_at,profiles!cashier_profiles_user_id_fkey(id,full_name,email,phone,status)").order("created_at") : Promise.resolve({ data: [] }),
     resolvedSection === "equipo" ? supabase.from("pending_barbers").select("id,email,status,barber_profile_id,expires_at,created_at").eq("status","pending").order("created_at",{ascending:false}) : Promise.resolve({ data: [] }),
     resolvedSection === "equipo" ? supabase.from("pending_cashiers").select("id,email,status,expires_at,created_at").eq("status","pending").order("created_at",{ascending:false}) : Promise.resolve({ data: [] }),
-    ["negocio", "horarios"].includes(resolvedSection) ? supabase.from("business_settings").select("*").eq("id", true).single() : Promise.resolve({ data: null }),
+    ["agenda", "negocio", "horarios"].includes(resolvedSection) ? supabase.from("business_settings").select("*").eq("id", true).single() : Promise.resolve({ data: null }),
     resolvedSection === "horarios" ? supabase.from("business_hours").select("*").order("weekday") : Promise.resolve({ data: [], error: null }),
     resolvedSection === "administradores" && isSuperadmin ? supabase.rpc("list_admin_users") : Promise.resolve({ data: [] }),
-    resolvedSection === "agenda" ? supabase.from("appointments").select("id,starts_at,status,service_name_snapshot,client_name_snapshot,barber_name_snapshot,price_snapshot,profiles!appointments_client_id_fkey(full_name,email,phone,is_blacklisted),barber_profiles!appointments_barber_id_fkey(display_name)").order("starts_at", { ascending: false }).limit(100) : Promise.resolve({ data: [] }),
+    resolvedSection === "agenda" ? supabase.from("appointments").select("id,barber_id,starts_at,status,service_name_snapshot,client_name_snapshot,barber_name_snapshot,profiles!appointments_client_id_fkey(full_name,email,phone,is_blacklisted),barber_profiles!appointments_barber_id_fkey(display_name)").order("starts_at", { ascending: false }).limit(100) : Promise.resolve({ data: [], error: null }),
     resolvedSection === "clientes"
       ? supabase.rpc("admin_list_clients", { search_term: clientSearch || null, page_number: clientPage, page_size: clientPageSize })
       : Promise.resolve({ data: { rows: [], total: 0 }, error: null }),
@@ -65,6 +81,10 @@ export async function AdminPageContent({
     resolvedSection === "programa" ? supabase.from("barber_expenses").select("*,barber_profiles(display_name)").order("created_at",{ascending:false}).limit(100) : Promise.resolve({ data: [] }),
     resolvedSection === "programa" ? supabase.from("payouts").select("*,barber_profiles(display_name)").order("created_at",{ascending:false}).limit(100) : Promise.resolve({ data: [] }),
   ]);
+
+  const timezone = getAgendaTimezone(String(settings.data?.timezone ?? DEFAULT_BUSINESS_TIMEZONE));
+  const agendaDate = new Intl.DateTimeFormat("es-BO", { dateStyle: "full", timeZone: timezone });
+  const agendaTime = new Intl.DateTimeFormat("es-BO", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: timezone });
 
   const clientPayload = (clientDirectory.data ?? {}) as { rows?: AdminClient[]; total?: number };
   const clientRows = Array.isArray(clientPayload.rows) ? clientPayload.rows : [];
@@ -80,8 +100,6 @@ export async function AdminPageContent({
   return (
     <PanelExperience><AdminDashboard
       initialSection={resolvedSection}
-      isRootPage={!initialSection}
-      userEmail={user.email ?? "Administrador"}
       adminProfile={{
         id: user.id,
         full_name: ownProfile.data?.full_name ?? user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "Administrador",
@@ -98,13 +116,36 @@ export async function AdminPageContent({
       cashiers={cashiers.data ?? []}
       pendingBarbers={pendingBarbers.data ?? []}
       pendingCashiers={pendingCashiers.data ?? []}
-      initialSettings={settings.data}
+      initialSettings={resolvedSection === "agenda" ? { timezone } : settings.data}
       initialBusinessHours={businessHours.data ?? []}
+      initialHoursStatus={resolvedSection === "horarios"
+        ? resolveBusinessStatus(String(settings.data?.business_status ?? "open"), businessHours.data ?? [], timezone)
+        : "schedule_closed"}
       businessHoursLoadError={Boolean(businessHours.error)}
       isSuperadmin={Boolean(isSuperadmin)}
       adminUsers={adminUsers.data ?? []}
       hasBarber={Boolean(capabilities.barber)}
-      initialAppointments={appointments.data ?? []}
+      hasCashier={capabilities.isCashier}
+      appointmentsLoadError={Boolean(appointments.error)}
+      initialAppointments={(appointments.data ?? []).map(item => {
+        const startsAt = new Date(item.starts_at);
+        const client = Array.isArray(item.profiles) ? item.profiles[0] : item.profiles;
+        const barber = Array.isArray(item.barber_profiles) ? item.barber_profiles[0] : item.barber_profiles;
+        return {
+          id: item.id,
+          barberId: item.barber_id ?? null,
+          startsAt: item.starts_at,
+          dateKey: businessDateKey(startsAt, timezone),
+          dateLabel: agendaDate.format(startsAt),
+          timeLabel: agendaTime.format(startsAt),
+          service: item.service_name_snapshot,
+          clientName: client?.full_name ?? client?.email ?? item.client_name_snapshot ?? "Cliente",
+          phone: client?.phone ?? null,
+          flagged: Boolean(client?.is_blacklisted),
+          barberName: barber?.display_name ?? item.barber_name_snapshot ?? "Sin asignar",
+          status: item.status,
+        };
+      })}
       clients={clientRows}
       clientSearch={clientSearch}
       clientPage={clientPage}

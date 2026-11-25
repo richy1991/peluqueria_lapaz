@@ -1,7 +1,5 @@
-import { ClientAccountView } from "@/modules/mobile/client";
-
-export const dynamic = "force-dynamic";
+import { redirect } from "next/navigation";
 
 export default function ClientNotificationsPage() {
-  return <ClientAccountView section="notificaciones" />;
+  redirect("/#notificaciones");
 }

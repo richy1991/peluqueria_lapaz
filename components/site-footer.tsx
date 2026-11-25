@@ -3,8 +3,9 @@ import { Brand } from "./brand";
 import { FacebookIcon, InstagramIcon, TikTokIcon, WhatsAppIcon } from "./social-icons";
 import type { BusinessInfo } from "@/lib/public-data";
 
-export function SiteFooter({ business }: { business?: BusinessInfo }) {
-  const publicSection = (section: string) => `/?vista=publica#${section}`;
+export function SiteFooter({ business, onHomePage = false }: { business?: BusinessInfo; onHomePage?: boolean }) {
+  const SectionLink = onHomePage ? "a" : Link;
+  const publicSection = (section: string) => onHomePage ? `#${section}` : `/#${section}`;
   return (
     <footer className="site-footer">
       <div className="container footer-grid">
@@ -14,10 +15,10 @@ export function SiteFooter({ business }: { business?: BusinessInfo }) {
         </div>
         <div>
           <h3>Explora</h3>
-          <Link href={publicSection("servicios")}>Servicios</Link>
-          <Link href={publicSection("equipo")}>Nuestro equipo</Link>
-          <Link href={publicSection("galeria")}>Trabajos</Link>
-          <Link href={publicSection("productos")}>Productos</Link>
+          <SectionLink href={publicSection("servicios")}>Servicios</SectionLink>
+          <SectionLink href={publicSection("equipo")}>Nuestro equipo</SectionLink>
+          <SectionLink href={publicSection("galeria")}>Trabajos</SectionLink>
+          <SectionLink href={publicSection("productos")}>Productos</SectionLink>
           <Link href="/reservar">Reservar</Link>
         </div>
         <div>

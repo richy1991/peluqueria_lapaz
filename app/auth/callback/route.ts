@@ -1,7 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { googleCallbackPath, googleErrorUrl, googleFlowCookie, googleRequestOrigin, googleReturnCookie, safeAuthPath } from "@/lib/supabase/google-redirect";
 
-export async function GET(request: Request) {
+const expiredMessage = "El intento de acceso venció o se abrió en otro navegador. Vuelve a continuar con Google desde esta pestaña.";
+const providerMessage = "Google regresó, pero no se pudo iniciar tu sesión. Intenta otra vez desde esta pestaña.";
+
+export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
 
   // The native build uses the already-authorized web callback as a bridge.
@@ -19,22 +23,37 @@ export async function GET(request: Request) {
   }
 
   const code = requestUrl.searchParams.get("code");
-  const requestedNext = requestUrl.searchParams.get("next") ?? "/panel";
-  const next = requestedNext.startsWith("/") && !requestedNext.startsWith("//")
-    ? requestedNext
-    : "/panel";
+  const origin = googleRequestOrigin(request);
+  const next = safeAuthPath(requestUrl.searchParams.get("next") ?? request.cookies.get(googleReturnCookie)?.value);
+  const flowId = request.cookies.get(googleFlowCookie)?.value;
+  const providerError = requestUrl.searchParams.get("error_code") ?? requestUrl.searchParams.get("error");
+  let failure = providerError ?? "missing_code";
+  let message = providerError === "access_denied"
+    ? "El acceso con Google se canceló. Puedes intentarlo otra vez."
+    : providerError ? providerMessage : expiredMessage;
+  let destination: URL | undefined;
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code, flowId ? { flowId } : undefined);
 
-    if (!error) {
-      return NextResponse.redirect(new URL(next, requestUrl.origin));
+    if (data.session) {
+      destination = new URL(next, origin);
+    } else {
+      failure = error?.code ?? error?.name ?? "missing_session";
+      message = /^(AuthPKCECodeVerifierMissingError|bad_code_verifier|flow_state_not_found|flow_state_expired)$/.test(failure)
+        ? expiredMessage
+        : providerMessage;
     }
   }
 
-  const errorUrl = new URL("/login", requestUrl.origin);
-  errorUrl.searchParams.set("next", next);
-  errorUrl.searchParams.set("auth_error", "No pudimos completar el acceso con Google.");
-  return NextResponse.redirect(errorUrl);
+  if (!destination && process.env.NODE_ENV === "development") {
+    console.warn("[Google OAuth] callback:", /^[a-zA-Z0-9_]+$/.test(failure) ? failure : "auth_error");
+  }
+  const response = NextResponse.redirect(destination ?? googleErrorUrl(next, origin, message), 303);
+  response.headers.set("Cache-Control", "no-store");
+  for (const cookie of [googleReturnCookie, googleFlowCookie]) {
+    response.cookies.set(cookie, "", { path: googleCallbackPath, maxAge: 0 });
+  }
+  return response;
 }

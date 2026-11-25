@@ -1,7 +1,7 @@
 "use client";
 
 import { Download, ExternalLink, Smartphone } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 const ANDROID_APK_URL = "https://github.com/richy1991/peluqueria_lapaz/releases/latest/download/legend-club-android.apk";
 
@@ -10,30 +10,40 @@ type InstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
-type InstallPlatform = "android" | "ios" | "desktop";
+type InstallContext = {
+  platform: "android" | "ios" | "desktop";
+  iosBrowser: "safari" | "other";
+  isXiaomi: boolean;
+  installed: boolean;
+};
 
-function getInstallContext() {
-  if (typeof navigator === "undefined") {
-    return { platform: "desktop" as const, iosBrowser: "safari" as const, isXiaomi: false, installed: false };
-  }
+const defaultInstallContext: InstallContext = {
+  platform: "desktop",
+  iosBrowser: "safari",
+  isXiaomi: false,
+  installed: false,
+};
+
+const subscribeToHydration = () => () => {};
+
+function getInstallContext(): InstallContext {
   const userAgent = navigator.userAgent;
   const isIos = /iphone|ipad|ipod/i.test(userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   return {
-    platform: (isIos ? "ios" : /android/i.test(userAgent) ? "android" : "desktop") as InstallPlatform,
-    iosBrowser: (isIos && /safari/i.test(userAgent) && !/crios|fxios|edgios/i.test(userAgent) ? "safari" : "other") as "safari" | "other",
+    platform: isIos ? "ios" : /android/i.test(userAgent) ? "android" : "desktop",
+    iosBrowser: isIos && /safari/i.test(userAgent) && !/crios|fxios|edgios/i.test(userAgent) ? "safari" : "other",
     isXiaomi: /xiaomi|redmi|miui/i.test(userAgent),
-    installed: typeof window !== "undefined" && (window.matchMedia("(display-mode: standalone)").matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone)),
+    installed: window.matchMedia("(display-mode: standalone)").matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone),
   };
 }
 
 export function InstallAppButton({ compact = false, androidApk = false }: { compact?: boolean; androidApk?: boolean }) {
-  const installContext = getInstallContext();
+  // Keep the first browser render in sync with the server before reading the platform.
+  const canReadBrowser = useSyncExternalStore(subscribeToHydration, () => true, () => false);
+  const { platform, iosBrowser, isXiaomi, installed } = canReadBrowser ? getInstallContext() : defaultInstallContext;
   const [installEvent, setInstallEvent] = useState<InstallPromptEvent | null>(null);
-  const [installed, setInstalled] = useState(installContext.installed);
+  const [installedInSession, setInstalledInSession] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [platform] = useState<InstallPlatform>(installContext.platform);
-  const [iosBrowser] = useState<"safari" | "other">(installContext.iosBrowser);
-  const [isXiaomi] = useState(installContext.isXiaomi);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -42,7 +52,7 @@ export function InstallAppButton({ compact = false, androidApk = false }: { comp
       setInstallEvent(event as InstallPromptEvent);
     };
     const onInstalled = () => {
-      setInstalled(true);
+      setInstalledInSession(true);
       setInstallEvent(null);
     };
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
@@ -62,7 +72,7 @@ export function InstallAppButton({ compact = false, androidApk = false }: { comp
     try {
       await installEvent.prompt();
       const choice = await installEvent.userChoice;
-      if (choice.outcome === "accepted") setInstalled(true);
+      if (choice.outcome === "accepted") setInstalledInSession(true);
     } catch {
       setMessage("El navegador no pudo abrir el diálogo. Usa las instrucciones de instalación.");
       setShowHelp(true);
@@ -71,7 +81,7 @@ export function InstallAppButton({ compact = false, androidApk = false }: { comp
     }
   }
 
-  if (installed && !(androidApk && platform === "android")) return <span className="pwa-installed"><Smartphone size={16} /> App instalada</span>;
+  if ((installed || installedInSession) && !(androidApk && platform === "android")) return <span className="pwa-installed"><Smartphone size={16} /> App instalada</span>;
   let instructions = "En Chrome, Edge, Firefox o Safari: usa el icono de instalación de la barra de direcciones o el menú del navegador.";
   if (platform === "ios") {
     instructions = iosBrowser === "safari"

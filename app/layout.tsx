@@ -38,7 +38,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es-BO" translate="no">
+    <html lang="es-BO" translate="no" data-scroll-behavior="smooth">
       <body lang="es-BO" translate="no"><SystemTypographyScope/>{children}<RouteNavigationIndicator/><PwaRegistration/><Suspense><MarketingTracker/></Suspense></body>
     </html>
   );

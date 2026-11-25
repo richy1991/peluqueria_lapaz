@@ -8,13 +8,34 @@ import { dispatchDashboardError, dispatchDashboardSuccess } from "@/lib/form-fee
 
 type Entity = "client" | "product" | "barber" | "gallery" | "service";
 
+export const CLIENT_DELETE_DETAIL = "Se eliminarán su cuenta, citas, puntos, apartados, ventas, cobros, comprobantes y demás datos relacionados.";
+
 const entities = {
-  client: { rpc: "clients", success: "Cliente y sus datos relacionados eliminados definitivamente.", detail: "Se eliminarán su cuenta, citas, puntos, apartados, ventas, cobros, comprobantes y demás datos relacionados." },
+  client: { rpc: "clients", success: "Cliente y sus datos relacionados eliminados definitivamente.", detail: CLIENT_DELETE_DETAIL },
   product: { rpc: "products", success: "Producto eliminado de la base de datos.", detail: "El producto dejará de estar disponible en el catálogo." },
   barber: { rpc: "barbers", success: "Peluquero eliminado de la base de datos.", detail: "Se eliminarán su perfil de peluquero y su acceso como peluquero. Si tiene otros roles, los conservará." },
   gallery: { rpc: "gallery", success: "Publicación eliminada de la base de datos.", detail: "La publicación dejará de aparecer en la galería." },
   service: { rpc: "services", success: "Servicio eliminado de la base de datos.", detail: "El servicio dejará de estar disponible para nuevas reservas." },
 } satisfies Record<Entity, { rpc: string; success: string; detail: string }>;
+
+export async function deleteAdminRecord(entity: Entity, id: string, imagePaths: string[] = []) {
+  const config = entities[entity];
+  const supabase = createClient();
+  const { error } = await supabase.rpc("admin_delete_record", { entity_type: config.rpc, target_id: id });
+  if (error) throw error;
+
+  const storedPaths = [...new Set(imagePaths.filter(path => path && !/^(?:https?:|data:|blob:|\/)/i.test(path)))];
+  let cleanupPending = false;
+  if (storedPaths.length && (entity === "product" || entity === "gallery")) {
+    try {
+      const { error: storageError } = await supabase.storage.from("public-media").remove(storedPaths);
+      cleanupPending = Boolean(storageError);
+    } catch {
+      cleanupPending = true;
+    }
+  }
+  return `${config.success}${cleanupPending ? " No se pudieron retirar sus archivos de imagen del almacenamiento." : ""}`;
+}
 
 export function AdminDeleteAction({ entity, id, label, disabled = false, confirmInitially = false, imagePaths = [], onDeleted }: { entity: Entity; id: string; label: string; disabled?: boolean; confirmInitially?: boolean; imagePaths?: string[]; onDeleted?: () => void }) {
   const router = useRouter();
@@ -31,22 +52,10 @@ export function AdminDeleteAction({ entity, id, label, disabled = false, confirm
     setBusy(true);
     setError("");
     try {
-      const supabase = createClient();
-      const { error: deleteError } = await supabase.rpc("admin_delete_record", { entity_type: config.rpc, target_id: id });
-      if (deleteError) throw deleteError;
-      const storedPaths = [...new Set(imagePaths.filter((path) => path && !/^(?:https?:|data:|blob:|\/)/i.test(path)))];
-      let cleanupPending = false;
-      if (storedPaths.length && (entity === "product" || entity === "gallery")) {
-        try {
-          const { error: storageError } = await supabase.storage.from("public-media").remove(storedPaths);
-          cleanupPending = Boolean(storageError);
-        } catch {
-          cleanupPending = true;
-        }
-      }
+      const message = await deleteAdminRecord(entity, id, imagePaths);
       setConfirming(false);
       onDeleted?.();
-      dispatchDashboardSuccess(`${config.success}${cleanupPending ? " No se pudieron retirar sus archivos de imagen del almacenamiento." : ""}`);
+      dispatchDashboardSuccess(message);
       router.refresh();
     } catch (reason) {
       const message = reason && typeof reason === "object" && "message" in reason ? String(reason.message) : "No se pudo eliminar el registro. Inténtalo de nuevo.";

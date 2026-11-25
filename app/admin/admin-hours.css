@@ -1,0 +1,263 @@
+.admin-content:has(> .admin-hours) { animation: none; }
+
+.panel-theme:has(.admin-hours) {
+  --hours-positive: #8addb1;
+  --hours-danger: #ffaaa9;
+  --hours-ease: cubic-bezier(.23, 1, .32, 1);
+}
+.panel-theme[data-panel-theme="light"]:has(.admin-hours) {
+  --hours-positive: #176746;
+  --hours-danger: #a82d38;
+}
+
+.admin-hours {
+  container-type: inline-size;
+  width: min(100%, 1260px);
+  margin-inline: auto;
+  color: var(--dash-text);
+  animation: hours-enter 210ms var(--hours-ease) both;
+}
+
+.hours-heading h1 {
+  margin: 0 0 12px;
+  color: var(--dash-text);
+  font: 740 clamp(24px, 2.6vw, 30px)/1.12 var(--sans);
+  letter-spacing: -.035em;
+  text-shadow: none;
+}
+
+.hours-context {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-bottom: 16px;
+}
+
+.hours-context > span,
+.admin-hours .hours-context .business-status {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: auto;
+  margin: 0;
+  padding: 0;
+  color: var(--dash-muted);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font: 500 13px/1.35 var(--sans);
+}
+.admin-hours .hours-context .business-status:not(.closed-pill) { color: var(--hours-positive); }
+.admin-hours .hours-context .business-status > span {
+  width: 6px;
+  height: 6px;
+  margin: 0;
+  background: currentColor;
+  box-shadow: none;
+}
+.admin-hours .hours-context .business-status > strong { font-weight: 650; }
+
+.hours-grid {
+  display: grid;
+  grid-template-columns: minmax(122px, 1.25fr) repeat(3, minmax(0, 1fr)) 90px;
+  align-items: center;
+  gap: 10px 16px;
+}
+.hours-columns { min-height: 34px; color: var(--dash-muted); font: 550 12px/1.3 var(--sans); }
+.hours-week { margin: 0; padding: 0; list-style: none; }
+.hours-day { border-top: 1px solid var(--dash-line); }
+.hours-row { min-height: 58px; padding-block: 6px; }
+.hours-day-name { display: grid; gap: 4px; }
+.hours-day-name strong { font: 700 14px/1.25 var(--sans); }
+.hours-day-name > span { color: var(--dash-muted); font: 500 12px/1.2 var(--sans); }
+.hours-day-name > span[data-active="true"] { color: var(--hours-positive); }
+.hours-range { color: var(--dash-text); font: 580 14px/1.3 var(--sans); font-variant-numeric: tabular-nums; }
+.hours-range small { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.hours-pause,
+.hours-row[data-active="false"] .hours-range,
+.hours-afternoon[data-present="false"] { color: var(--dash-muted); }
+
+.hours-button,
+.hours-edit,
+.hours-shift-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 10px;
+  color: var(--dash-text);
+  border: 1px solid var(--dash-line);
+  border-radius: 7px;
+  background: var(--dash-card-2);
+  font: 650 13px/1.3 var(--sans);
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease, opacity 140ms ease;
+}
+.admin-hours button svg { flex: none; }
+.admin-hours button:disabled { opacity: .58; cursor: default; }
+.admin-hours button:active:not(:disabled) { opacity: .82; }
+.admin-hours :is(button, a, input):focus-visible { outline: 2px solid var(--dash-cyan); outline-offset: 2px; }
+.hours-edit,
+.hours-shift-toggle { border-color: transparent; background: transparent; }
+.hours-edit { justify-self: end; }
+.hours-edit svg { color: var(--dash-muted); transition: transform 200ms var(--hours-ease); }
+.hours-edit[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+.hours-disclosure {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 200ms var(--hours-ease), opacity 160ms var(--hours-ease);
+}
+.hours-disclosure[data-open="true"] { grid-template-rows: 1fr; opacity: 1; }
+.hours-disclosure-clip { min-height: 0; overflow: hidden; }
+.hours-day-fields {
+  display: grid;
+  gap: 12px;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 6px 0 18px;
+  border: 0;
+}
+
+.hours-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 9px;
+  min-height: 44px;
+  font: 650 13px var(--sans);
+  cursor: pointer;
+}
+.hours-switch input {
+  position: absolute;
+  inset-inline-start: 0;
+  width: 34px;
+  height: 20px;
+  margin: 0;
+  opacity: 0;
+}
+.hours-switch-track {
+  display: inline-flex;
+  align-items: center;
+  width: 34px;
+  height: 20px;
+  padding: 2px;
+  border: 1px solid var(--dash-line);
+  border-radius: 20px;
+  background: var(--dash-card-2);
+  transition: background-color 140ms ease;
+}
+.hours-switch-track::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--dash-muted);
+  transition: transform 140ms var(--hours-ease), background-color 140ms ease;
+}
+.hours-switch input:checked + .hours-switch-track { background: color-mix(in srgb, var(--hours-positive) 24%, var(--dash-bg)); }
+.hours-switch input:checked + .hours-switch-track::before { background: var(--hours-positive); transform: translateX(14px); }
+.hours-switch input:focus-visible + .hours-switch-track { outline: 2px solid var(--dash-cyan); outline-offset: 3px; }
+
+.hours-shifts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 310px));
+  gap: 12px 24px;
+  align-items: start;
+  animation: hours-fade 150ms ease-out both;
+}
+.hours-shift { display: grid; gap: 8px; }
+.hours-shift h2 { display: flex; align-items: center; min-height: 44px; margin: 0; font: 700 14px/1.25 var(--sans); }
+.hours-shift-heading { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.hours-shift-toggle { padding-inline: 6px; color: var(--dash-muted); }
+.hours-clock-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.hours-shift-heading + div .hours-clock-fields { animation: hours-fade 150ms ease-out both; }
+.hours-time-field { display: grid; gap: 5px; color: var(--dash-muted); font: 550 13px/1.25 var(--sans); }
+.hours-time-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding-inline: 8px;
+  border: 1px solid var(--dash-line);
+  border-radius: 7px;
+  font: 600 16px/1.3 var(--sans);
+  font-variant-numeric: tabular-nums;
+}
+.hours-time-field:has(input[aria-invalid="true"]) { color: var(--hours-danger); }
+.hours-break, .hours-note, .hours-error { margin: 0; color: var(--dash-muted); font: 500 13px/1.45 var(--sans); }
+.hours-break, .hours-error { display: flex; align-items: start; gap: 6px; }
+.hours-break svg, .hours-error svg { flex: none; margin-top: 2px; }
+.hours-break { grid-column: 1 / -1; }
+.hours-break strong { color: var(--dash-text); font-variant-numeric: tabular-nums; }
+.hours-override { margin-bottom: 14px; }
+.hours-override a { color: var(--dash-text); text-underline-offset: 3px; }
+.hours-error { color: var(--hours-danger); overflow-wrap: anywhere; }
+
+.hours-save {
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  padding-block: 10px;
+  border-block: 1px solid var(--dash-line);
+  background: var(--dash-bg);
+}
+.hours-save[data-dirty="true"] { position: sticky; bottom: 82px; }
+.hours-save > .hours-error { grid-column: 1 / -1; }
+.hours-save-status { display: inline-flex; align-items: center; gap: 6px; color: var(--dash-muted); font: 550 13px/1.3 var(--sans); }
+.hours-save-status svg { flex: none; color: var(--hours-positive); }
+.hours-save-status[data-dirty="true"] { color: var(--dash-cyan); }
+.hours-primary { color: var(--dash-bg); border-color: transparent; background: var(--dash-text); }
+
+.hours-empty { display: grid; justify-items: center; gap: 12px; padding: 34px 12px; text-align: center; border-block: 1px solid var(--dash-line); color: var(--dash-muted); }
+.hours-empty h2 { margin: 0; color: var(--dash-text); font: 700 17px var(--sans); }
+.hours-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.panel-theme:has(.admin-hours) .dashboard-toast-success { color: var(--dash-text); border-color: var(--dash-line); background: var(--dash-surface); }
+.panel-theme:has(.admin-hours) .dashboard-toast-success > svg { color: var(--hours-positive); }
+.panel-theme:has(.admin-hours) .dashboard-toast-success p { color: var(--dash-muted); font-size: 12px; }
+.panel-theme:has(.admin-hours) .dashboard-toast-success > button { color: var(--dash-text); }
+
+@media (hover: hover) and (pointer: fine) {
+  .hours-edit:hover, .hours-shift-toggle:hover, .hours-button:not(.hours-primary, :disabled):hover { background: var(--dash-card-2); }
+  .hours-primary:not(:disabled):hover { opacity: .9; }
+}
+
+@container (max-width: 550px) {
+  .hours-columns { display: none; }
+  .hours-row { grid-template-columns: repeat(3, minmax(0, 1fr)); padding-block: 8px; }
+  .hours-day-name { grid-row: 1; grid-column: 1 / 3; }
+  .hours-edit { grid-row: 1; grid-column: 3; }
+  .hours-range { grid-row: 2; display: grid; gap: 4px; font-size: 13px; }
+  .hours-range small { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal; color: var(--dash-muted); font: 500 12px/1.25 var(--sans); }
+  .hours-morning { grid-column: 1; }
+  .hours-pause { grid-column: 2; }
+  .hours-afternoon { grid-column: 3; }
+  .hours-range[data-present="false"], .hours-row[data-active="false"] .hours-range { display: none; }
+  .hours-shifts { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .hours-shift + .hours-shift { border-top: 1px solid var(--dash-line); padding-top: 5px; }
+}
+
+@media (max-width: 760px) {
+  .panel-theme[data-panel-theme] .admin-control-shell .admin-content:has(> .admin-hours) { padding-inline: 16px; }
+  .hours-save[data-dirty="true"] { bottom: calc(68px + env(safe-area-inset-bottom)); }
+  .panel-theme:has(.admin-hours) .dashboard-toast { top: auto; bottom: calc(134px + env(safe-area-inset-bottom)); }
+}
+
+@keyframes hours-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes hours-fade { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-hours, .admin-hours *, .hours-switch-track::before,
+  .panel-theme:has(.admin-hours) .dashboard-toast { animation: none !important; transition: none !important; }
+}

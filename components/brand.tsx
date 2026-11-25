@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 
-export function Brand({ linked = true }: { linked?: boolean }) {
+export function Brand({ linked = true, href = "/" }: { linked?: boolean; href?: string }) {
   const identity = (
     <>
       <span className="brand-mark" aria-hidden="true">
@@ -15,5 +15,8 @@ export function Brand({ linked = true }: { linked?: boolean }) {
   );
 
   if (!linked) return <div className="brand" aria-label="Barbería Legend Club">{identity}</div>;
-  return <Link className="brand" href="/" aria-label="Barbería Legend Club, ir al inicio">{identity}</Link>;
+  const linkProps = { className: "brand", href, "aria-label": "Barbería Legend Club, ir al inicio" };
+  return href.startsWith("#")
+    ? <a {...linkProps}>{identity}</a>
+    : <Link {...linkProps}>{identity}</Link>;
 }

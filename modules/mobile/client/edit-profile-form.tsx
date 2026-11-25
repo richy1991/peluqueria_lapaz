@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -24,15 +25,18 @@ export function EditProfileForm({ userId, initialName, initialPhone, initialPhon
     const { error } = await createClient().from("profiles").update({ full_name: cleanName, phone: cleanPhone || null, phone_normalized: normalized || null, phone_confirmed_at: normalized === currentNormalized ? initialPhoneConfirmedAt : null, updated_at: new Date().toISOString() }).eq("id", userId);
     setBusy(false);
     if (error) { setMessage(error.message); return; }
-    router.replace("/mi-cuenta/perfil");
+    router.replace("/mi-cuenta#datos-personales");
     router.refresh();
   }
 
   return <form className="client-edit-profile-form" onSubmit={save}>
     <label>Nombre completo<input required minLength={2} maxLength={80} autoComplete="name" value={name} onChange={event => setName(event.target.value)} /></label>
     <label>Número de teléfono<input type="tel" autoComplete="tel" placeholder="Ej. +591 70000000" value={phone} onChange={event => setPhone(event.target.value)} /></label>
-    <label>Correo electrónico<input value={email} readOnly /></label>
+    <label>Correo electrónico<input type="email" autoComplete="email" aria-describedby="profile-email-note" value={email} readOnly /><small id="profile-email-note">Es el correo con el que inicias sesión.</small></label>
     {message && <p role="alert">{message}</p>}
-    <button type="submit" disabled={busy}>{busy ? "Guardando…" : "Guardar cambios"}</button>
+    <div className="client-profile-edit-actions">
+      <Link href="/mi-cuenta#datos-personales">Cancelar</Link>
+      <button type="submit" disabled={busy}>{busy ? "Guardando…" : "Guardar cambios"}</button>
+    </div>
   </form>;
 }
