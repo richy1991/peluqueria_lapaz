@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createPublicClient, type SupabaseClient } from "@supabase/supabase-js";
+import { unstable_cache } from "next/cache";
+import { supabasePublishableKey, supabaseUrl } from "@/lib/supabase/config";
 import {
   barbers as fallbackBarbers,
   gallery as fallbackGallery,
@@ -99,21 +102,75 @@ const fallbackBusiness: BusinessInfo = {
   coverImage: null,
 };
 
+async function getPublicServices(supabase: SupabaseClient) {
+  const { data, error } = await supabase.from("services")
+    .select("slug,name,description,category,price,duration_minutes")
+    .eq("status", "active").order("price");
+  const services: PublicService[] = (data ?? []).map((item) => ({
+    id: item.slug,
+    name: item.name,
+    description: item.description ?? "Servicio profesional personalizado.",
+    category: item.category ?? "Servicio",
+    price: Number(item.price),
+    duration: item.duration_minutes,
+  }));
+  return { services, error };
+}
+
+async function getPublicBarbers(supabase: SupabaseClient) {
+  const { data, error } = await supabase.from("barber_profiles")
+    .select("slug,display_name,bio,photo_path,specialties")
+    .eq("active", true).order("display_name");
+  const barbers: PublicBarber[] = (data ?? []).map((item) => ({
+    id: item.slug,
+    name: item.display_name,
+    role: item.bio ?? "Barbero LEGEND CLUB",
+    specialties: (item.specialties ?? []).join(", "),
+    image: publicMediaUrl(item.photo_path) ??
+      fallbackBarbers.find((barber) => barber.id === item.slug)?.image ?? fallbackBarbers[0].image,
+  }));
+  return { barbers, error };
+}
+
+const loadBookingCatalog = unstable_cache(async () => {
+  const supabase = createPublicClient(supabaseUrl, supabasePublishableKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const [services, barbers, hours, settings] = await Promise.all([
+    getPublicServices(supabase),
+    getPublicBarbers(supabase),
+    supabase.from("business_hours").select("*").order("weekday"),
+    supabase.from("business_settings").select("business_status,timezone").eq("id", true).single(),
+  ]);
+
+  if (services.error || barbers.error || hours.error || settings.error) {
+    throw new Error("Booking catalog unavailable");
+  }
+
+  return {
+    services: services.services,
+    barbers: barbers.barbers,
+    businessHours: hours.data as BusinessHour[],
+    timezone: settings.data.timezone ?? DEFAULT_BUSINESS_TIMEZONE,
+    businessStatus: settings.data.business_status,
+  };
+}, ["booking-catalog", supabaseUrl], { revalidate: 30 });
+
+export async function getBookingData() {
+  try {
+    return await loadBookingCatalog();
+  } catch {
+    return null;
+  }
+}
+
 export async function getPublicData() {
   try {
     const supabase = await createClient();
     const [servicesResult, barbersResult, galleryResult, productsResult, businessResult, businessHoursResult] =
       await Promise.all([
-        supabase
-          .from("services")
-          .select("slug,name,description,category,price,duration_minutes")
-          .eq("status", "active")
-          .order("price"),
-        supabase
-          .from("barber_profiles")
-          .select("slug,display_name,bio,photo_path,specialties")
-          .eq("active", true)
-          .order("display_name"),
+        getPublicServices(supabase),
+        getPublicBarbers(supabase),
         supabase
           .from("gallery_posts")
           .select("id,title,description,image_path,image_paths,sort_order")
@@ -126,35 +183,14 @@ export async function getPublicData() {
           .from("products")
           .select("id,name,description,category,brand,presentation,price,stock,image_path,image_paths")
           .eq("status", "active")
-          .order("created_at", { ascending: false })
-          .limit(12),
+          .gt("stock", 0)
+          .order("created_at", { ascending: false }),
         supabase.from("business_settings").select("*").eq("id", true).maybeSingle(),
         supabase.from("business_hours").select("*").order("weekday"),
       ]);
 
-    const services: PublicService[] = servicesResult.error
-      ? fallbackServices
-      : (servicesResult.data ?? []).map((item) => ({
-          id: item.slug,
-          name: item.name,
-          description: item.description ?? "Servicio profesional personalizado.",
-          category: item.category ?? "Servicio",
-          price: Number(item.price),
-          duration: item.duration_minutes,
-        }));
-
-    const barbers: PublicBarber[] = barbersResult.error
-      ? fallbackBarbers
-      : (barbersResult.data ?? []).map((item) => ({
-          id: item.slug,
-          name: item.display_name,
-          role: item.bio ?? "Barbero LEGEND CLUB",
-          specialties: (item.specialties ?? []).join(", "),
-          image:
-            publicMediaUrl(item.photo_path) ??
-            fallbackBarbers.find((barber) => barber.id === item.slug)?.image ??
-            fallbackBarbers[0].image,
-        }));
+    const services = servicesResult.error ? fallbackServices : servicesResult.services;
+    const barbers = barbersResult.error ? fallbackBarbers : barbersResult.barbers;
 
     const gallery: PublicGalleryItem[] = galleryResult.error || !galleryResult.data?.length
       ? fallbackGallery.map((image, index) => ({

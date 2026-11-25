@@ -1,25 +1,22 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useCallback, useEffect, useId, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BarChart3, CalendarClock, ChevronRight, CircleDollarSign, Clock3, ImageOff, ImagePlus, LogOut, Menu, PackagePlus, Pencil, Plus, Power, Save, Scissors, Search, ShieldCheck, Sparkles, Store, UserPlus, UserRound, UserRoundCog, Users, X } from "lucide-react";
-import { Brand } from "@/components/brand";
-import { ModeSwitcher } from "@/components/mode-switcher";
+import { ImageOff, ImagePlus, PackagePlus, Pencil, Plus, Power, Save, Scissors, Search, ShieldCheck, Store, UserPlus, UserRound, UserRoundCog, Users, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { AppointmentAdminActions } from "./admin-operations";
+import { AdminAgenda, type AgendaAppointment } from "./admin-agenda";
+import { AdminHours } from "./admin-hours";
 import { AdminAnalytics, type AnalyticsData } from "./admin-analytics";
 import { AdminProgram } from "./admin-program";
 import { DashboardModal } from "@/components/dashboard-modal";
 import { DashboardToast, type DashboardToastData } from "@/components/dashboard-toast";
-import { PanelMobileLogout, PanelMobileMenuButton, PanelMobileScrim, PanelMobileSidebarClose, PanelResponsiveSidebar, PanelThemeSelector } from "@/components/panel-experience";
 import { clearFormErrors, dispatchDashboardSuccess, reportFormError } from "@/lib/form-feedback";
-import { DEFAULT_BUSINESS_TIMEZONE, formatBusinessHours, getBusinessHourError, prepareBusinessHourForSave, resolveBusinessStatus, type BusinessHour } from "@/lib/business-hours";
+import { DEFAULT_BUSINESS_TIMEZONE, type BusinessHour, type EffectiveBusinessStatus } from "@/lib/business-hours";
 import { IMAGE_INPUT_ACCEPT, uploadOptimizedImages } from "@/lib/image-upload";
 import { publicMediaUrl } from "@/lib/public-media";
-import type {LucideIcon} from "lucide-react";
 import { AdminClientsTable, type AdminClient } from "./admin-clients-table";
 import { AdminDeleteAction } from "./admin-delete-action";
+import { AdminNavigation } from "./admin-navigation";
 
 type Row = Record<string, unknown> & { id: string };
 type AdminUser = { user_id: string | null; email: string; role: "admin" | "superadmin" | "pending"; created_at: string };
@@ -269,20 +266,8 @@ function AdminProductsTable({
     </div>
   );
 }
-const businessDays = [
-  { weekday: 1, label: "Lunes" },
-  { weekday: 2, label: "Martes" },
-  { weekday: 3, label: "Miércoles" },
-  { weekday: 4, label: "Jueves" },
-  { weekday: 5, label: "Viernes" },
-  { weekday: 6, label: "Sábado" },
-  { weekday: 0, label: "Domingo" },
-];
-
 type AdminDashboardProps = {
   initialSection?: string;
-  isRootPage: boolean;
-  userEmail: string;
   adminProfile: AdminProfile;
   initialServices: Row[];
   initialGallery: Row[];
@@ -294,11 +279,14 @@ type AdminDashboardProps = {
   pendingCashiers: Row[];
   initialSettings: Record<string, unknown> | null;
   initialBusinessHours: BusinessHour[];
+  initialHoursStatus: EffectiveBusinessStatus;
   businessHoursLoadError: boolean;
   isSuperadmin: boolean;
   adminUsers: AdminUser[];
   hasBarber: boolean;
-  initialAppointments: Row[];
+  hasCashier: boolean;
+  initialAppointments: AgendaAppointment[];
+  appointmentsLoadError: boolean;
   clients: AdminClient[];
   clientSearch: string;
   clientPage: number;
@@ -315,8 +303,6 @@ async function uploadImages(files: File[], folder: string) {
 
 export function AdminDashboard({
   initialSection,
-  isRootPage,
-  userEmail,
   adminProfile,
   initialServices,
   initialGallery,
@@ -328,11 +314,14 @@ export function AdminDashboard({
   pendingCashiers,
   initialSettings,
   initialBusinessHours,
+  initialHoursStatus,
   businessHoursLoadError,
   isSuperadmin,
   adminUsers,
   hasBarber,
+  hasCashier,
   initialAppointments,
+  appointmentsLoadError,
   clients,
   clientSearch,
   clientPage,
@@ -346,13 +335,6 @@ export function AdminDashboard({
   const section = initialSection ?? (isSuperadmin ? "administradores" : "agenda");
   const [toast, setToast] = useState<DashboardToastData | null>(null);
   const [busy, setBusy] = useState(false);
-  const [navCollapsed,setNavCollapsed]=useState(false);
-  const [businessHours, setBusinessHours] = useState<BusinessHour[]>(() => Array.from({ length: 7 }, (_, weekday) => {
-    const saved = initialBusinessHours.find((item) => item.weekday === weekday);
-    return saved
-      ? prepareBusinessHourForSave(saved)
-      : { weekday, active: weekday !== 1, opens_at: "09:00", closes_at: "20:00", afternoon_opens_at: null, afternoon_closes_at: null };
-  }));
   const toastIdRef = useRef(0);
 
   function showToast(type: "success" | "error", text: string) {
@@ -404,29 +386,6 @@ export function AdminDashboard({
     const { error: updateError } = await supabase.from("business_settings").update(payload).eq("id", true);
     if (updateError) return failAction(updateError, form);
     finishAction("Información del negocio actualizada.");
-  }
-
-  async function saveBusinessHours(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    clearFormErrors(form);
-    if (businessHoursLoadError) return failAction(new Error("Recarga la página para cargar los horarios antes de guardar."));
-    startAction();
-    const rows = businessHours.map((row) => prepareBusinessHourForSave(row, initialBusinessHours.find((saved) => saved.weekday === row.weekday)));
-    for (const row of rows) {
-      const invalid = getBusinessHourError(row);
-      if (invalid) {
-        const label = businessDays.find((day) => day.weekday === row.weekday)?.label;
-        return failAction(new Error(`${label}: ${invalid.message}`), form, `${invalid.field}_${row.weekday}`);
-      }
-    }
-    const { error: scheduleError } = await createClient().from("business_hours").upsert(
-      rows.map((row) => ({ ...row, updated_at: new Date().toISOString() })),
-      { onConflict: "weekday" },
-    );
-    if (scheduleError) return failAction(scheduleError, form);
-    setBusinessHours(rows);
-    finishAction("Días y horarios de atención actualizados.");
   }
 
   async function addService(event: FormEvent<HTMLFormElement>) {
@@ -667,13 +626,6 @@ export function AdminDashboard({
     }
   }
 
-  async function logout() {
-    if (!window.confirm("¿Seguro que quieres salir de la aplicación? Puedes quedarte un poco más para continuar usando LEGEND CLUB.")) return;
-    await createClient().auth.signOut();
-    router.replace("/");
-    router.refresh();
-  }
-
   function renderBarberActions(item: Row) {
     const invitation = pendingBarbers.find((pending) => String(pending.barber_profile_id) === item.id && String(pending.status) === "pending");
     const isActive = Boolean(item.active);
@@ -700,47 +652,10 @@ export function AdminDashboard({
   const adminInitials = adminProfile.full_name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() || "AD";
   const avatarStyle = adminProfile.avatar_url ? { backgroundImage: `url(${JSON.stringify(adminProfile.avatar_url)})` } : undefined;
   const businessTimezone = String(settings.timezone ?? DEFAULT_BUSINESS_TIMEZONE);
-  const configuredStatus = String(settings.business_status ?? "open");
-  const effectiveBusinessStatus = resolveBusinessStatus(configuredStatus, businessHours, businessTimezone);
-  const automaticStatus = configuredStatus === "open" || configuredStatus === "appointment_only";
-  const businessOpenNow = effectiveBusinessStatus === "open" || effectiveBusinessStatus === "appointment_only";
-  const navigation:Array<[string,string,LucideIcon]>=[
-    ["agenda","Agenda",CalendarClock],
-    ["programa","Caja y fidelización",CircleDollarSign],
-    ["clientes","Clientes",Users],
-    ["equipo","Equipo",UserPlus],
-    ["servicios","Servicios",Scissors],
-    ["productos","Productos",PackagePlus],
-    ["galeria","Galería",ImagePlus],
-    ["horarios","Horarios",Clock3],
-    ["negocio","Negocio",Store],
-    ["estadisticas","Estadísticas",BarChart3],
-    ...(isSuperadmin?[["administradores","Administradores",ShieldCheck] as [string,string,LucideIcon]]:[]),
-  ];
-
   return (
     <main className="admin-shell admin-control-shell">
       <DashboardToast toast={toast} onClose={closeToast}/>
-      <header className="admin-header dash-header">
-        <PanelMobileMenuButton/>
-        <div className="dash-brand"><Brand linked={false} /><span className="dash-live"><i/> SISTEMA EN LÍNEA</span></div>
-        <ModeSwitcher current="admin" isAdmin hasBarber={hasBarber} isCashier={!isSuperadmin} showClient={false} />
-        <div className="dash-user"><span className="dash-avatar">{userEmail.slice(0,2).toUpperCase()}</span><span>{userEmail}<small>Administrador</small></span><button className="desktop-logout" onClick={logout}><LogOut size={16} /> Salir</button></div>
-      </header>
-      <div className={`admin-layout ${navCollapsed?"nav-collapsed":""}`}>
-        <PanelResponsiveSidebar>
-        <aside className="admin-nav dash-sidebar">
-          <div className="dash-sidebar-head"><p>CONTROL CENTRAL</p><button className="dash-collapse" type="button" onClick={()=>setNavCollapsed(value=>!value)} aria-label={navCollapsed?"Abrir menú lateral":"Cerrar menú lateral"} aria-expanded={!navCollapsed} title={navCollapsed?"Abrir menú":"Cerrar menú"}>{navCollapsed?<Menu/>:<X/>}</button><PanelMobileSidebarClose/></div>
-          <Link href="/admin/perfil" replace={!isRootPage} className={`admin-sidebar-profile ${section === "perfil" ? "active" : ""}`} aria-current={section === "perfil" ? "page" : undefined} aria-label={`Ver perfil de ${adminProfile.full_name}`} title="Ver mi perfil">
-            <div className={`admin-sidebar-avatar ${adminProfile.avatar_url ? "has-photo" : ""}`} style={avatarStyle}>{!adminProfile.avatar_url && adminInitials}</div>
-            <span><strong>{adminProfile.full_name}</strong><small>{adminRole}</small></span>
-            <ChevronRight />
-          </Link>
-          <nav aria-label="Páginas de administración">{navigation.map(([id,label,Icon])=><Link href={`/admin/${id}`} replace={!isRootPage} title={label} aria-current={section===id?"page":undefined} className={`${section===id?"active":""} ${id==="negocio"?"nav-secondary-start":""}`} key={id}><Icon/><span>{label}</span>{section===id&&<i/>}</Link>)}</nav>
-          <div className="dash-sidebar-foot"><PanelThemeSelector/><Link href="/sitio"><Sparkles/><span>Ver sitio público</span></Link><PanelMobileLogout/></div>
-        </aside>
-        <PanelMobileScrim/>
-        </PanelResponsiveSidebar>
+      <AdminNavigation section={section} profile={adminProfile} isSuperadmin={isSuperadmin} hasBarber={hasBarber} hasCashier={hasCashier}>
         <section className="admin-content" key={section}>
           {section === "perfil" && <div className="admin-panel admin-profile-panel">
             <div className="admin-title"><UserRound /><div><p>CUENTA ADMINISTRATIVA</p><h1>Mi perfil</h1></div></div>
@@ -755,7 +670,12 @@ export function AdminDashboard({
               <div><dt>Estado</dt><dd>{adminProfile.status === "active" ? "Activo" : adminProfile.status}</dd></div>
             </dl>
           </div>}
-          {section === "agenda" && <div className="admin-panel"><div className="admin-title"><CalendarClock /><div><p>OPERACIÓN</p><h1>Reservas y agenda</h1></div></div><div className="admin-metrics"><div><strong>{initialAppointments.filter((item)=>["requested","confirmed","pending_client_confirmation"].includes(String(item.status))).length}</strong><span>Próximas o pendientes</span></div><div><strong>{initialAppointments.filter((item)=>item.status==="needs_reschedule").length}</strong><span>Por reprogramar</span></div><div><strong>{initialAppointments.length}</strong><span>Últimas reservas</span></div></div><div className="admin-list appointment-admin-list">{initialAppointments.length?initialAppointments.map((item)=>{const client=item.profiles as {full_name?:string;phone?:string;email?:string;is_blacklisted?:boolean}|null;const barber=item.barber_profiles as {display_name?:string}|null;return <article key={item.id}><div><strong>{String(item.service_name_snapshot)} · {new Intl.DateTimeFormat("es-BO",{dateStyle:"medium",timeStyle:"short",timeZone:businessTimezone}).format(new Date(String(item.starts_at)))}</strong><span>{client?.full_name??client?.email??String(item.client_name_snapshot??"Cliente")} · {client?.phone??"Sin teléfono"} · {barber?.display_name??String(item.barber_name_snapshot??"Sin asignar")} · {String(item.status)}</span>{client?.is_blacklisted&&<small className="admin-alert">Alerta por inasistencias</small>}</div><AppointmentAdminActions id={item.id} barbers={barbers as Array<{id:string;display_name:string;active?:boolean}>} timezone={businessTimezone}/></article>}):<p className="admin-help">Todavía no existen reservas.</p>}</div></div>}
+          {section === "agenda" && <AdminAgenda
+            appointments={initialAppointments}
+            loadError={appointmentsLoadError}
+            barbers={activeBarbers.map(item => ({ id: item.id, name: String(item.display_name) }))}
+            timezone={businessTimezone}
+          />}
 
           {section === "estadisticas" && <AdminAnalytics data={analyticsData} />}
 
@@ -763,37 +683,13 @@ export function AdminDashboard({
 
           {section === "clientes" && <AdminClientsTable clients={clients} query={clientSearch} page={clientPage} pageSize={clientPageSize} total={clientTotal} loadError={clientLoadError} timezone={businessTimezone} />}
 
-          {section === "horarios" && <div className="admin-panel business-hours-panel">
-            <div className="admin-title"><Clock3 /><div><p>OPERACIÓN DEL LOCAL</p><h1>Días y horarios de atención</h1></div></div>
-            <p className="business-hours-help">Configura la apertura y el cierre de cada turno por día. El local estará cerrado desde el cierre de la mañana hasta la apertura de la tarde; tú decides la hora y la duración del descanso. Para atender un solo turno, deja ambas horas de la tarde vacías.</p>
-            {businessHoursLoadError ? <p className="admin-error" role="alert">No se pudieron cargar los horarios. Recarga la página antes de editarlos.</p> : <div className="business-hours-summary">
-              <span className={`dash-status-pill ${businessOpenNow ? "online" : "offline"}`}><i />{businessOpenNow ? "Abierto ahora" : "Cerrado ahora"}</span>
-              <div><strong>{formatBusinessHours(businessHours)}</strong><small>{automaticStatus ? `El estado público se actualiza automáticamente en la zona ${businessTimezone}.` : "El cierre manual configurado en Negocio tiene prioridad sobre este horario."}</small></div>
-            </div>}
-            {!businessHoursLoadError && <form className="business-hours-form" onSubmit={saveBusinessHours} onChange={(event) => clearFormErrors(event.currentTarget)}>
-              {businessDays.map(({ weekday, label }) => {
-                const day = businessHours.find((item) => item.weekday === weekday) ?? { weekday, active: false, opens_at: "09:00", closes_at: "20:00", afternoon_opens_at: null, afternoon_closes_at: null };
-                const updateDay = (changes: Partial<BusinessHour>) => setBusinessHours((current) => current.map((item) => item.weekday === weekday ? { ...item, ...changes } : item));
-                return <article className={day.active ? "active" : "closed"} key={weekday}>
-                  <label className="business-day-toggle"><input type="checkbox" checked={day.active} disabled={busy} onChange={(event) => updateDay({ active: event.target.checked })} /><span><strong>{label}</strong><small>{day.active ? "Día de atención" : "Cerrado"}</small></span></label>
-                  {day.active && <div className="business-day-times">
-                    <fieldset disabled={busy}><legend>Turno mañana</legend><div className="business-shift-times">
-                      <label>Apertura<input aria-label={`${label}: apertura de la mañana`} name={`opens_at_${weekday}`} type="time" value={day.opens_at.slice(0, 5)} onChange={(event) => updateDay({ opens_at: event.target.value })} required /></label>
-                      <span>hasta</span>
-                      <label>Cierre<input aria-label={`${label}: cierre de la mañana`} name={`closes_at_${weekday}`} type="time" value={day.closes_at.slice(0, 5)} onChange={(event) => updateDay({ closes_at: event.target.value })} required /></label>
-                    </div></fieldset>
-                    <fieldset disabled={busy}><legend>Turno tarde <small>(opcional)</small></legend><div className="business-shift-times">
-                      <label>Apertura<input aria-label={`${label}: apertura de la tarde`} name={`afternoon_opens_at_${weekday}`} type="time" value={day.afternoon_opens_at?.slice(0, 5) ?? ""} onChange={(event) => updateDay({ afternoon_opens_at: event.target.value || null })} required={Boolean(day.afternoon_closes_at)} /></label>
-                      <span>hasta</span>
-                      <label>Cierre<input aria-label={`${label}: cierre de la tarde`} name={`afternoon_closes_at_${weekday}`} type="time" value={day.afternoon_closes_at?.slice(0, 5) ?? ""} onChange={(event) => updateDay({ afternoon_closes_at: event.target.value || null })} required={Boolean(day.afternoon_opens_at)} /></label>
-                    </div></fieldset>
-                    <p className="business-day-break">{!getBusinessHourError(day) && day.afternoon_opens_at ? `Cerrado por descanso: ${day.closes_at.slice(0, 5)}–${day.afternoon_opens_at.slice(0, 5)}` : "El descanso se define entre los dos turnos."}</p>
-                  </div>}
-                </article>;
-              })}
-              <button className="button button-dark" disabled={busy}><Save size={17} /> Guardar horarios</button>
-            </form>}
-          </div>}
+          {section === "horarios" && <AdminHours
+            hours={initialBusinessHours}
+            initialStatus={initialHoursStatus}
+            configuredStatus={String(settings.business_status ?? "open")}
+            timezone={businessTimezone}
+            loadError={businessHoursLoadError}
+          />}
 
           {section === "negocio" && <div className="admin-panel business-settings-panel">
             <div className="admin-title"><Store /><div><p>CONFIGURACIÓN PÚBLICA</p><h1>Información del negocio</h1></div></div>
@@ -901,7 +797,7 @@ export function AdminDashboard({
             <div className="admin-list">{adminUsers.length ? adminUsers.map((item) => <article key={`${String(item.user_id ?? item.email)}-${String(item.role)}`}><div><strong>{String(item.email)}</strong><span>{item.role === "superadmin" ? "Superadministrador · desarrollador" : item.role === "pending" ? "Invitación pendiente de ingreso con Google" : "Administrador"}</span></div>{item.role !== "superadmin" && <button disabled={busy} onClick={() => removeAdmin(String(item.email))}>{item.role === "pending" ? "Cancelar invitación" : "Retirar acceso"}</button>}</article>) : <div className="admin-list-empty"><ShieldCheck/><div><strong>No hay administradores adicionales</strong><span>El superadministrador es el único con acceso administrativo por ahora.</span></div></div>}</div>
           </div>}
         </section>
-      </div>
+      </AdminNavigation>
     </main>
   );
 }

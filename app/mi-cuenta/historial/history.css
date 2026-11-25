@@ -1,0 +1,194 @@
+.panel-theme[data-panel-theme] .panel-client-shell.client-booking-history {
+  --history-width: min(1120px, calc(100% - 48px));
+  padding: clamp(18px, 3.5vw, 54px) 0 56px;
+  color-scheme: dark;
+  color: var(--public-text);
+  background: radial-gradient(ellipse at 75% 0, #27334380, transparent 48%), var(--public-ink);
+}
+
+.panel-theme .client-booking-history > .client-secondary-content {
+  width: var(--history-width);
+  margin: 22px auto 0;
+}
+
+.history-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px 12px;
+  width: var(--history-width);
+  margin: 0 auto;
+  padding: clamp(18px, 3vw, 34px);
+  overflow: hidden;
+  border: 1px solid var(--public-line);
+  border-radius: 24px;
+  background:
+    linear-gradient(102deg, #161b24 14%, #161b24ef 42%, #161b2466 100%),
+    url("/brand/legend-club-salon-header.jpg") center 53% / cover,
+    var(--public-surface);
+  box-shadow: 0 14px 32px #080b1040;
+}
+
+.history-hero h1 {
+  margin: 0;
+  color: var(--public-text);
+  font: 650 clamp(34px, 5vw, 56px)/1.02 var(--sans);
+  letter-spacing: -.055em;
+}
+
+.history-hero .history-back, .history-next-footer a, .history-entry-copy a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.history-header-links {
+  grid-column: 1 / -1;
+  justify-content: space-between;
+}
+
+.history-hero .history-back {
+  min-height: 42px;
+  padding: 0 10px;
+  color: var(--public-text);
+  border: 1px solid var(--public-line);
+  border-radius: 10px;
+  background: #10131b99;
+  font-size: 13px;
+}
+
+.history-back svg { color: var(--public-accent); }
+.history-hero .history-back:hover { background: var(--public-raised); }
+
+.client-booking-history a:focus-visible { outline: 2px solid var(--public-accent); outline-offset: 3px; }
+
+.history-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+}
+
+.history-activity { display: grid; gap: 18px; }
+
+.history-section {
+  min-width: 0;
+  padding: clamp(16px, 2vw, 23px);
+  border: 1px solid var(--public-line);
+  border-radius: 19px;
+  background: var(--public-surface);
+}
+
+.history-section#citas { scroll-margin-top: 18px; }
+
+.history-section-heading { display: flex; align-items: center; gap: 12px; }
+.history-section-heading > span {
+  flex: 0 0 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: var(--public-accent);
+  border: 1px solid #ff9b6640;
+  border-radius: 11px;
+  background: #ff9b6612;
+}
+
+.history-section-heading h2 { margin: 0; color: var(--public-text); font-size: clamp(17px, 2vw, 21px); letter-spacing: -.025em; }
+.history-empty { margin: 14px 0 0; color: var(--public-muted); font-size: 14px; line-height: 1.5; }
+
+.history-next {
+  display: grid;
+  gap: 16px;
+  margin-top: 15px;
+  padding: clamp(13px, 2vw, 20px);
+  border: 1px solid #ff9b6652;
+  border-radius: 15px;
+  background: radial-gradient(ellipse at 100% 0, #ff793824, transparent 68%), var(--public-ink);
+}
+
+.history-next-caption, .history-next-footer { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.history-next-caption h3 { margin: 0; color: var(--public-accent); font-size: 13px; font-weight: 700; }
+.history-next-main { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 14px; }
+.history-date-tile {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  width: 68px;
+  min-height: 72px;
+  color: var(--public-accent);
+  border: 1px solid #ff9b6652;
+  border-radius: 12px;
+  background: #ff9b6612;
+}
+.history-date-tile strong { font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+.history-date-tile span { font-size: 11px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.history-next-copy { display: grid; gap: 5px; }
+.history-next-copy p { margin: 0 0 3px; font-size: clamp(17px, 2.2vw, 24px); font-weight: 730; line-height: 1.15; overflow-wrap: anywhere; }
+.history-next-copy > span { display: flex; align-items: center; gap: 7px; color: var(--public-muted); font-size: 13px; overflow-wrap: anywhere; }
+.history-next-copy svg, .history-entry-copy svg { flex: none; color: var(--public-accent); }
+.history-next-footer { padding-top: 12px; border-top: 1px solid var(--public-line); }
+.history-next-footer > strong { color: var(--public-text); font-size: 19px; }
+.history-next-footer a {
+  min-height: 38px;
+  padding: 0 10px;
+  color: var(--public-text);
+  border: 1px solid var(--public-line);
+  border-radius: 9px;
+  background: var(--public-card);
+  font-size: 13px;
+  font-weight: 700;
+}
+.history-next-footer a:hover { border-color: var(--public-accent); }
+.history-next-footer a svg { color: var(--public-accent); }
+
+.history-entries { margin: 14px 0 0; padding: 0; list-style: none; }
+.history-entry { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 13px 0; border-top: 1px solid var(--public-line); }
+.history-entry:last-child { padding-bottom: 0; }
+.history-entry-copy, .history-entry-meta { display: grid; align-content: start; gap: 4px; }
+.history-entry-copy { min-width: 0; overflow-wrap: anywhere; }
+.history-entry-copy > a, .history-entry-copy > strong, .history-entry-meta > strong { color: var(--public-text); font-size: 14px; font-weight: 700; }
+.history-entry-copy > a { width: fit-content; max-width: 100%; min-height: 24px; }
+.history-entry-copy > a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.history-entry-copy > time, .history-entry-copy > span { color: var(--public-muted); font-size: 12px; line-height: 1.4; }
+.history-entry-meta { justify-items: end; text-align: right; }
+
+.history-status {
+  display: inline-block;
+  padding: 4px 8px;
+  color: var(--public-muted);
+  border: 1px solid var(--public-line);
+  border-radius: 20px;
+  background: var(--public-raised);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.3;
+}
+.history-status:is([data-status="confirmed"], [data-status="completed"], [data-status="paid"], [data-status="collected"]) {
+  color: #98e8be;
+  border-color: #98e8be50;
+  background: #98e8be16;
+}
+.history-status:is([data-status="requested"], [data-status="reserved"], [data-status="pending_client_confirmation"], [data-status="pending_payment"], [data-status="needs_reschedule"]) {
+  color: #ffc09d;
+  border-color: #ff9b664a;
+  background: #ff9b661a;
+}
+
+@media (max-width: 760px) {
+  .panel-theme[data-panel-theme] .panel-client-shell.client-booking-history { --history-width: calc(100% - 28px); }
+  .history-layout, .history-activity { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .panel-theme .client-booking-history > .client-secondary-content { margin-top: 14px; }
+  .history-hero { gap: 12px; border-radius: 18px; }
+}
+
+@media (max-width: 420px) {
+  .history-hero { column-gap: 8px; }
+  .history-hero h1 { font-size: clamp(23px, 7.5vw, 31px); }
+  .history-date-tile { width: 54px; min-height: 63px; }
+  .history-date-tile strong { font-size: 26px; }
+  .history-next-main { gap: 10px; }
+}
+
+body:has(.analytics-consent) .panel-theme[data-panel-theme] .panel-client-shell.client-booking-history { padding-bottom: 150px; }

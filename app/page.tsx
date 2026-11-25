@@ -1,12 +1,10 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import {
   ArrowRight,
   CalendarDays,
   Clock3,
   MapPin,
   MessageCircle,
-  Sparkles,
   Scissors,
   UserRound,
   Armchair,
@@ -18,10 +16,11 @@ import { SiteFooter } from "@/components/site-footer";
 import { ProductCatalog } from "@/components/product-catalog";
 import { LegendCrownIcon, LegendDivider } from "@/components/legend-icons";
 import { getPublicData } from "@/lib/public-data";
-import { BusinessStatus } from "@/components/business-status";
 import { createClient } from "@/lib/supabase/server";
-import { getDashboardPath, getUserCapabilities } from "@/lib/user-capabilities";
 import { InstallAppButton } from "@/components/install-app-button";
+import { HomePriceDigits, HomeScrollEffects } from "@/components/home-scroll-effects";
+import "./home.css";
+import "./productos/products.css";
 
 export const dynamic = "force-dynamic";
 
@@ -35,39 +34,34 @@ function getIntroDescription(description: string, amenities: string[]) {
     : description;
 }
 
-type HomePageProps = {
-  searchParams: Promise<{ vista?: string | string[] }>;
-};
-
-export default async function HomePage({ searchParams }: HomePageProps) {
-  const { vista } = await searchParams;
+export default async function HomePage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user && vista !== "publica") redirect(getDashboardPath(await getUserCapabilities(user.id)));
-
-  const { services, barbers, gallery, products, business } = await getPublicData();
+  const [{ data: { user } }, { services, barbers, gallery, products, business }] = await Promise.all([
+    supabase.auth.getUser(),
+    getPublicData(),
+  ]);
   return (
-    <>
-      <SiteHeader />
+    <HomeScrollEffects>
+      <SiteHeader homeUser={user} />
       <main>
         <section className="hero">
-          <div
-            className="hero-photo"
-            aria-hidden="true"
-            style={business.coverImage ? { backgroundImage: `url(${business.coverImage})` } : undefined}
-          />
+          <div className="hero-photo-frame" aria-hidden="true">
+            <div
+              className="hero-photo"
+              style={business.coverImage ? { backgroundImage: `url(${business.coverImage})` } : undefined}
+            />
+          </div>
           <div className="hero-shade" />
           <div className="container hero-content">
-            <BusinessStatus configuredStatus={business.configuredStatus} initialStatus={business.status} statusMessage={business.statusMessage} timezone={business.timezone} hours={business.schedule} />
             <p className="eyebrow light">TRADICIÓN · CALLE · PRECISIÓN</p>
             <h1>Respeto al estilo.<br /><em>Leyenda en cada corte.</em></h1>
             <p className="hero-copy">{business.slogan}</p>
             <div className="hero-actions">
-              <Link className="button" href="/reservar">
+              <Link className="button" href="/reservar" prefetch>
                 Reservar una cita <ArrowRight size={18} />
               </Link>
               <InstallAppButton androidApk />
-              <Link className="text-link light-link" href="#servicios">Ver servicios</Link>
+              <a className="text-link light-link" href="#servicios">Ver servicios</a>
             </div>
           </div>
           <div className="container hero-facts">
@@ -116,7 +110,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                     <p>{service.description}</p>
                   </div>
                   <div className="service-meta">
-                    <strong>Bs {service.price}</strong>
+                    <strong>Bs <HomePriceDigits value={service.price} /></strong>
                     <span>{service.duration} min</span>
                   </div>
                   <Link aria-label={`Reservar ${service.name}`} href={`/reservar?servicio=${service.id}`}>
@@ -181,7 +175,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           </div>
         </section>
 
-        <section className="section products-section" id="productos">
+        <section className="section products-section public-products" id="productos">
           <div className="container">
             <div className="section-heading">
               <div>
@@ -190,8 +184,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               </div>
               <p>Productos seleccionados por el equipo. Consulta disponibilidad y apártalos por 24 horas.</p>
             </div>
-            <ProductCatalog products={products.slice(0,3)} variant="home" />
-            <div className="center-action"><Link className="button button-dark" href="/productos">Ver todos los productos <ArrowRight size={17}/></Link></div>
+            <ProductCatalog products={products} variant="home" expandable />
           </div>
         </section>
 
@@ -216,11 +209,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <Scissors size={38} strokeWidth={1.5} aria-hidden="true" />
           <h2>Entra al club.</h2>
           <p>{business.slogan}</p>
-          <Link className="button" href="/reservar">Ver horarios disponibles <Sparkles size={17} /></Link>
+          <Link className="button" href="/reservar">Ver horarios disponibles</Link>
         </section>
       </main>
-      <SiteFooter business={business} />
+      <SiteFooter business={business} onHomePage />
       <Link className="mobile-book-bar" href="/reservar">Reservar una cita <ArrowRight size={18} /></Link>
-    </>
+    </HomeScrollEffects>
   );
 }

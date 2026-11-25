@@ -1,4 +1,5 @@
 import { ClientAccountView } from "@/modules/mobile/client";
+import "./client-products.css";
 
 export const dynamic = "force-dynamic";
 

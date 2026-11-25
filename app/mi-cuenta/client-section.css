@@ -1,0 +1,118 @@
+.panel-theme.panel-theme[data-panel-theme] .client-section-screen {
+  --client-bg: var(--public-ink);
+  --client-card: var(--public-surface);
+  --client-card-muted: var(--public-card);
+  --client-line: var(--public-line);
+  --client-text: var(--public-text);
+  --client-muted: var(--public-muted);
+  --client-accent: var(--public-accent);
+  --client-danger: #ffafa9;
+  --lc-primary: var(--public-ink);
+  --lc-accent: var(--client-accent);
+  --lc-accent-dark: var(--client-accent);
+  --lc-border: var(--client-line);
+  --lc-card: var(--client-card);
+  --lc-surface: var(--client-card-muted);
+  --lc-text: var(--client-text);
+  --lc-muted: var(--client-muted);
+  --ink: var(--client-text);
+  --muted-ink: var(--client-muted);
+  --paper: var(--client-card-muted);
+  --paper-deep: var(--client-bg);
+  --line: var(--client-line);
+  --gold: var(--public-action);
+  --copper: var(--client-accent);
+  --app-theme-color: var(--client-bg);
+  min-height: 100svh;
+  padding-bottom: 52px;
+  color: var(--client-text);
+  background: radial-gradient(ellipse at 80% 0, #33445947, transparent 49%), var(--client-bg);
+}
+.panel-theme.panel-theme[data-panel-theme="light"] .client-section-screen {
+  --client-bg: #f2efeb;
+  --client-card: #fffdf9;
+  --client-card-muted: #f6f2ed;
+  --client-line: #51484030;
+  --client-text: #232831;
+  --client-muted: #5d616a;
+  --client-accent: #a34520;
+  --client-danger: #9b3033;
+  background: radial-gradient(ellipse at 80% 0, #d78a5c20, transparent 49%), var(--client-bg);
+}
+
+.client-section-width { width: min(1180px, calc(100% - 48px)); margin-inline: auto; }
+.client-section-topbar { border-bottom: 1px solid var(--client-line); }
+.client-section-topbar .client-section-width { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 74px; }
+.client-section-topbar .brand strong { color: var(--client-text); font-size: 15px; }
+.client-section-topbar .brand .brand-mark { width: 38px; height: 38px; border-radius: 9px; box-shadow: 0 0 0 1px #f7f3e8; }
+.client-section-topbar a { display: inline-flex; align-items: center; gap: 7px; min-height: 42px; padding: 0 11px; color: var(--client-text); border: 1px solid var(--client-line); border-radius: 10px; background: var(--client-card); font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.client-section-topbar a svg { color: var(--client-accent); }
+.client-section-topbar a:hover { border-color: var(--client-accent); }
+.client-section-screen :is(a, button):focus-visible { outline: 2px solid var(--client-accent); outline-offset: 2px; }
+.client-section-heading { padding: clamp(26px, 4vw, 44px) 0 22px; }
+.client-section-heading h1 { margin: 0; color: var(--client-text); font: 700 clamp(31px, 5vw, 54px)/1.06 var(--sans); letter-spacing: -.05em; text-shadow: none; }
+.client-section-heading p { margin: 9px 0 0; color: var(--client-muted); font-size: 14px; }
+body:has(.analytics-consent) .panel-theme .client-section-screen { padding-bottom: 130px; }
+
+.client-header-actions { display: flex; align-items: center; gap: 8px; }
+.panel-client-shell .client-booking-link {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 10px;
+  color: var(--public-ink);
+  border-radius: 9px;
+  background: var(--public-action);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.panel-client-shell .client-booking-link:hover { background: var(--public-action-hover); }
+.panel-client-shell .client-booking-link:focus-visible { outline: 2px solid var(--public-accent); outline-offset: 2px; }
+.panel-client-shell .public-home-link {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 0 11px;
+  color: var(--public-link-text, var(--public-text));
+  border: 1px solid var(--public-link-line, var(--public-line));
+  border-radius: 10px;
+  background: var(--public-link-bg, var(--public-surface));
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.panel-client-shell .public-home-link svg { flex: none; color: var(--public-link-accent, var(--public-accent)); }
+.panel-client-shell .public-home-link:hover { border-color: var(--public-link-accent, var(--public-accent)); }
+.panel-client-shell .public-home-link:focus-visible { outline: 2px solid var(--public-link-accent, var(--public-accent)); outline-offset: 2px; }
+.client-section-topbar .public-home-link {
+  --public-link-text: var(--client-text);
+  --public-link-bg: var(--client-card);
+  --public-link-line: var(--client-line);
+  --public-link-accent: var(--client-accent);
+}
+.client-secondary-hero > .public-home-link { margin-inline-start: auto; }
+
+@media (max-width: 760px) {
+  .client-section-width { width: calc(100% - 28px); }
+  .client-section-topbar .client-section-width { min-height: 64px; gap: 7px; padding-inline-end: 44px; }
+  .client-section-topbar .brand { gap: 8px; }
+  .client-section-topbar .brand strong { font-size: 12px; }
+  .client-section-topbar a { padding-inline: 7px; font-size: 12px; }
+  .panel-client-shell .public-home-link { gap: 5px; padding-inline: 7px; font-size: 12px; }
+  .panel-theme.panel-theme[data-panel-theme] .client-section-screen { padding-bottom: 104px; }
+  body:has(.analytics-consent) .panel-theme .client-section-screen { padding-bottom: 224px; }
+}
+
+@media (max-width: 375px) {
+  .client-section-topbar .brand > span:last-child { display: none; }
+  .client-header-actions { gap: 6px; }
+}

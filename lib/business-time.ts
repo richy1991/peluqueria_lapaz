@@ -45,6 +45,18 @@ export function businessDateKey(value = new Date(), timezone = DEFAULT_BUSINESS_
   return [year, String(month).padStart(2, "0"), String(day).padStart(2, "0")].join("-");
 }
 
+export function formatBookingDateTime(value: Date, timezone = DEFAULT_BUSINESS_TIMEZONE) {
+  const timeZone = safeTimezone(timezone);
+  const date = new Intl.DateTimeFormat("es-BO", { dateStyle: "long", timeZone }).format(value);
+  const time = new Intl.DateTimeFormat("es-BO", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone,
+  }).format(value);
+  return `${date} · ${time}`;
+}
+
 export function zonedDateTimeToDate(localValue: string, timezone = DEFAULT_BUSINESS_TIMEZONE) {
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(localValue);
   if (!match) throw new Error("La fecha y hora no tienen un formato válido.");

@@ -1,0 +1,93 @@
+.client-points-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  grid-template-areas: "balances actions" "history actions";
+  align-items: start;
+  gap: 16px;
+}
+.client-points-balances { grid-area: balances; }
+.client-points-history { grid-area: history; }
+.client-points-actions { grid-area: actions; display: grid; min-width: 0; gap: 16px; }
+.client-points-card { min-width: 0; padding: clamp(14px, 2vw, 22px); border: 1px solid var(--client-line); border-radius: 18px; background: var(--client-card); }
+.client-points-card h2 { display: flex; align-items: center; gap: 9px; margin: 0; color: var(--client-text); font-size: 19px; font-weight: 730; }
+.client-points-card h2 svg { flex: none; color: var(--client-accent); }
+.client-points-card > p { margin: 10px 0 0; color: var(--client-muted); font-size: 13px; line-height: 1.5; }
+.client-points-card > .client-points-empty { margin-top: 13px; padding: 12px; border: 1px dashed var(--client-line); border-radius: 10px; }
+.client-points-card > [role="alert"] { color: var(--client-danger); }
+
+.client-points-balances-list, .client-points-movements { margin: 15px 0 0; padding: 0; list-style: none; }
+.client-points-balances-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 205px), 1fr)); gap: 10px; }
+.client-points-balances-list li {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--client-line);
+  border-radius: 13px;
+  background: radial-gradient(ellipse at 100% 0, color-mix(in srgb, var(--client-accent) 12%, transparent), transparent 72%), var(--client-bg);
+}
+.client-points-balances-list h3 { display: flex; align-items: center; gap: 7px; margin: 0; color: var(--client-text); font-size: 14px; line-height: 1.25; overflow-wrap: anywhere; }
+.client-points-balances-list h3 svg { flex: none; color: var(--client-accent); }
+.client-points-balances-list p { margin: 10px 0; color: var(--client-muted); font-size: 12px; }
+.client-points-balances-list p strong { margin-right: 4px; color: var(--client-accent); font: 760 clamp(29px, 3vw, 42px)/1 var(--sans); font-variant-numeric: tabular-nums; }
+.client-points-balances-list dl { display: flex; flex-wrap: wrap; gap: 7px 14px; margin: 0; padding-top: 10px; border-top: 1px solid var(--client-line); }
+.client-points-balances-list dl > div { display: flex; align-items: baseline; gap: 5px; }
+.client-points-balances-list dl dt { color: var(--client-muted); font-size: 11px; }
+.client-points-balances-list dl dd { margin: 0; color: var(--client-text); font-size: 12px; font-weight: 700; }
+
+.client-points-movements li { display: flex; justify-content: space-between; align-items: start; gap: 10px; padding: 12px 0; border-top: 1px solid var(--client-line); }
+.client-points-movements li:last-child { padding-bottom: 0; }
+.client-points-movements li > div { display: grid; min-width: 0; gap: 4px; overflow-wrap: anywhere; }
+.client-points-movements strong { color: var(--client-text); font-size: 14px; }
+.client-points-movements span { color: var(--client-muted); font-size: 12px; }
+.client-points-movements b { flex: none; padding: 4px 8px; color: var(--client-muted); border: 1px solid var(--client-line); border-radius: 7px; background: var(--client-card-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.client-points-movements [data-points="added"] { color: var(--points-success); }
+.client-points-movements [data-points="removed"] { color: var(--client-danger); }
+.client-points-screen { --points-success: #98e8be; }
+.panel-theme[data-panel-theme="light"] .client-points-screen { --points-success: #166442; }
+
+.client-points-referral { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 12px; margin-top: 14px; }
+.client-points-qr { display: grid; place-items: center; width: min(26vw, 120px); aspect-ratio: 1; padding: 10px; border-radius: 9px; background: #fff; }
+.client-points-qr svg { width: 100%; height: auto; }
+.client-points-referral strong { display: block; width: fit-content; max-width: 100%; margin: 0 0 8px; padding: 7px 9px; color: var(--client-text); border: 1px dashed var(--client-line); border-radius: 8px; background: var(--client-bg); font: 700 15px/1.2 "Courier New", monospace; overflow-wrap: anywhere; user-select: all; }
+.client-points-referral button, .client-points-claim > button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 0 9px;
+  color: var(--client-text);
+  border: 1px solid var(--client-line);
+  border-radius: 9px;
+  background: var(--client-card-muted);
+  font: 700 13px var(--sans);
+  cursor: pointer;
+}
+.client-points-referral button:hover { border-color: var(--client-accent); }
+.client-points-referral button svg { flex: none; color: var(--client-accent); }
+.client-points-claim { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 8px; margin-top: 14px; }
+.client-points-claim label { grid-column: 1 / -1; color: var(--client-muted); font-size: 12px; }
+.panel-theme.panel-theme[data-panel-theme] .client-points-screen .client-points-claim input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 9px;
+  color: var(--client-text);
+  caret-color: var(--client-text);
+  border: 1px solid var(--client-line);
+  border-radius: 9px;
+  outline: none;
+  box-shadow: none;
+  background: var(--client-bg);
+  font-size: 16px;
+}
+.panel-theme.panel-theme[data-panel-theme] .client-points-screen .client-points-claim input:focus-visible { border-color: var(--client-muted); }
+.client-points-claim > button { color: var(--public-ink); border-color: var(--public-action); background: var(--public-action); }
+.client-points-claim > button:hover:not(:disabled) { background: var(--public-action-hover); }
+.client-points-claim > button:disabled { opacity: .65; cursor: wait; }
+.client-points-feedback { grid-column: 1 / -1; margin: 6px 0 0; color: var(--points-success); font-size: 12px; line-height: 1.4; }
+.client-points-feedback[role="alert"] { color: var(--client-danger); }
+
+@media (max-width: 800px) {
+  .client-points-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "balances" "actions" "history"; gap: 12px; }
+  .client-points-actions { gap: 12px; }
+}

@@ -1,0 +1,164 @@
+.card {
+  display: grid;
+  grid-template-areas: "copy photo";
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  min-height: 228px;
+  overflow: clip;
+  border: 1px solid var(--public-line);
+  border-radius: 24px;
+  background: var(--public-ink);
+}
+
+.pageCard {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  min-height: 392px;
+  border-radius: 32px;
+  box-shadow: 0 28px 80px #090b1375;
+}
+
+.copy {
+  grid-area: copy;
+  align-self: center;
+  min-width: 0;
+  padding: clamp(22px, 2.8vw, 38px);
+}
+
+.pageCard .copy { padding: clamp(24px, 5vw, 64px); }
+
+.copy::before {
+  display: block;
+  width: 32px;
+  height: 3px;
+  margin-bottom: 16px;
+  border-radius: 999px;
+  background: var(--public-accent);
+  content: "";
+}
+
+.photo {
+  grid-area: photo;
+  border-inline-start: 1px solid var(--public-line);
+  background:
+    linear-gradient(155deg, #ff9b661c, transparent 54%, #10131b62),
+    url("/brand/legend-club-salon-header.jpg") 62% 54% / cover no-repeat var(--public-raised);
+}
+
+.title {
+  margin: 0 0 12px;
+  color: var(--public-text);
+  font: 650 clamp(29px, 3vw, 42px)/1.03 var(--serif);
+  letter-spacing: -.045em;
+}
+
+.pageCard .title {
+  font-size: clamp(37px, 5.5vw, 64px);
+  letter-spacing: -.055em;
+}
+
+.description,
+.error {
+  max-width: 36ch;
+  margin: 0;
+  color: var(--public-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.pageCard .description { font-size: 16px; }
+
+.error {
+  margin-top: 10px;
+  color: #ffc0ba;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.pageCard .actions { margin-top: 30px; }
+
+.googleButton {
+  min-height: 52px;
+  padding: 8px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #1f1f1f;
+  border: 1px solid #747775;
+  border-radius: 999px;
+  background: #fff;
+  font: 600 15px/20px "Google Sans", Roboto, var(--sans);
+  cursor: pointer;
+  transition: background-color .18s ease, box-shadow .18s ease;
+}
+
+.pageCard .googleButton {
+  width: min(280px, 100%);
+  min-height: 56px;
+}
+
+.googleButton img { flex: none; }
+.googleButton:hover:not(:disabled) { background: #f4f7fb; box-shadow: 0 4px 16px #0003; }
+.googleButton:focus-visible { outline-color: var(--public-accent); }
+.googleButton:disabled { opacity: .7; cursor: wait; }
+
+@media (max-width: 640px) {
+  .card:not(.pageCard) {
+    grid-template-areas: "photo" "copy";
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .card:not(.pageCard) .copy { padding: 20px 18px; }
+
+  .card:not(.pageCard) .photo {
+    min-height: 86px;
+    border-inline-start: 0;
+    border-bottom: 1px solid var(--public-line);
+    background-position: 50% 61%;
+  }
+  .pageCard {
+    grid-template-areas: "photo" "copy";
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+    border-radius: 24px;
+  }
+
+  .pageCard .photo {
+    min-height: clamp(120px, 34vw, 192px);
+    border-inline-start: 0;
+    border-bottom: 1px solid var(--public-line);
+    background-position: 50% 61%;
+  }
+
+  .copy::before { margin-bottom: 13px; }
+  .pageCard .actions { margin-top: 22px; }
+  .pageCard .googleButton { width: 100%; }
+}
+
+@media (max-width: 520px) {
+  .card:not(.pageCard) { border-radius: 19px; }
+  .card:not(.pageCard) .copy { padding: 16px 18px 20px; }
+  .card:not(.pageCard) .copy::before { display: none; }
+  .googleButton { flex: 1; min-width: 0; padding-inline: 12px; }
+}
+
+@media (max-width: 360px) {
+  .card:not(.pageCard) .googleButton { gap: 8px; padding-inline: 10px; font-size: 14px; }
+}
+
+@media (max-width: 640px) and (max-height: 640px) {
+  .pageCard .photo { min-height: 104px; }
+  .pageCard .copy { padding-block: 20px; }
+  .pageCard .description { font-size: 15px; line-height: 1.5; }
+  .pageCard .actions { margin-top: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .googleButton { transition: none; }
+}
