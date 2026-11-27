@@ -2621,6 +2621,9 @@
 .panel-theme[data-panel-theme] .cashier-shell .cashier-service-payment { grid-template-columns: minmax(0,1fr); }
 .panel-theme[data-panel-theme] .cashier-shell .cashier-service-payment > .cashier-payment-splits { grid-column: 1 / -1; width: 100%; }
 .panel-theme[data-panel-theme] .cashier-shell .cashier-service-payment > .button-dark { grid-column: 1 / -1; align-self: start; min-height: 42px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-product-workspace { flex: 0 0 auto; height: auto; min-height: 0; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-product-workspace .cashier-pos-layout { height: auto; min-height: 0; align-items: start; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-product-workspace .cashier-catalog { height: auto; min-height: 0; grid-template-rows: auto auto auto auto; overflow: visible; }
 @media (max-width: 520px) {
   .cashier-shell .cashier-workflow-dialog:is([data-size="default"],[data-size="large"]) { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); border-radius: 16px; }
   .cashier-shell .cashier-workflow-dialog:is([data-size="default"],[data-size="large"]) .cashier-workflow-screen { max-height: calc(100dvh - 18px); }
