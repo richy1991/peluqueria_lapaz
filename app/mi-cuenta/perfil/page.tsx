@@ -1,5 +1,9 @@
-import { redirect } from "next/navigation";
+import { ClientAccountView } from "@/modules/mobile/client";
+import "../account-home.css";
+import "./profile.css";
+
+export const dynamic = "force-dynamic";
 
 export default function ClientProfilePage() {
-  redirect("/mi-cuenta");
+  return <ClientAccountView section="perfil" />;
 }

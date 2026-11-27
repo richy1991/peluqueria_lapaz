@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { Alert, Linking, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { ThemedText as Text } from '@/components/ThemedText';
-import { Activity, CalendarDays, Check, ChevronDown, Clock3, CreditCard, History, Phone, Play, UserRoundX } from 'lucide-react-native';
+import { CalendarDays, Check, ChevronDown, CreditCard, History, Phone, Play, UserRoundX } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppShell } from '@/components/AppShell';
-import { ActionButton, Card, CardTitle, EmptyState, InlineMessage, LoadingState, PageHeading, palette } from '@/components/ui';
+import { FloatingPageHeader, useClientHeaderHeight } from '@/components/ClientPageHeader';
+import { ActionButton, Card, CardTitle, EmptyState, InlineMessage, LoadingState, palette } from '@/components/ui';
+import { useAppearance } from '@/lib/appearance';
 import { barberTabs } from '@/lib/navigation';
 import { useSession } from '@/lib/session';
-import { businessDateKey } from '@/lib/business-time';
+import { businessDateKey, zonedDateTimeToDate } from '@/lib/business-time';
 import { supabase } from '@/lib/supabase';
 import { businessDayStart, formatDate, requireData, useRemoteData } from '@/lib/utils';
 
@@ -20,6 +22,9 @@ type AgendaData = { appointments: Appointment[]; clients: BarberClient[]; servic
 
 export default function BarberAgendaScreen() {
   const { barber } = useSession();
+  const { colors } = useAppearance();
+  const expandedHeaderHeight = useClientHeaderHeight(227);
+  const [selectedDayKey, setSelectedDayKey] = useState('');
   const barberId = barber?.id ?? '';
   const query = useRemoteData<AgendaData>(async () => {
     if (!barberId) throw new Error('No se encontró tu perfil de peluquero.');
@@ -43,62 +48,91 @@ export default function BarberAgendaScreen() {
 
   const data = query.data;
   const timezone = data?.timezone ?? 'America/La_Paz';
-  const todayKey = businessDateKey(new Date(), timezone);
-  const active = (data?.appointments ?? []).filter((item) => !['canceled', 'completed', 'no_show', 'needs_reschedule'].includes(item.status));
-  const today = active.filter((item) => businessDateKey(new Date(item.starts_at), timezone) === todayKey);
+  const now = new Date().toISOString();
+  const todayKey = businessDateKey(new Date(now), timezone);
+  const activeAppointments = (data?.appointments ?? []).filter((item) => !['canceled', 'completed', 'no_show', 'needs_reschedule'].includes(item.status));
   const clientById = new Map((data?.clients ?? []).map((item) => [item.appointment_id, item]));
-  const groups = active.reduce<Record<string, Appointment[]>>((result, appointment) => {
+  const appointmentsByDay = activeAppointments.reduce<Record<string, Appointment[]>>((result, appointment) => {
     const key = businessDateKey(new Date(appointment.starts_at), timezone);
     (result[key] ??= []).push(appointment);
     return result;
   }, {});
+  const weekDays = buildWeekDays(todayKey, appointmentsByDay, timezone);
+  const selectedDay = weekDays.find((day) => day.key === selectedDayKey) ?? weekDays[0];
+  const selectedAppointments = selectedDay?.appointments ?? [];
 
   return (
-    <AppShell title="Agenda" roleLabel={`PELUQUERO · ${barber?.display_name ?? ''}`} activeTab="agenda" tabs={barberTabs} onRefresh={query.refresh} refreshing={query.loading}>
-      <PageHeading eyebrow="Operación diaria" title="Agenda del día" description="Consulta tus citas, actualiza su estado y envía atenciones terminadas a caja." />
-      {query.error ? <InlineMessage>{query.error}</InlineMessage> : null}
-      {!data && query.loading ? <LoadingState title="Sincronizando tu agenda…" /> : null}
-      {data ? <>
-      <View style={styles.stats}>
-        <Card style={styles.stat}><CardTitle icon={Activity} title="Hoy" subtitle="Citas activas" /><Text style={styles.statValue}>{today.length}</Text></Card>
-        <Card style={styles.stat}><CardTitle icon={Clock3} title="Próxima cita" subtitle="En los próximos siete días" /><Text style={styles.statDate}>{active[0] ? formatDate(active[0].starts_at, { timeZone: data?.timezone ?? 'America/La_Paz' }) : 'Sin citas'}</Text></Card>
-      </View>
-
-      <Card>
-        <CardTitle icon={CalendarDays} title="Cola de clientes" subtitle={`${today.length} citas para hoy`} />
-        {today.length ? today.map((appointment) => (
-          <AppointmentCard key={appointment.id} appointment={appointment} client={clientById.get(appointment.id)} timezone={data?.timezone ?? 'America/La_Paz'} services={data?.services ?? []} products={data?.products ?? []} refresh={query.refresh} />
-        )) : <EmptyState title="No hay citas activas para hoy" description="Las próximas reservas aparecerán aquí." />}
-      </Card>
-
-      <Card>
-        <CardTitle icon={History} title="Agenda semanal" subtitle="Próximos siete días" />
-        {Object.entries(groups).length ? Object.entries(groups).map(([key, appointments]) => (
-          <View key={key} style={styles.dayGroup}>
-            <Text style={styles.dayTitle}>{formatDate(appointments[0].starts_at, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: data?.timezone ?? 'America/La_Paz' })}</Text>
-            {appointments.map((appointment) => {
-              const client = clientById.get(appointment.id);
-              return <View key={appointment.id} style={styles.weekItem}>
-                <Text style={styles.time}>{formatDate(appointment.starts_at, { timeStyle: 'short', timeZone: data?.timezone ?? 'America/La_Paz' })}</Text>
-                <View style={{ flex: 1, gap: 3 }}><Text style={styles.clientName}>{client?.full_name ?? appointment.client_name_snapshot ?? 'Cliente'}</Text><Text style={styles.muted}>{appointment.service_name_snapshot} · {statusLabel(appointment.status)}</Text>{client?.phone ? <Pressable onPress={() => void Linking.openURL('tel:' + client.phone)} style={styles.phone}><Phone size={13} color={palette.gold} /><Text style={styles.muted}>{client.phone}</Text></Pressable> : null}</View>
-              </View>;
-            })}
+    <AppShell title="Agenda" roleLabel={`PELUQUERO · ${barber?.display_name ?? ''}`} activeTab="agenda" tabs={barberTabs} onRefresh={query.refresh} refreshing={query.loading}
+      floatingHeaderHeight={expandedHeaderHeight}
+      floatingHeader={(scrollY) => <FloatingPageHeader scrollY={scrollY} expandedHeight={expandedHeaderHeight} eyebrow="TU ESTACIÓN" title={`Hola, ${barber?.display_name ?? 'peluquero'}`} description="Agenda, atenciones y el resumen de tu jornada." titleSize={36} expandedContentHeight={142} chatHref="/barber/chat" />}>
+      <View style={styles.agendaContent}>
+        {query.error ? <InlineMessage>{query.error}</InlineMessage> : null}
+        {!data && query.loading ? <LoadingState title="Sincronizando tu agenda…" /> : null}
+        {data ? <>
+          <View style={styles.weekHeading}>
+            <View style={styles.weekHeadingCopy}>
+              <Text style={[styles.weekEyebrow, { color: colors.accent }]}>AGENDA SEMANAL</Text>
+              <Text style={[styles.weekTitle, { color: colors.text }]}>Tus citas</Text>
+            </View>
+            <Text style={[styles.weekCaption, { color: colors.muted }]}>Próximos 7 días</Text>
           </View>
-        )) : <EmptyState title="No tienes citas próximas esta semana" />}
-      </Card>
-      </> : null}
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.weekCalendar}>
+            {weekDays.map((day) => {
+              const selected = day.key === selectedDay?.key;
+              return <Pressable key={day.key} onPress={() => setSelectedDayKey(day.key)} style={[styles.weekDay, { backgroundColor: selected ? colors.accent : colors.surface, borderColor: selected ? colors.accent : colors.glassBorder }]} accessibilityRole="button" accessibilityLabel={`${day.fullLabel}, ${day.appointments.length} ${day.appointments.length === 1 ? 'cita' : 'citas'}`} accessibilityState={{ selected }}>
+                <Text style={[styles.weekDayName, { color: selected ? colors.accentForeground : colors.muted }]}>{day.weekday}</Text>
+                <Text style={[styles.weekDayNumber, { color: selected ? colors.accentForeground : colors.text }]}>{day.dayNumber}</Text>
+                <View style={[styles.weekDayCount, { backgroundColor: selected ? colors.accentForeground : colors.glassRaised }]}>
+                  <Text style={[styles.weekDayCountText, { color: selected ? colors.accent : colors.muted }]}>{day.appointments.length}</Text>
+                </View>
+              </Pressable>;
+            })}
+          </ScrollView>
+
+          <Card>
+            <CardTitle icon={selectedDay?.isToday ? CalendarDays : History} title={selectedDay?.isToday ? 'Hoy' : selectedDay?.fullLabel ?? 'Agenda'} subtitle={`${selectedAppointments.length} ${selectedAppointments.length === 1 ? 'cita' : 'citas'}`} />
+            {selectedAppointments.length ? selectedAppointments.map((appointment) => (
+              <AppointmentCard key={appointment.id} appointment={appointment} client={clientById.get(appointment.id)} timezone={timezone} services={data.services} products={data.products} canManage={selectedDay?.isToday ?? false} refresh={query.refresh} />
+            )) : <EmptyState title="No hay citas para este día" description="Elige otra fecha de la semana para consultar su agenda." />}
+          </Card>
+        </> : null}
+      </View>
     </AppShell>
   );
+}
+
+function buildWeekDays(todayKey: string, appointmentsByDay: Record<string, Appointment[]>, timezone: string) {
+  const [year, month, day] = todayKey.split('-').map(Number);
+  return Array.from({ length: 7 }, (_, offset) => {
+    const calendarDate = new Date(Date.UTC(year, month - 1, day + offset, 12));
+    const key = `${calendarDate.getUTCFullYear()}-${String(calendarDate.getUTCMonth() + 1).padStart(2, '0')}-${String(calendarDate.getUTCDate()).padStart(2, '0')}`;
+    const localNoon = zonedDateTimeToDate(`${key}T12:00:00`, timezone).toISOString();
+    return {
+      key,
+      isToday: offset === 0,
+      weekday: formatDate(localNoon, { weekday: 'short', timeZone: timezone }).replace(/\.$/, ''),
+      dayNumber: formatDate(localNoon, { day: 'numeric', timeZone: timezone }),
+      fullLabel: formatDate(localNoon, { weekday: 'long', day: 'numeric', month: 'long', timeZone: timezone }),
+      appointments: appointmentsByDay[key] ?? [],
+    };
+  });
 }
 
 function statusLabel(status: string) {
   return ({ requested: 'Solicitada', confirmed: 'Confirmada', in_progress: 'En atención', pending_payment: 'En caja', pending_client_confirmation: 'Cambio pendiente' } as Record<string, string>)[status] ?? status;
 }
 
-function AppointmentCard({ appointment, client, timezone, services, products, refresh }: { appointment: Appointment; client?: BarberClient; timezone: string; services: Service[]; products: Product[]; refresh: () => void }) {
+function formatTimeRange(appointment: Appointment, timezone: string) {
+  const start = formatDate(appointment.starts_at, { timeStyle: 'short', timeZone: timezone });
+  const end = formatDate(appointment.ends_at, { timeStyle: 'short', timeZone: timezone });
+  return `${start} – ${end}`;
+}
+
+function AppointmentCard({ appointment, client, timezone, services, products, canManage, refresh }: { appointment: Appointment; client?: BarberClient; timezone: string; services: Service[]; products: Product[]; canManage: boolean; refresh: () => void }) {
   return (
     <View style={styles.appointment}>
-      <View style={styles.appointmentTime}><Text style={styles.time}>{formatDate(appointment.starts_at, { timeStyle: 'short', timeZone: timezone })}</Text></View>
+      <View style={styles.appointmentTime}><Text style={styles.time}>{formatTimeRange(appointment, timezone)}</Text></View>
       <View style={styles.appointmentCopy}>
         <Text style={styles.clientName}>{client?.full_name ?? appointment.client_name_snapshot ?? 'Cliente'}</Text>
         <Text style={styles.muted}>{appointment.service_name_snapshot} · {statusLabel(appointment.status)}</Text>
@@ -106,7 +140,7 @@ function AppointmentCard({ appointment, client, timezone, services, products, re
         {client?.is_blacklisted ? <Text style={styles.warning}>Alerta por inasistencias</Text> : null}
         {appointment.notes ? <Text style={styles.muted}>Nota: {appointment.notes}</Text> : null}
       </View>
-      <AppointmentActions appointment={appointment} services={services} products={products} refresh={refresh} />
+      {canManage ? <AppointmentActions appointment={appointment} services={services} products={products} refresh={refresh} /> : null}
     </View>
   );
 }
@@ -214,13 +248,21 @@ function ChoiceField({ label, value, options, emptyLabel, onChange }: { label: s
 }
 
 const styles = StyleSheet.create({
-  stats: { flexDirection: 'row', gap: 10 },
-  stat: { flex: 1, minWidth: 0, padding: 13 },
-  statValue: { color: palette.gold, fontSize: 32, fontWeight: '900' },
-  statDate: { color: palette.text, fontSize: 12, lineHeight: 18, fontWeight: '700' },
+  agendaContent: { paddingHorizontal: 16, paddingTop: 22, paddingBottom: 24, gap: 15 },
+  weekHeading: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, paddingHorizontal: 2 },
+  weekHeadingCopy: { gap: 3 },
+  weekEyebrow: { fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
+  weekTitle: { fontSize: 21, lineHeight: 26, fontWeight: '800' },
+  weekCaption: { fontSize: 11, fontWeight: '700', paddingBottom: 3 },
+  weekCalendar: { gap: 8, paddingHorizontal: 1, paddingVertical: 2 },
+  weekDay: { width: 48, minHeight: 78, alignItems: 'center', justifyContent: 'center', gap: 4, borderWidth: 1, borderRadius: 15, paddingVertical: 7 },
+  weekDayName: { fontSize: 9, lineHeight: 12, fontWeight: '800', textTransform: 'uppercase' },
+  weekDayNumber: { fontSize: 17, lineHeight: 20, fontWeight: '900' },
+  weekDayCount: { minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', borderRadius: 99, paddingHorizontal: 4 },
+  weekDayCountText: { fontSize: 9, lineHeight: 12, fontWeight: '800' },
   appointment: { gap: 10, paddingVertical: 14, borderTopColor: palette.border, borderTopWidth: StyleSheet.hairlineWidth },
   appointmentTime: { alignSelf: 'flex-start', borderRadius: 9, backgroundColor: '#20242A', paddingHorizontal: 9, paddingVertical: 6 },
-  time: { color: palette.gold, fontSize: 12, fontWeight: '900' },
+  time: { color: palette.gold, fontSize: 11, fontWeight: '900' },
   appointmentCopy: { gap: 5 },
   clientName: { color: palette.text, fontSize: 14, fontWeight: '800' },
   muted: { color: palette.muted, fontSize: 11, lineHeight: 16 },

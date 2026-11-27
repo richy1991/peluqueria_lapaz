@@ -13,7 +13,7 @@ export const CLIENT_DELETE_DETAIL = "Se eliminarán su cuenta, citas, puntos, ap
 const entities = {
   client: { rpc: "clients", success: "Cliente y sus datos relacionados eliminados definitivamente.", detail: CLIENT_DELETE_DETAIL },
   product: { rpc: "products", success: "Producto eliminado de la base de datos.", detail: "El producto dejará de estar disponible en el catálogo." },
-  barber: { rpc: "barbers", success: "Peluquero eliminado de la base de datos.", detail: "Se eliminarán su perfil de peluquero y su acceso como peluquero. Si tiene otros roles, los conservará." },
+  barber: { rpc: "barbers", success: "Peluquero eliminado. Su cuenta personal se borró si no tenía otros roles de personal.", detail: "Se eliminará su ficha y el acceso de peluquero. Si solo tenía el rol automático de cliente además del de peluquero, también se eliminarán su cuenta, sesiones, identidades de acceso y datos personales. Las cuentas con otros roles de personal se conservarán." },
   gallery: { rpc: "gallery", success: "Publicación eliminada de la base de datos.", detail: "La publicación dejará de aparecer en la galería." },
   service: { rpc: "services", success: "Servicio eliminado de la base de datos.", detail: "El servicio dejará de estar disponible para nuevas reservas." },
 } satisfies Record<Entity, { rpc: string; success: string; detail: string }>;

@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, ChevronRight, Clock3, History, PackageCheck, Settings2, Star, UserRound, UserRoundPen } from "lucide-react";
+import { ArrowRight, CalendarDays, Clock3, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { Brand } from "@/components/brand";
 import { PublicHomeLink } from "@/components/public-home-link";
 import { CancelAppointmentButton, ConfirmReassignmentButton } from "./appointment-actions";
-import { ClientProfileDetails, type ClientProfile } from "./client-profile-view";
+import type { ClientProfile } from "./client-profile-view";
 import { ProfileCardMotion } from "./profile-card-motion";
+import { WorkCarousel } from "./work-carousel";
 
 type Appointment = {
   id: string;
@@ -26,19 +27,13 @@ const labels: Record<string, string> = {
   needs_reschedule: "Por reprogramar",
 };
 
-const shortcuts = [
-  { href: "/mi-cuenta/historial", label: "Mi historial", icon: History },
-  { href: "/mi-cuenta/productos", label: "Productos", icon: PackageCheck },
-  { href: "/mi-cuenta/puntos", label: "Puntos", icon: Star },
-  { href: "/mi-cuenta/configuracion-avisos", label: "Configurar avisos", icon: Settings2 },
-] as const;
-
-export function ClientHomeView({ profile, accountEmail, appointment, timezone, businessStatus }: {
+export function ClientHomeView({ profile, accountEmail, appointment, timezone, businessStatus, works }: {
   profile: ClientProfile | null;
   accountEmail?: string;
   appointment?: Appointment;
   timezone: string;
   businessStatus: ReactNode;
+  works: Array<{ id: string; title: string; image: string }>;
 }) {
   const name = profile?.full_name?.trim() || (profile?.email || accountEmail)?.split("@")[0] || "Cliente";
   const initials = name.split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase();
@@ -58,7 +53,7 @@ export function ClientHomeView({ profile, accountEmail, appointment, timezone, b
       </header>
 
       <ProfileCardMotion className="client-account-width client-account-content">
-        <h1 className="client-account-heading">Mi perfil</h1>
+        <h1 className="client-account-heading">Inicio</h1>
         <section className="account-profile-identity" aria-labelledby="account-profile-name">
           <div className="account-profile-avatar" aria-hidden="true">
             {initials}
@@ -68,12 +63,9 @@ export function ClientHomeView({ profile, accountEmail, appointment, timezone, b
             <h2 id="account-profile-name">Hola, {name}</h2>
             {businessStatus}
           </div>
-          <Link className="account-profile-edit" href="/mi-cuenta/editar-perfil">
-            <UserRoundPen size={18} aria-hidden="true" /> Editar perfil
-          </Link>
         </section>
 
-        <div className="client-account-columns">
+        <div className="client-account-columns client-account-home-columns">
           <section className="client-account-card client-account-appointment" aria-labelledby="client-account-appointment-title" data-profile-card>
             <div className="client-account-card-title">
               <span><CalendarDays size={20} aria-hidden="true" /></span>
@@ -84,21 +76,16 @@ export function ClientHomeView({ profile, accountEmail, appointment, timezone, b
               ? <UpcomingAppointment appointment={appointment} timezone={timezone} />
               : <p className="client-account-empty">Aún no tienes una cita próxima.</p>}
           </section>
-
-          <section className="client-account-card" aria-labelledby="client-account-shortcuts" data-profile-card>
-            <h2 id="client-account-shortcuts">Accesos</h2>
-            <nav className="client-account-shortcuts" aria-labelledby="client-account-shortcuts">
-              {shortcuts.map(({ href, label, icon: Icon }) => (
-                <Link key={href} href={href}>
-                  <span><Icon size={17} aria-hidden="true" /></span>
-                  {label} <ChevronRight size={15} aria-hidden="true" />
-                </Link>
-              ))}
-            </nav>
-          </section>
         </div>
 
-        <ClientProfileDetails profile={profile} accountEmail={accountEmail} />
+        <section className="client-account-card client-account-works" aria-labelledby="client-account-works-title">
+          <div className="client-account-works-heading">
+            <div><p>INSPIRACIÓN LEGEND</p><h2 id="client-account-works-title">Trabajos con firma propia</h2></div>
+            <Link href="/mi-cuenta/galeria">Ver galería <ArrowRight size={15} aria-hidden="true" /></Link>
+          </div>
+          <WorkCarousel items={works} href="/mi-cuenta/galeria" />
+        </section>
+
       </ProfileCardMotion>
     </main>
   );

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { Image, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { Easing, Extrapolation, FadeIn, FadeInDown, interpolate, useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
@@ -19,8 +19,9 @@ export function useClientHeaderHeight(contentHeight: number) {
   return Math.max(Math.ceil(width / 1.5), insets.top + contentHeight);
 }
 
-export function ClientPageHeader({
+export function FloatingPageHeader({
   scrollY, expandedHeight, title, eyebrow, description, compact = false, onBack, showChat = true,
+  chatHref = '/client/chat',
   brandAccessory, actionLabel, actionIcon: ActionIcon = Globe2, onActionPress,
   expandedContentHeight = 124, titleSize = 31, titleLineHeight: configuredTitleLineHeight, descriptionFontSize = 14, descriptionLineHeight = 20,
 }: {
@@ -32,6 +33,7 @@ export function ClientPageHeader({
   compact?: boolean;
   onBack?: () => void;
   showChat?: boolean;
+  chatHref?: Href;
   brandAccessory?: ReactNode;
   actionLabel?: string;
   actionIcon?: LucideIcon;
@@ -111,7 +113,7 @@ export function ClientPageHeader({
         </View>
       </View>}
       {brandAccessory ? <Animated.View pointerEvents="none" style={[styles.brandAccessory, accessoryStyle]}>{brandAccessory}</Animated.View> : null}
-      {showChat ? <Pressable onPress={() => router.push('/client/chat')} style={styles.chatButton} accessibilityRole="button" accessibilityLabel="Abrir chat de soporte">
+      {showChat ? <Pressable onPress={() => router.push(chatHref)} style={styles.chatButton} accessibilityRole="button" accessibilityLabel="Abrir chat de soporte">
         <MessageCircle size={20} color={palette.gold} />
       </Pressable> : null}
     </Animated.View>
@@ -130,6 +132,8 @@ export function ClientPageHeader({
     </Animated.View> : null}
   </View>;
 }
+
+export const ClientPageHeader = FloatingPageHeader;
 
 const styles = StyleSheet.create({
   hero: { flex: 1, width: '100%', overflow: 'hidden', borderBottomLeftRadius: 22, borderBottomRightRadius: 22, backgroundColor: '#090a0c' },

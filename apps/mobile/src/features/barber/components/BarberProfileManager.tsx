@@ -5,6 +5,7 @@ import { ThemedText as Text } from '@/components/ThemedText';
 import { Camera, History, Images, Link2, UserRoundPen } from 'lucide-react-native';
 
 import { AppShell } from '@/components/AppShell';
+import { FloatingPageHeader, useClientHeaderHeight } from '@/components/ClientPageHeader';
 import { ActionButton, Card, CardTitle, EmptyState, InlineMessage, PageHeading, SwitchRow, TextField, ThemePreferenceControl, palette } from '@/components/ui';
 import { useAppearance } from '@/lib/appearance';
 import { barberTabs } from '@/lib/navigation';
@@ -21,6 +22,7 @@ type ManagerData = { profile: BarberProfile; gallery: GalleryPost[] };
 export function BarberProfileManager({ view }: { view: 'profile' | 'gallery' }) {
   const { barber, session } = useSession();
   const { colors } = useAppearance();
+  const expandedHeaderHeight = useClientHeaderHeight(view === 'profile' ? 220 : 226);
   const barberId = barber?.id ?? '';
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
@@ -124,7 +126,9 @@ export function BarberProfileManager({ view }: { view: 'profile' | 'gallery' }) 
   const profile = query.data?.profile;
   const photo = profilePhoto?.uri ?? publicMediaUrl(profile?.photo_path);
   return (
-    <AppShell title={view === 'profile' ? 'Mi perfil' : 'Mis trabajos'} roleLabel="MI ESTACIÓN" activeTab={view === 'profile' ? 'perfil' : 'trabajos'} tabs={barberTabs} onRefresh={query.refresh} refreshing={query.loading}>
+    <AppShell title={view === 'profile' ? 'Mi perfil' : 'Mis trabajos'} roleLabel="MI ESTACIÓN" activeTab={view === 'profile' ? 'perfil' : 'trabajos'} tabs={barberTabs} onRefresh={query.refresh} refreshing={query.loading}
+      floatingHeaderHeight={expandedHeaderHeight}
+      floatingHeader={(scrollY) => <FloatingPageHeader scrollY={scrollY} expandedHeight={expandedHeaderHeight} eyebrow={view === 'profile' ? 'PRESENCIA PÚBLICA' : 'PORTAFOLIO'} title={view === 'profile' ? 'Mi perfil público' : 'Mis trabajos'} description={view === 'profile' ? 'Actualiza la información que tus clientes ven al reservar.' : 'Comparte trabajos autorizados o referencias con su fuente.'} chatHref="/barber/chat" />}>
       <PageHeading eyebrow={view === 'profile' ? 'Presencia pública' : 'Portafolio'} title={view === 'profile' ? 'Mi perfil público' : 'Publicar trabajos'} description={view === 'profile' ? 'Mantén actualizada la información que ven tus clientes.' : 'Comparte trabajos autorizados o referencias con su fuente.'} />
       {query.error || message ? <InlineMessage tone={message.includes('actualizó') || message.includes('compartió') ? 'success' : 'error'}>{message || query.error}</InlineMessage> : null}
 

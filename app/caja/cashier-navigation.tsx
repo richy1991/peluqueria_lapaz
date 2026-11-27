@@ -15,9 +15,22 @@ const cashierQuickNavigation = [
   { id: "historial", href: "/caja/historial", label: "Historial", icon: History },
 ] as const;
 
+export function CashierDesktopNavigation({ section, reservationCount = 0 }: { section: CashierNavigationSection; reservationCount?: number }) {
+  return <nav className="cashier-desktop-nav" aria-label="Secciones de caja">
+    {cashierQuickNavigation.map(item => {
+      const Icon = item.icon;
+      const active = section === item.id;
+      const count = item.id === "reservas" ? reservationCount : 0;
+      return <Link key={item.id} href={item.href} aria-current={active ? "page" : undefined} className={active ? "active" : ""}>
+        <Icon /><span>{item.label}</span>{count > 0 && <b>{count > 99 ? "99+" : count}</b>}
+      </Link>;
+    })}
+  </nav>;
+}
+
 export function CashierMobileNavigation({ section, reservationCount = 0 }: { section: CashierNavigationSection; reservationCount?: number }) {
   const replaceNavigation = section !== "servicios";
-  return <PanelViewportPortal><nav className="panel-bottom-nav" aria-label="Accesos rápidos de caja">
+  return <PanelViewportPortal><nav className="panel-bottom-nav cashier-mobile-bottom-nav" aria-label="Accesos rápidos de caja">
     {cashierQuickNavigation.map(item => {
       const Icon = item.icon;
       const active = section === item.id;

@@ -1,0 +1,509 @@
+.cashier-shell {
+  --dash-bg: #f2efeb;
+  --dash-surface: #fffdfa;
+  --dash-card: #ffffff;
+  --dash-card-2: #f8f4f0;
+  --dash-line: rgba(57, 43, 38, .13);
+  --dash-cyan: #963b4a;
+  --dash-copper: #bd7955;
+  --dash-text: #282524;
+  --dash-muted: #746c68;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 92% 0, rgba(174, 125, 111, .1), transparent 34%), #f2efeb;
+  color: var(--dash-text);
+}
+.cashier-shell::before { opacity: 0; }
+.cashier-shell .dash-header {
+  height: 76px;
+  padding: 0 clamp(16px, 3vw, 42px);
+  background: rgba(255, 252, 248, .88);
+  border-color: rgba(57, 43, 38, .1);
+  box-shadow: 0 8px 28px rgba(44, 34, 31, .06);
+  backdrop-filter: blur(18px) saturate(1.15);
+}
+.cashier-shell .dash-brand .brand { color: #292523; }
+.cashier-shell .dash-live { color: #857c76; }
+.cashier-shell .dash-avatar { color: #803746; border-color: rgba(150, 59, 74, .18); background: #f4e9e6; box-shadow: none; }
+.cashier-shell .dash-user { color: #38312e !important; }
+.cashier-shell .dash-user small { color: #877d77; }
+.cashier-shell .dash-header .mode-switcher { position: static; margin-left: auto; transform: none; border-color: var(--dash-line); background: rgba(255,255,255,.7); }
+.cashier-shell .dash-header .mode-switcher a { color: #746c68; }
+.cashier-shell .dash-header .mode-switcher a.active { color: white; background: #843744; box-shadow: none; }
+.cashier-shell .dash-sidebar, .cashier-shell .admin-nav, .cashier-shell .mobile-nav-toggle { display: none !important; }
+.cashier-shell .cashier-layout { display: block !important; grid-template-columns: 1fr !important; min-height: 0; }
+.cashier-shell .cashier-content { width: 100%; max-width: 1640px; margin: 0 auto; padding: 22px clamp(16px, 3vw, 44px) 96px; animation: cashierPageIn .32s ease both; }
+.cashier-toolbar {
+  position: sticky;
+  top: 76px;
+  z-index: 30;
+  min-height: 62px;
+  margin: 0 0 28px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(255,255,255,.78);
+  border-radius: 16px;
+  background: rgba(255, 252, 248, .76);
+  box-shadow: 0 12px 30px rgba(47, 36, 32, .07);
+  backdrop-filter: blur(18px) saturate(1.18);
+}
+.cashier-desktop-nav { min-width: 0; display: flex; align-items: center; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.cashier-desktop-nav::-webkit-scrollbar { display: none; }
+.cashier-desktop-nav a {
+  position: relative;
+  min-height: 42px;
+  padding: 0 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  color: #655d58;
+  font-size: 11px;
+  font-weight: 650;
+  text-decoration: none;
+  transition: color .18s ease, background .18s ease, transform .18s ease;
+}
+.cashier-desktop-nav a svg { width: 16px; height: 16px; color: #8b7370; }
+.cashier-desktop-nav a:hover { color: #782f3c; background: rgba(150,59,74,.07); transform: translateY(-1px); }
+.cashier-desktop-nav a.active { color: #792f3c; border-color: rgba(150,59,74,.1); background: #f4e9e6; }
+.cashier-desktop-nav a.active svg { color: #963b4a; }
+.cashier-desktop-nav a b { min-width: 19px; height: 19px; display: inline-grid; place-items: center; border-radius: 20px; color: white; background: #963b4a; font-size: 10px; }
+.cashier-toolbar-tools { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.cashier-shell .cashier-toolbar-tools > * { color: #625955; }
+.cashier-shell .dash-page-heading { margin: 8px 0 26px; align-items: center; gap: 20px; }
+.cashier-shell .admin-title { margin: 0; display: flex; align-items: center; gap: 14px; }
+.cashier-shell .admin-title > svg { width: 44px; height: 44px; padding: 11px; color: #8d3543; border: 1px solid rgba(150,59,74,.16); border-radius: 14px; background: #f5e8e5; filter: none; }
+.cashier-shell .admin-title p { margin: 0 0 3px; color: #8d3543; font-size: 9px; font-weight: 800; letter-spacing: .13em; }
+.cashier-shell .admin-title h1 { margin: 0; color: #272321; font-size: clamp(27px, 3.2vw, 38px); font-weight: 560; letter-spacing: -.045em; text-shadow: none; }
+.cashier-shell .dash-status-pill { color: #716962; border-color: rgba(57,43,38,.12); background: rgba(255,255,255,.54); letter-spacing: .04em; }
+.cashier-shell .dash-status-pill.online i { background: #4b9b72; box-shadow: 0 0 0 4px rgba(75,155,114,.12); animation: none; }
+.cashier-shell .dash-status-pill.offline i { background: #b54b4b; box-shadow: 0 0 0 4px rgba(181,75,75,.1); }
+.cashier-shell .admin-panel { overflow: visible; padding: clamp(20px, 2.2vw, 30px); border-color: rgba(57,43,38,.1); border-radius: 19px; background: rgba(255,253,250,.92); box-shadow: 0 14px 38px rgba(52,39,34,.055); }
+.cashier-shell .admin-panel::after { display: none; }
+.cashier-shell .dash-list-head h2, .cashier-shell .admin-panel h2, .cashier-shell .admin-panel h3 { color: #2b2725; }
+.cashier-shell .dash-list-head small, .cashier-shell .admin-title p { color: #8d3543; }
+.cashier-shell .admin-help, .cashier-shell .admin-panel p { color: #746c68; }
+.cashier-shell .admin-list { border-color: rgba(57,43,38,.11); }
+.cashier-shell .admin-list article { border-color: rgba(57,43,38,.1); }
+.cashier-shell .admin-list article strong { color: #302b28; }
+.cashier-shell .admin-list article span, .cashier-shell .admin-list article small { color: #756c66; }
+.cashier-shell .admin-message { position: relative; top: auto; margin: 0 0 16px; color: #245f42; border: 1px solid #badcc8; background: #edf7f0; box-shadow: none; }
+.cashier-shell .admin-error { position: relative; top: auto; margin: 0 0 16px; color: #8e3434; border: 1px solid #e4baba; background: #fff0ee; box-shadow: none; }
+
+.cashier-dashboard-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0 0 20px; perspective: 1100px; }
+.cashier-tool-card {
+  position: relative;
+  min-height: 130px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.85);
+  border-radius: 18px;
+  color: #302a27;
+  background: rgba(255,253,250,.7);
+  box-shadow: 0 12px 28px rgba(52,39,34,.06), inset 0 1px rgba(255,255,255,.88);
+  backdrop-filter: blur(16px) saturate(1.2);
+  text-decoration: none;
+  transform-style: preserve-3d;
+  transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease;
+}
+.cashier-tool-card::before { content: ""; position: absolute; inset: -120% -35%; z-index: 0; opacity: .42; background: linear-gradient(112deg, transparent 42%, rgba(181,126,112,.11) 49%, rgba(150,59,74,.08) 54%, transparent 62%); animation: cashierGlassDrift 13s ease-in-out infinite; pointer-events: none; }
+.cashier-tool-card:hover { z-index: 1; border-color: rgba(150,59,74,.2); box-shadow: 0 20px 38px rgba(52,39,34,.11); transform: translateY(-4px) rotateX(1deg); }
+.cashier-tool-icon, .cashier-tool-copy, .cashier-tool-action, .cashier-tool-count { position: relative; z-index: 1; }
+.cashier-tool-icon { width: 46px; height: 46px; display: grid; place-items: center; border: 1px solid rgba(150,59,74,.12); border-radius: 14px; color: #8d3543; background: #f5e9e6; }
+.cashier-tool-icon svg { width: 20px; }
+.cashier-tool-copy { min-width: 0; display: grid; gap: 5px; }
+.cashier-tool-copy small { color: #8d3543; font-size: 9px; font-weight: 750; letter-spacing: .06em; }
+.cashier-tool-copy strong { font-size: 16px; letter-spacing: -.02em; }
+.cashier-tool-copy > span { color: #786e68; font-size: 11px; }
+.cashier-tool-action { display: flex; align-items: center; gap: 5px; color: #7f3440; font-size: 10px; font-weight: 750; white-space: nowrap; }
+.cashier-tool-action svg { width: 14px; }
+.cashier-tool-count { position: absolute; top: 13px; right: 13px; min-width: 22px; height: 22px; padding: 0 6px; display: grid; place-items: center; border-radius: 22px; color: white; background: #963b4a; font-size: 10px; }
+.cashier-queue { margin-top: 0; }
+.cashier-queue > .admin-help { margin: 7px 0 17px; }
+.cashier-quick-actions { display: grid; grid-template-columns: minmax(0,1fr); gap: 14px; margin-top: 18px; }
+.cashier-quick-action { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.cashier-quick-action > div { max-width: 710px; }
+.cashier-quick-action > div > small { color: #8d3543; font-size: 9px; font-weight: 800; letter-spacing: .08em; }
+.cashier-quick-action h2 { margin: 7px 0; }
+.cashier-quick-action p { margin: 0; line-height: 1.55; }
+.cashier-quick-action .cashier-workflow-launch { flex: 0 0 auto; }
+
+.cashier-workflow-launch, .cashier-shell .button-dark, .cashier-checkout-button {
+  min-height: 46px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid #843744;
+  border-radius: 12px;
+  color: #fffdfb;
+  background: linear-gradient(135deg, #843744, #a64d58);
+  box-shadow: 0 8px 18px rgba(132,55,68,.17);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.cashier-workflow-launch svg, .cashier-checkout-button svg { width: 17px; height: 17px; }
+.cashier-workflow-launch:hover, .cashier-shell .button-dark:hover:not(:disabled), .cashier-checkout-button:hover:not(:disabled) { box-shadow: 0 12px 25px rgba(132,55,68,.23); transform: translateY(-2px); }
+.cashier-workflow-launch.secondary { color: #783744; border-color: rgba(132,55,68,.18); background: #f6e9e7; box-shadow: none; }
+.cashier-workflow-launch.ghost { color: #783744; border-color: rgba(132,55,68,.18); background: transparent; box-shadow: none; }
+.cashier-workflow-launch:focus-visible, .cashier-shell button:focus-visible, .cashier-desktop-nav a:focus-visible { outline: 3px solid rgba(150,59,74,.25); outline-offset: 3px; }
+.cashier-shell button:disabled { opacity: .5; cursor: not-allowed; }
+
+.cashier-workflow-dialog { position: fixed; inset: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; overflow: hidden; border: 0; color: #2a2624; background: transparent; }
+.cashier-workflow-dialog::backdrop { background: rgba(32,25,23,.44); backdrop-filter: blur(8px); }
+.cashier-workflow-screen { width: 100%; height: 100%; display: grid; grid-template-rows: auto minmax(0,1fr); overflow: hidden; background: radial-gradient(ellipse at 90% 2%, rgba(174,125,111,.11), transparent 33%), #f6f3ef; animation: cashierWorkflowIn .22s ease both; }
+.cashier-workflow-header { min-height: 70px; padding: 10px clamp(16px, 3vw, 42px); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px; border-bottom: 1px solid rgba(57,43,38,.12); background: rgba(255,253,250,.86); backdrop-filter: blur(18px); }
+.cashier-workflow-brand { display: flex; align-items: center; gap: 12px; }
+.cashier-workflow-brand .brand { color: #2c2725; }
+.cashier-workflow-brand > span { padding-left: 12px; border-left: 1px solid rgba(57,43,38,.16); color: #8d3543; font-size: 10px; font-weight: 750; }
+.cashier-workflow-back, .cashier-workflow-close { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(57,43,38,.12); border-radius: 12px; color: #554d49; background: rgba(255,255,255,.8); cursor: pointer; }
+.cashier-workflow-back { padding: 0 14px; }
+.cashier-workflow-back svg { width: 17px; }
+.cashier-workflow-close { width: 42px; justify-self: end; }
+.cashier-workflow-main { width: 100%; overflow: auto; overscroll-behavior: contain; padding: 30px clamp(16px, 4vw, 58px) 64px; }
+.cashier-workflow-heading { width: min(100%, 1320px); margin: 0 auto 24px; }
+.cashier-workflow-heading p { margin: 0 0 4px; color: #8d3543; font-size: 9px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+.cashier-workflow-heading h1 { margin: 0; color: #292523; font-size: clamp(28px, 3.5vw, 42px); font-weight: 560; letter-spacing: -.045em; }
+.cashier-workflow-heading > span { display: block; margin-top: 8px; color: #756c66; font-size: 13px; line-height: 1.55; }
+.cashier-workflow-error { margin: 18px 0 0; padding: 12px 15px; border: 1px solid rgba(158,43,54,.2); border-radius: 12px; color: #8b2634; background: #fff0ef; font-size: 13px; }
+.cashier-workflow-content { width: min(100%, 1320px); margin: 0 auto; }
+.cashier-workflow-content > .admin-form { padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px; border: 0; border-radius: 0; background: transparent; }
+.cashier-workflow-content .admin-form > label, .cashier-workflow-content .admin-form .cashier-line-group, .cashier-workflow-content .admin-form .cashier-benefits, .cashier-workflow-content .admin-form .cashier-total-preview { min-width: 0; }
+.cashier-workflow-content .admin-form > .wide { grid-column: 1 / -1; }
+.cashier-workflow-content .admin-form label { color: #49413d; font-size: 12px; font-weight: 650; }
+.cashier-workflow-content .admin-form input:not([type="hidden"]), .cashier-workflow-content .admin-form textarea, .cashier-workflow-content .admin-form select { min-height: 46px; margin-top: 7px; padding: 11px 12px; color: #312b28; border: 1px solid rgba(57,43,38,.16); border-radius: 11px; background: #fffdfa; box-shadow: 0 2px 5px rgba(49,37,32,.025); }
+.cashier-workflow-content .admin-form input:focus, .cashier-workflow-content .admin-form textarea:focus, .cashier-workflow-content .admin-form select:focus { border-color: rgba(150,59,74,.6); outline: 0; box-shadow: 0 0 0 3px rgba(150,59,74,.1); }
+.cashier-workflow-content .admin-form .button-dark { grid-column: 1 / -1; justify-self: end; }
+.cashier-workflow-content .admin-form .cashier-line-group, .cashier-workflow-content .admin-form .cashier-benefits { padding: 18px; border: 1px solid rgba(57,43,38,.12); border-radius: 16px; background: rgba(255,253,250,.82); }
+
+.cashier-client-fields { min-width: 0; padding: 18px; border: 1px solid rgba(57,43,38,.12); border-radius: 16px; background: rgba(255,253,250,.84); }
+.cashier-client-fields legend, .cashier-line-group legend, .cashier-benefits legend { padding: 0 8px; color: #8d3543; font-size: 13px; font-weight: 750; }
+.cashier-client-modes, .cashier-benefit-modes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+.cashier-client-modes button, .cashier-benefit-modes button, .cashier-history-filters button {
+  min-height: 40px; padding: 0 14px; border: 1px solid rgba(57,43,38,.13); border-radius: 11px; color: #625954; background: #fffdfa; font-size: 11px; font-weight: 650; cursor: pointer; transition: color .17s ease, border-color .17s ease, background .17s ease;
+}
+.cashier-client-modes button.active, .cashier-benefit-modes button.active, .cashier-history-filters button.active { color: #7c303e; border-color: rgba(150,59,74,.2); background: #f4e8e5; }
+.cashier-client-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+.cashier-client-search { display: block; position: relative; }
+.cashier-client-search > label { display: grid; gap: 7px; color: #49413d; font-size: 12px; font-weight: 650; }
+.cashier-client-results { position: absolute; z-index: 25; top: calc(100% + 4px); left: 0; right: 0; max-height: 300px; overflow: auto; padding: 5px; border: 1px solid rgba(57,43,38,.14); border-radius: 13px; background: #fffdfa; box-shadow: 0 14px 32px rgba(46,34,29,.15); }
+.cashier-client-results button { width: 100%; min-height: 48px; padding: 8px 10px; display: grid; gap: 4px; text-align: left; border: 0; border-radius: 9px; color: #312a27; background: transparent; cursor: pointer; }
+.cashier-client-results button:hover, .cashier-client-results button[aria-selected="true"] { background: #f5ece8; }
+.cashier-client-results button small, .cashier-client-results p { color: #796f69; font-size: 11px; }
+.cashier-client-results p { margin: 8px; }
+.cashier-client-selected, .cashier-client-picked { min-height: 52px; padding: 9px 11px; display: flex; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid rgba(76,142,103,.22); border-radius: 12px; background: #f0f7f1; }
+.cashier-client-selected > span, .cashier-client-picked > span { display: grid; gap: 3px; }
+.cashier-client-selected small, .cashier-client-picked small { color: #716a64; font-size: 10px; }
+.cashier-client-selected button, .cashier-client-picked button { min-height: 34px; padding: 0 10px; border: 1px solid rgba(57,43,38,.12); border-radius: 9px; color: #743541; background: white; cursor: pointer; }
+.cashier-client-profile { margin-top: 12px; padding: 14px; border: 1px solid rgba(57,43,38,.1); border-radius: 14px; background: linear-gradient(120deg, rgba(255,255,255,.95), rgba(248,242,237,.9)); }
+.cashier-client-profile-head { display: grid; grid-template-columns: 40px minmax(0,1fr) auto; align-items: center; gap: 11px; }
+.cashier-client-avatar { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 13px; color: #803542; background: #f2e3df; font-weight: 800; }
+.cashier-client-profile-head > span:nth-child(2), .cashier-client-points { display: grid; gap: 3px; }
+.cashier-client-profile-head small, .cashier-client-profile-meta small { color: #8d3543; font-size: 8px; font-weight: 800; letter-spacing: .08em; }
+.cashier-client-profile-head strong { color: #302b28; font-size: 13px; }
+.cashier-client-profile-head > span:nth-child(2) > span { color: #766e69; font-size: 10px; }
+.cashier-client-points { min-width: 68px; padding: 8px 11px; text-align: center; border: 1px solid rgba(150,59,74,.1); border-radius: 11px; background: rgba(255,255,255,.8); }
+.cashier-client-points strong { color: #823644; font-size: 19px; }
+.cashier-client-profile-meta { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 18px; }
+.cashier-client-profile-meta > span { display: grid; gap: 3px; }
+.cashier-client-profile-meta strong { color: #4a413c; font-size: 10px; }
+.cashier-client-profile ol { margin: 10px 0 0; padding: 8px 0 0; display: grid; gap: 7px; border-top: 1px solid rgba(57,43,38,.1); list-style: none; }
+.cashier-client-profile li { display: flex; align-items: flex-start; gap: 12px; color: #514944; font-size: 10px; }
+.cashier-client-profile time { min-width: 92px; color: #776d67; }
+.cashier-client-profile li span { display: grid; gap: 2px; font-weight: 650; }
+.cashier-client-profile li small { color: #827873; font-weight: 450; }
+.cashier-client-help { margin: 0; color: #756c66; font-size: 11px; line-height: 1.5; }
+
+.cashier-line-group { display: grid; gap: 12px; }
+.cashier-service-line { padding: 15px; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 15px; border: 1px solid rgba(57,43,38,.1); border-radius: 14px; background: #fffdfa; }
+.cashier-line-number { grid-column: 1 / -1; color: #8d3543; font-size: 10px; font-weight: 800; letter-spacing: .06em; }
+.cashier-choice-field { min-width: 0; display: grid; gap: 7px; color: #49413d; font-size: 11px; font-weight: 700; }
+.cashier-choice-buttons { display: grid; grid-template-columns: repeat(auto-fit,minmax(115px,1fr)); gap: 7px; }
+.cashier-choice-buttons button, .cashier-checkout-products > button {
+  min-height: 46px; padding: 8px 10px; display: grid; align-content: center; justify-items: start; gap: 4px; border: 1px solid rgba(57,43,38,.13); border-radius: 11px; color: #554c47; background: #fffdfa; text-align: left; cursor: pointer; transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+.cashier-choice-buttons button:hover, .cashier-checkout-products > button:hover { border-color: rgba(150,59,74,.25); transform: translateY(-1px); }
+.cashier-choice-buttons button.active, .cashier-checkout-products > button.active { color: #783541; border-color: rgba(150,59,74,.28); background: #f7eeeb; box-shadow: inset 0 0 0 1px rgba(150,59,74,.05); }
+.cashier-choice-buttons button strong, .cashier-checkout-products > button span { font-size: 11px; font-weight: 720; }
+.cashier-choice-buttons button small, .cashier-checkout-products > button small { color: #786e68; font-size: 9px; }
+.cashier-add-line, .cashier-remove-line, .cashier-option-toggle, .cashier-split-add { min-height: 42px; padding: 0 13px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(150,59,74,.17); border-radius: 11px; color: #7b3441; background: #f7edeb; font-size: 11px; font-weight: 700; cursor: pointer; }
+.cashier-add-line svg, .cashier-remove-line svg, .cashier-option-toggle svg, .cashier-split-add svg { width: 16px; height: 16px; }
+.cashier-remove-line { justify-self: start; color: #8c4d49; border-color: rgba(155,76,67,.16); background: #fff4f1; }
+.cashier-option-toggle { justify-self: start; }
+.cashier-option-toggle.active { color: #fff; border-color: #843744; background: #843744; }
+.cashier-checkout-products { padding: 15px; display: grid; grid-template-columns: repeat(auto-fill,minmax(170px,1fr)); gap: 8px; border: 1px solid rgba(57,43,38,.1); border-radius: 14px; background: rgba(255,253,250,.8); }
+.cashier-checkout-products .cashier-choice-field, .cashier-checkout-products .cashier-product-quantity-choice { grid-column: 1 / -1; }
+.cashier-product-quantity-choice { display: flex; align-items: center; gap: 10px; color: #514944; font-size: 12px; }
+.cashier-product-quantity-choice span { margin-right: auto; }
+.cashier-product-quantity-choice button { width: 40px; height: 40px; border: 1px solid rgba(57,43,38,.13); border-radius: 11px; color: #743541; background: white; font-size: 19px; cursor: pointer; }
+.cashier-product-quantity-choice strong { min-width: 22px; text-align: center; }
+.cashier-benefit-modes button { display: inline-flex; align-items: center; gap: 6px; }
+.cashier-benefit-modes button svg { width: 15px; }
+.cashier-reward-options { display: grid; gap: 8px; }
+.cashier-reward-options label { min-height: 60px; padding: 10px 12px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 11px; border: 1px solid rgba(57,43,38,.12); border-radius: 12px; background: white; cursor: pointer; }
+.cashier-reward-options label.selected { border-color: rgba(150,59,74,.28); background: #f7efec; }
+.cashier-reward-options label > span { display: grid; gap: 4px; }
+.cashier-reward-options small { color: #746c68; }
+.cashier-vip-panel { padding: 13px; border: 1px solid rgba(57,43,38,.1); border-radius: 12px; background: #faf7f4; }
+.cashier-total-preview { padding: 15px 18px; display: grid; gap: 8px; border: 1px solid rgba(57,43,38,.1); border-radius: 14px; background: #f8f4f0; }
+.cashier-total-preview > span { display: flex; align-items: center; justify-content: space-between; color: #726963; font-size: 11px; }
+.cashier-total-preview strong { padding-top: 8px; display: flex; align-items: center; justify-content: space-between; gap: 15px; border-top: 1px solid rgba(57,43,38,.11); color: #342c29; font-size: 14px; }
+.cashier-total-preview strong b { color: #823644; font-size: 20px; }
+
+.cashier-payment-splits { min-width: 0; padding: 15px; display: grid; gap: 11px; border: 1px solid rgba(57,43,38,.1); border-radius: 14px; background: rgba(255,253,250,.85); }
+.cashier-split-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #3f3733; font-size: 12px; }
+.cashier-split-heading > span { color: #8a4a45; font-size: 10px; font-weight: 650; }
+.cashier-split-heading > span.complete { color: #43815d; }
+.cashier-payment-split { display: grid; grid-template-columns: minmax(0,1fr) minmax(105px,160px) 36px; align-items: end; gap: 10px; }
+.cashier-payment-methods { display: grid; grid-template-columns: repeat(auto-fit,minmax(85px,1fr)); gap: 6px; }
+.cashier-payment-methods button { min-height: 39px; padding: 5px 8px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid rgba(57,43,38,.12); border-radius: 10px; color: #5f5650; background: white; font-size: 10px; cursor: pointer; }
+.cashier-payment-methods button svg { width: 15px; height: 15px; }
+.cashier-payment-methods button.active { color: #7e3441; border-color: rgba(150,59,74,.25); background: #f5e9e6; }
+.cashier-payment-methods button:disabled { opacity: .42; cursor: not-allowed; }
+.cashier-split-amount { display: grid; gap: 5px; color: #625954; font-size: 10px; font-weight: 650; }
+.cashier-split-amount input { width: 100%; min-height: 39px !important; margin: 0 !important; }
+.cashier-split-remove { width: 36px; height: 39px; border: 1px solid rgba(57,43,38,.12); border-radius: 10px; color: #8c4a46; background: white; cursor: pointer; }
+.cashier-split-remove svg { width: 15px; }
+.cashier-split-add { justify-self: start; min-height: 36px; }
+.cashier-split-hint { margin: 0; color: #786f69; font-size: 10px; }
+
+.cashier-pos-form { width: 100%; }
+.cashier-pos-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(340px,410px); align-items: start; gap: 20px; }
+.cashier-catalog, .cashier-cart { min-width: 0; padding: 19px; border: 1px solid rgba(57,43,38,.11); border-radius: 17px; background: rgba(255,253,250,.92); box-shadow: 0 10px 26px rgba(52,39,34,.045); }
+.cashier-catalog-heading, .cashier-cart-heading { margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cashier-catalog-heading p, .cashier-cart-heading p { margin: 0 0 3px; color: #8d3543; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.cashier-catalog-heading h2, .cashier-cart-heading h2 { margin: 0; display: flex; align-items: center; gap: 8px; color: #2e2926; font-size: 21px; letter-spacing: -.03em; }
+.cashier-catalog-heading > span { color: #766d68; font-size: 10px; }
+.cashier-cart-heading h2 svg { width: 19px; }
+.cashier-catalog-search { min-height: 45px; margin-bottom: 12px; padding: 0 12px; display: flex; align-items: center; gap: 9px; border: 1px solid rgba(57,43,38,.13); border-radius: 12px; color: #8a7d76; background: white; }
+.cashier-catalog-search svg { width: 17px; }
+.cashier-catalog-search input { min-width: 0; width: 100%; min-height: 42px; border: 0; outline: 0; color: #302b28; background: transparent; }
+.cashier-category-tabs { margin: 0 0 14px; display: flex; gap: 7px; overflow-x: auto; scrollbar-width: thin; }
+.cashier-category-tabs button { min-height: 34px; padding: 0 12px; flex: 0 0 auto; border: 1px solid rgba(57,43,38,.11); border-radius: 20px; color: #675e58; background: white; font-size: 10px; cursor: pointer; }
+.cashier-category-tabs button.active { color: white; border-color: #843744; background: #843744; }
+.cashier-product-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(155px,1fr)); gap: 10px; }
+.cashier-product-tile { min-width: 0; padding: 0; overflow: hidden; display: grid; grid-template-rows: auto 1fr; border: 1px solid rgba(57,43,38,.1); border-radius: 14px; color: #302a27; background: white; text-align: left; cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.cashier-product-tile:hover:not(:disabled) { border-color: rgba(150,59,74,.3); box-shadow: 0 10px 22px rgba(52,39,34,.1); transform: translateY(-3px) rotateX(.5deg); }
+.cashier-product-tile:disabled { opacity: .46; cursor: not-allowed; }
+.cashier-product-tile.in-cart { border-color: rgba(150,59,74,.34); box-shadow: 0 0 0 1px rgba(150,59,74,.08); }
+.cashier-product-photo { position: relative; aspect-ratio: 1.25; display: grid; place-items: center; overflow: hidden; color: #9a827b; background: linear-gradient(145deg,#f5f0eb,#eee5df); }
+.cashier-product-photo img { object-fit: cover; }
+.cashier-product-photo > svg { width: 26px; }
+.cashier-product-quantity { position: absolute; top: 8px; right: 8px; min-width: 24px; height: 24px; padding: 0 5px; display: grid; place-items: center; border: 2px solid white; border-radius: 20px; color: white; background: #843744; font-size: 10px; }
+.cashier-product-tile-copy { min-width: 0; padding: 10px; display: grid; gap: 5px; }
+.cashier-product-tile-copy > strong { overflow: hidden; color: #342d29; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.cashier-product-tile-copy > small { overflow: hidden; color: #7a706a; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.cashier-product-tile-copy > span { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.cashier-product-tile-copy > span b { color: #803542; font-size: 12px; }
+.cashier-product-tile-copy > span i { color: #8c817b; font-size: 8px; font-style: normal; }
+.cashier-catalog-empty, .cashier-cart-empty { min-height: 170px; display: grid; place-content: center; justify-items: center; gap: 8px; color: #766b65; text-align: center; }
+.cashier-catalog-empty svg, .cashier-cart-empty svg { width: 24px; height: 24px; color: #9a555d; }
+.cashier-catalog-empty strong, .cashier-cart-empty strong { color: #403733; font-size: 12px; }
+.cashier-catalog-empty span, .cashier-cart-empty span { font-size: 10px; }
+.cashier-cart { position: sticky; top: 154px; max-height: calc(100dvh - 174px); overflow-y: auto; }
+.cashier-cart-clear { min-height: 34px; padding: 0 11px; border: 1px solid rgba(57,43,38,.12); border-radius: 9px; color: #7f3642; background: white; font-size: 10px; cursor: pointer; }
+.cashier-cart-lines { display: grid; gap: 9px; }
+.cashier-cart-line { min-width: 0; padding-bottom: 9px; display: grid; grid-template-columns: 50px minmax(0,1fr) auto; align-items: center; gap: 9px; border-bottom: 1px solid rgba(57,43,38,.09); }
+.cashier-cart-photo { position: relative; width: 50px; height: 50px; display: grid; place-items: center; overflow: hidden; border-radius: 10px; color: #9a827b; background: #f1eae4; }
+.cashier-cart-photo img { object-fit: cover; }
+.cashier-cart-photo svg { width: 17px; }
+.cashier-cart-line-copy { min-width: 0; display: grid; gap: 4px; }
+.cashier-cart-line-copy > strong { overflow: hidden; color: #37302c; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.cashier-cart-line-copy > small { color: #766c66; font-size: 9px; }
+.cashier-quantity-control { display: flex; align-items: center; gap: 5px; }
+.cashier-quantity-control button { width: 27px; height: 27px; display: grid; place-items: center; border: 1px solid rgba(57,43,38,.12); border-radius: 8px; color: #713440; background: white; cursor: pointer; }
+.cashier-quantity-control button svg { width: 13px; }
+.cashier-quantity-control button.remove { margin-left: 3px; color: #98524c; }
+.cashier-quantity-control b { min-width: 17px; color: #443b37; font-size: 10px; text-align: center; }
+.cashier-cart-line-total { color: #403631; font-size: 10px; white-space: nowrap; }
+.cashier-cart-client { margin: 13px 0; display: grid; gap: 7px; }
+.cashier-cart-client > label { color: #463d38; font-size: 10px; font-weight: 700; }
+.cashier-cart-client > label small { margin-left: 4px; color: #827772; font-weight: 450; }
+.cashier-client-picker { position: relative; min-height: 42px; padding: 0 10px; display: flex; align-items: center; gap: 7px; border: 1px solid rgba(57,43,38,.13); border-radius: 11px; background: white; }
+.cashier-client-picker > svg { width: 15px; color: #8b7770; }
+.cashier-client-picker input { min-width: 0; width: 100%; height: 40px; border: 0; outline: 0; color: #302b28; background: transparent; font-size: 10px; }
+.cashier-client-picked { min-height: 44px; }
+.cashier-client-picked strong { font-size: 10px; }
+.cashier-client-picked button { min-height: 30px; font-size: 9px; }
+.cashier-barber-picker { display: grid; gap: 5px; color: #574c46; font-size: 10px; }
+.cashier-barber-picker select { min-height: 39px; padding: 8px 10px; border: 1px solid rgba(57,43,38,.12); border-radius: 10px; background: white; }
+.cashier-cart-note { margin: 0; color: #52815f; font-size: 9px; }
+.cashier-promotion-toggle { min-height: 38px; display: flex; align-items: center; gap: 9px; color: #5c514b; font-size: 10px; }
+.cashier-promotion-toggle input { accent-color: #843744; }
+.cashier-promotion-code { display: grid; gap: 5px; color: #584e49; font-size: 10px; }
+.cashier-promotion-code input { min-height: 38px; padding: 8px; border: 1px solid rgba(57,43,38,.13); border-radius: 10px; }
+.cashier-cart-total { margin: 14px 0 10px; padding: 13px 0 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; border-top: 1px solid rgba(57,43,38,.11); color: #766c66; font-size: 10px; }
+.cashier-cart-total > div { display: grid; justify-items: end; gap: 3px; }
+.cashier-cart-total small { color: #766c66; font-size: 9px; }
+.cashier-cart-total strong { color: #783441; font-size: 24px; letter-spacing: -.04em; }
+.cashier-checkout-button { width: 100%; min-height: 49px; }
+
+.cashier-loading { --loading-line: rgba(98,76,67,.1); min-height: 100vh; padding: 26px clamp(16px, 3vw, 42px); display: grid; align-content: start; gap: 22px; background: #f2efeb; }
+.cashier-loading-brand { width: fit-content; color: #37302c; font-size: 13px; font-weight: 850; letter-spacing: .16em; }
+.cashier-loading-brand i { width: 7px; height: 7px; margin-left: 9px; display: inline-block; border-radius: 50%; background: #70a382; }
+.cashier-loading-toolbar, .cashier-loading-heading, .cashier-loading-cards, .cashier-loading-panel { border: 1px solid rgba(255,255,255,.9); border-radius: 16px; background: rgba(255,253,250,.82); box-shadow: 0 10px 25px rgba(52,39,34,.04); }
+.cashier-loading-toolbar { min-height: 60px; padding: 10px; display: flex; gap: 8px; }
+.cashier-loading-toolbar span { width: 110px; height: 38px; border-radius: 10px; background: var(--loading-line); animation: cashierShimmer 1.3s linear infinite; }
+.cashier-loading-heading { min-height: 85px; padding: 18px; display: flex; align-items: center; gap: 14px; }
+.cashier-loading-heading > span { width: 44px; height: 44px; border-radius: 14px; background: var(--loading-line); animation: cashierShimmer 1.3s linear infinite; }
+.cashier-loading-heading div { display: grid; gap: 10px; }
+.cashier-loading-heading i, .cashier-loading-heading b { height: 12px; border-radius: 8px; background: var(--loading-line); animation: cashierShimmer 1.3s linear infinite; }
+.cashier-loading-heading i { width: 95px; }.cashier-loading-heading b { width: min(34vw,380px); height: 24px; }
+.cashier-loading-cards { padding: 14px; display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.cashier-loading-cards span { height: 100px; border-radius: 13px; background: var(--loading-line); animation: cashierShimmer 1.3s linear infinite; }
+.cashier-loading-panel { min-height: 230px; padding: 20px; display: grid; align-content: start; gap: 13px; }
+.cashier-loading-panel span { height: 34px; border-radius: 9px; background: var(--loading-line); animation: cashierShimmer 1.3s linear infinite; }
+.cashier-loading-label { justify-self: center; color: #766b65; font-size: 11px; }
+
+.cashier-shell .settlement-metrics article, .cashier-shell .settlement-columns > section, .cashier-shell .settlement-action-panel, .cashier-shell .settlement-history { border-color: rgba(57,43,38,.11); background: rgba(255,253,250,.9); }
+.cashier-shell .settlement-metrics article span, .cashier-shell .settlement-columns p, .cashier-shell .settlement-history span { color: #756c66; }
+.cashier-shell .settlement-metrics strong { color: #332c28; }
+.cashier-shell .settlement-metrics .net strong { color: #803542; }
+.cashier-shell .settlement-payment-summary > div { color: #403834; background: #f8f4f0; }
+.cashier-shell .settlement-payment-summary .total { border-color: rgba(57,43,38,.12); }
+.cashier-shell .settlement-payment-summary .total strong { color: #803542; }
+.cashier-shell .cashier-ledger-summary article, .cashier-shell .cashier-reservation-overview article, .cashier-shell .cashier-settlement-overview article { border-color: rgba(57,43,38,.1); background: #f9f6f2; }
+.cashier-shell .cashier-ledger-summary article span, .cashier-shell .cashier-reservation-overview article span, .cashier-shell .cashier-settlement-overview article span { color: #756c66; }
+.cashier-shell .cashier-ledger-summary article strong, .cashier-shell .cashier-reservation-overview article strong, .cashier-shell .cashier-settlement-overview article strong { color: #342d29; }
+.cashier-shell .cashier-ledger-table, .cashier-shell .cashier-reservation-list > article, .cashier-shell .cashier-reservation-list dl > div { border-color: rgba(57,43,38,.11); background: #fffdfa; }
+.cashier-shell .cashier-ledger-table .ledger-head { color: #7c3441; background: #f4e9e6; }
+.cashier-shell .cashier-ledger-table .ledger-row { color: #4a413c; border-color: rgba(57,43,38,.09); }
+.cashier-shell .cashier-ledger-table b, .cashier-shell .cashier-reservation-list dd { color: #342d29; }
+.cashier-shell .cashier-history-filters { display: flex; gap: 7px; margin: 14px 0; }
+.cashier-shell .cashier-empty-state, .cashier-shell .cashier-inline-empty { border-color: rgba(57,43,38,.12); color: #6f655f; background: #faf7f3; }
+.cashier-shell .cashier-empty-state strong, .cashier-shell .cashier-inline-empty strong { color: #332c28; }
+.cashier-shell .cashier-detail-link { color: #803542; border-color: rgba(150,59,74,.14); background: #f8efec; }
+.cashier-shell .settlement-back { margin: 0 0 15px; color: #803542; }
+.cashier-shell .cashier-compact-status { margin: 0 0 14px; display: flex; gap: 9px; }
+.cashier-shell .cashier-compact-status span { padding: 8px 12px; border: 1px solid rgba(57,43,38,.1); border-radius: 22px; color: #716862; background: rgba(255,253,250,.7); font-size: 10px; }
+.cashier-shell .cashier-compact-status b { color: #803542; }
+.cashier-shell .cashier-welcome { min-height: 420px; color: #302a27; background: rgba(255,253,250,.94); }
+.cashier-shell .cashier-welcome h2 { color: #302a27; }
+.cashier-shell .cashier-welcome > p:not(.eyebrow) { color: #746c68; }
+.cashier-shell .cashier-orb { color: #8d3543; border-color: rgba(150,59,74,.17); background: #f5e9e6; box-shadow: none; animation: none; }
+.cashier-shell .cashier-ledger-meta { color: #726862; }
+.cashier-shell .cashier-ledger-meta span { border-color: rgba(57,43,38,.1); }
+.cashier-shell .cashier-print-header { color: #332c28; }
+.cashier-shell .cashier-reservation-main h3, .cashier-shell .cashier-reservation-main p { color: #352e2a; }
+.cashier-shell .cashier-reservation-icon { color: #843744; background: #f4e8e5; }
+.cashier-shell .cashier-reservation-list dt { color: #756c66; }
+.cashier-shell .cashier-reservation-list dd { color: #362f2b; }
+.cashier-shell .cashier-reservation-summary { padding: 15px; display: grid; gap: 5px; border-radius: 12px; background: #f7f1ec; }
+.cashier-shell .cashier-reservation-summary strong { color: #332c28; }
+.cashier-shell .cashier-reservation-summary span { color: #756c66; }
+.cashier-shell .cashier-reservation-checkout > .cashier-choice-field { grid-column: 1 / -1; }
+.cashier-shell .cashier-reservation-checkout > .cashier-payment-splits { grid-column: 1 / -1; }
+
+.cashier-shell .panel-bottom-nav { border: 1px solid rgba(255,255,255,.88); background: rgba(255,253,250,.9); box-shadow: 0 10px 32px rgba(44,34,31,.13); backdrop-filter: blur(18px); }
+.cashier-shell .panel-bottom-nav a { color: #746b65; }
+.cashier-shell .panel-bottom-nav a.active { color: #843744; }
+.cashier-shell .panel-bottom-nav a.active i { background: #843744; }
+.cashier-shell .panel-bottom-nav svg { color: currentColor; }
+
+@keyframes cashierPageIn { from { opacity: .4; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@keyframes cashierWorkflowIn { from { opacity: .7; transform: scale(.995); } to { opacity: 1; transform: scale(1); } }
+@keyframes cashierGlassDrift { 0%, 40% { transform: translateX(-22%) rotate(0); } 75%, 100% { transform: translateX(22%) rotate(0); } }
+@keyframes cashierShimmer { 0% { opacity: .55; } 50% { opacity: 1; } 100% { opacity: .55; } }
+@media (max-width: 1050px) {
+  .cashier-dashboard-tools { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .cashier-pos-layout { grid-template-columns: minmax(0,1fr) 350px; gap: 12px; }
+  .cashier-product-grid { grid-template-columns: repeat(auto-fill,minmax(135px,1fr)); }
+}
+@media (max-width: 760px) {
+  .cashier-shell .dash-header { min-height: 68px; height: auto; padding: 9px 13px; gap: 8px; }
+  .cashier-shell .dash-header .mode-switcher { order: 3; width: 100%; margin: 0; justify-content: center; }
+  .cashier-shell .install-app-button { display: none; }
+  .cashier-shell .cashier-content { padding: 12px 12px 90px; }
+  .cashier-toolbar { position: sticky; top: 102px; min-height: 58px; margin-bottom: 18px; padding: 6px; border-radius: 13px; }
+  .cashier-desktop-nav { display: none; }
+  .cashier-toolbar-tools { width: 100%; justify-content: flex-end; }
+  .cashier-shell .dash-page-heading { margin: 8px 0 18px; align-items: flex-start; flex-direction: column; gap: 10px; }
+  .cashier-shell .admin-title h1 { font-size: 27px; }
+  .cashier-dashboard-tools { grid-template-columns: 1fr; gap: 9px; }
+  .cashier-tool-card { min-height: 100px; padding: 14px; grid-template-columns: 42px minmax(0,1fr) auto; border-radius: 15px; }
+  .cashier-tool-icon { width: 42px; height: 42px; }
+  .cashier-tool-copy strong { font-size: 14px; }
+  .cashier-tool-action { font-size: 9px; }
+  .cashier-quick-action { align-items: stretch; flex-direction: column; gap: 15px; }
+  .cashier-quick-action .cashier-workflow-launch { width: 100%; }
+  .cashier-pos-layout { grid-template-columns: 1fr; }
+  .cashier-cart { position: static; max-height: none; order: -1; }
+  .cashier-product-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .cashier-workflow-header { min-height: 60px; padding: 8px 12px; grid-template-columns: 1fr auto; }
+  .cashier-workflow-brand { display: none; }
+  .cashier-workflow-back { justify-self: start; }
+  .cashier-workflow-main { padding: 20px 13px 40px; }
+  .cashier-workflow-heading { margin-bottom: 17px; }
+  .cashier-workflow-heading h1 { font-size: 29px; }
+  .cashier-workflow-heading > span { font-size: 11px; }
+  .cashier-workflow-content > .admin-form { grid-template-columns: 1fr; gap: 13px; }
+  .cashier-workflow-content .admin-form > .wide, .cashier-workflow-content .admin-form .button-dark { grid-column: auto; }
+  .cashier-client-grid, .cashier-service-line { grid-template-columns: 1fr; }
+  .cashier-client-fields, .cashier-workflow-content .admin-form .cashier-line-group, .cashier-workflow-content .admin-form .cashier-benefits { padding: 13px; }
+  .cashier-payment-split { grid-template-columns: minmax(0,1fr) 96px 32px; gap: 6px; }
+  .cashier-payment-methods { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .cashier-payment-methods button { min-height: 36px; }
+  .cashier-split-amount { font-size: 9px; }
+  .cashier-split-remove { width: 32px; }
+  .cashier-shell .admin-panel { padding: 18px 14px; }
+  .cashier-shell .cashier-history-filters { flex-wrap: wrap; }
+  .cashier-shell .cashier-ledger-table { overflow-x: auto; }
+  .cashier-shell .cashier-ledger-table .ledger-row { min-width: 650px; }
+  .panel-theme.panel-viewport-layer .cashier-mobile-bottom-nav {
+    position: fixed !important;
+    z-index: 80;
+    left: 10px;
+    right: 10px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    width: auto;
+    height: 62px;
+    max-width: 580px;
+    padding: 3px;
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0,1fr));
+    border: 1px solid rgba(255,255,255,.92);
+    border-radius: 17px;
+    background: rgba(255,253,250,.92);
+    box-shadow: 0 10px 30px rgba(44,34,31,.16);
+    backdrop-filter: blur(18px);
+  }
+  .panel-theme.panel-viewport-layer .cashier-mobile-bottom-nav > a { min-width: 0; display: grid; align-content: center; justify-items: center; gap: 3px; color: #776c66; }
+  .panel-theme.panel-viewport-layer .cashier-mobile-bottom-nav > a > svg { width: 18px; height: 18px; }
+  .panel-theme.panel-viewport-layer .cashier-mobile-bottom-nav > a > span { max-width: 58px; overflow: hidden; color: inherit; font-size: 7px; line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
+  .panel-theme.panel-viewport-layer .cashier-mobile-bottom-nav > a.active { color: #843744; }
+  .panel-theme.panel-viewport-layer .cashier-mobile-bottom-nav > a.active > svg { color: #843744; }
+  .panel-theme.panel-viewport-layer .cashier-mobile-bottom-nav > a.active i { background: #843744; }
+  .panel-theme.panel-viewport-layer .cashier-mobile-bottom-nav .panel-bottom-badge { top: 3px; left: calc(50% + 3px); background: #843744; }
+}
+@media (max-width: 420px) {
+  .cashier-tool-card { grid-template-columns: 38px minmax(0,1fr); }
+  .cashier-tool-icon { width: 38px; height: 38px; }
+  .cashier-tool-action { grid-column: 2; }
+  .cashier-workflow-back { min-height: 40px; padding: 0 10px; font-size: 10px; }
+  .cashier-workflow-close { width: 40px; height: 40px; }
+  .cashier-workflow-heading h1 { font-size: 25px; }
+  .cashier-product-grid { gap: 7px; }
+  .cashier-product-tile-copy { padding: 8px; }
+  .cashier-payment-split { grid-template-columns: minmax(0,1fr) 84px 30px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cashier-shell *, .cashier-loading * { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .001ms !important; }
+}
+@media print {
+  .cashier-toolbar, .cashier-shell .dash-header, .panel-bottom-nav, .no-print, .cashier-workflow-launch { display: none !important; }
+  .cashier-shell { color: #000; background: white; }
+  .cashier-shell .admin-panel { box-shadow: none; border: 1px solid #bbb; background: white; }
+}

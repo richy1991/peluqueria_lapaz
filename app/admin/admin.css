@@ -1755,6 +1755,10 @@
 .panel-theme[data-panel-theme="light"] :is(.admin-form,.inline-edit-form,.link-account-form,.admin-operation) :is(input,textarea,select),.panel-theme[data-panel-theme="light"] .panel-client-shell :is(input,textarea,select){color:#2a211b;border-color:rgba(101,63,43,.28);background:#fff8e9}
 .panel-theme[data-panel-theme="dark"] :is(.admin-form,.inline-edit-form,.link-account-form,.admin-operation) :is(input,textarea,select),.panel-theme[data-panel-theme="dark"] .panel-client-shell :is(input,textarea,select){color:#e7edf5;border-color:rgba(148,163,184,.24);background:#0d1726}
 .panel-theme :is(input,textarea,select):focus{border-color:var(--dash-cyan)!important;outline:3px solid color-mix(in srgb,var(--dash-cyan) 17%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--dash-cyan) 9%,transparent)}
+.panel-theme[data-panel-theme] .dash-modal-body .barber-account-email{display:grid;gap:6px;margin-bottom:12px;padding:14px 16px;color:var(--dash-text);border:1px solid var(--dash-line);border-radius:11px;background:var(--dash-card)}
+.panel-theme[data-panel-theme] .dash-modal-body .barber-account-email>span{color:var(--dash-muted);font-size:12px;font-weight:700}
+.panel-theme[data-panel-theme] .dash-modal-body .barber-account-email>strong{color:var(--dash-text);font-size:15px;line-height:1.4;overflow-wrap:anywhere;user-select:text}
+.panel-theme[data-panel-theme] .dash-modal-body .barber-account-email>p{margin:0;color:var(--dash-muted);font-size:12px;line-height:1.5}
 .panel-theme .dash-action:not(.dash-action-ghost),.panel-theme .admin-form>button,.panel-theme .link-account-form button{color:#fff4df;border-color:#8d3949;background:linear-gradient(135deg,#843245,#652733);box-shadow:0 9px 24px rgba(92,31,43,.25)}
 .panel-theme .dash-action:not(.dash-action-ghost):hover,.panel-theme .admin-form>button:hover{background:linear-gradient(135deg,#953b4d,#732c3a);box-shadow:0 12px 30px rgba(92,31,43,.32)}
 .panel-theme .dash-action-ghost,.panel-theme .admin-operation button{color:var(--dash-cyan);border-color:var(--dash-line);background:color-mix(in srgb,var(--dash-cyan) 7%,transparent)}

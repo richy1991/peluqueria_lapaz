@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { formatBookingDateTime } from "@/lib/business-time";
-import { ArrowLeft, CircleUserRound, Images, PackageCheck, Star } from "lucide-react";
+import { ArrowLeft, Home, Images, PackageCheck, Star, UserRound } from "lucide-react";
 import { PublicHomeLink } from "@/components/public-home-link";
 import type { ReactNode } from "react";
 import { Brand } from "@/components/brand";
@@ -21,6 +21,7 @@ import {
 import { CLIENT_NAVIGATION, type ClientSection } from "./contracts";
 import { ClientHomeView } from "./client-home-view";
 import { ClientPointsView } from "./client-points-view";
+import { ClientProfileScreen } from "./client-profile-screen";
 
 export async function ClientAccountView({ section }: { section: ClientSection }) {
   const supabase = await createClient();
@@ -86,11 +87,11 @@ export async function ClientAccountView({ section }: { section: ClientSection })
   if (section === "inicio") await supabase.rpc("refresh_my_barber_loyalty");
   const requestTime = new Date().toISOString();
   const [profile, appointments, businessSettings, businessHours, gallery] = await Promise.all([
-    section === "inicio" ? supabase.from("profiles").select("full_name,email,phone,avatar_url,status,no_show_count,is_blacklisted,is_blocked").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null }),
+    section === "inicio" || section === "perfil" ? supabase.from("profiles").select("full_name,email,phone,avatar_url,status,no_show_count,is_blacklisted,is_blocked").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null }),
     section === "inicio" ? supabase.from("appointments").select("id,starts_at,status,price_snapshot,service_name_snapshot,barber_name_snapshot,barber_profiles!appointments_barber_id_fkey(display_name)").eq("client_id", user.id).gte("starts_at", requestTime).in("status", ["requested", "confirmed", "in_progress", "pending_payment", "pending_client_confirmation", "needs_reschedule"]).order("starts_at", { ascending: true }).limit(1) : Promise.resolve({ data: [] }),
     supabase.from("business_settings").select("business_status,status_message,timezone").eq("id", true).maybeSingle(),
     supabase.from("business_hours").select("*").order("weekday"),
-    section === "galeria" ? getPublicGallery() : Promise.resolve([]),
+    section === "inicio" || section === "galeria" ? getPublicGallery() : Promise.resolve([]),
   ]);
 
   const clientBusinessHours = (businessHours.data ?? []) as BusinessHour[];
@@ -107,8 +108,16 @@ export async function ClientAccountView({ section }: { section: ClientSection })
         appointment={appointments.data?.[0]}
         timezone={clientBusinessTimezone}
         businessStatus={businessStatus}
+        works={gallery}
       />
       <PanelViewportPortal><ClientMainNavigation section={section} replaceNavigation={false} variant="mobile" /></PanelViewportPortal>
+    </PanelExperience>;
+  }
+
+  if (section === "perfil") {
+    return <PanelExperience chatInHeader>
+      <ClientProfileScreen profile={profile.data} accountEmail={user.email} />
+      <PanelViewportPortal><ClientMainNavigation section={section} replaceNavigation variant="mobile" /></PanelViewportPortal>
     </PanelExperience>;
   }
 
@@ -147,7 +156,7 @@ function ClientSectionFrame({ section, title, description, className, children }
         <div className="client-section-width">
           <Brand linked={false} />
           <div className="client-header-actions">
-            <Link href="/mi-cuenta"><ArrowLeft size={16} aria-hidden="true" /> Mi perfil</Link>
+            <Link href="/mi-cuenta"><ArrowLeft size={16} aria-hidden="true" /> Inicio</Link>
             <PublicHomeLink />
           </div>
         </div>
@@ -161,7 +170,7 @@ function ClientSectionFrame({ section, title, description, className, children }
   </PanelExperience>;
 }
 
-const clientNavigationIcons = { inicio: CircleUserRound, productos: PackageCheck, puntos: Star } as const;
+const clientNavigationIcons = { inicio: Home, productos: PackageCheck, puntos: Star, perfil: UserRound } as const;
 
 function ClientMainNavigation({ section, replaceNavigation, variant }: { section: ClientSection; replaceNavigation: boolean; variant: "desktop" | "mobile" }) {
   if (variant === "mobile") {
@@ -169,7 +178,7 @@ function ClientMainNavigation({ section, replaceNavigation, variant }: { section
       const Icon = clientNavigationIcons[item.id];
       return { ...item, icon: <Icon /> };
     });
-    return <PanelBottomNavigation items={items} activeId={section} replace={replaceNavigation} className="client-bottom-nav" ariaLabel="Navegación principal" />;
+    return <PanelBottomNavigation items={items} activeId={section === "galeria" ? "inicio" : section} replace={replaceNavigation} className="client-bottom-nav" ariaLabel="Navegación principal" />;
   }
 
   return <nav className="client-desktop-nav" aria-label="Navegación del cliente">

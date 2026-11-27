@@ -32,6 +32,12 @@ function productImageUrl(item: Row) {
   return publicMediaUrl(productImagePaths(item)[0]);
 }
 
+function barberAccountEmail(item: Row) {
+  const relation = item.profiles as { email?: string | null } | { email?: string | null }[] | null;
+  const profile = Array.isArray(relation) ? relation[0] : relation;
+  return String(profile?.email ?? "").trim();
+}
+
 type ExistingProductImage = { path: string; url: string };
 
 function ProductImagePicker({
@@ -538,7 +544,7 @@ export function AdminDashboard({
       biography: String(data.get("biography") ?? "").trim() || null,
     });
     if (registerError) return failAction(registerError, form);
-    finishAction("Peluquero agregado correctamente. Su ficha ya aparece en Equipo y el acceso se activará con Google.");
+    finishAction("Peluquero agregado correctamente. Su ficha ya aparece en Equipo. Si no tiene cuenta, podrá crearla con ese correo y contraseña o continuar con Google.");
   }
 
   async function toggleBarber(id: string, enabled: boolean) {
@@ -557,7 +563,7 @@ export function AdminDashboard({
   async function linkBarber(event: FormEvent<HTMLFormElement>, id: string) {
     event.preventDefault(); const form=event.currentTarget; clearFormErrors(form); startAction(); const data=new FormData(form); const email=String(data.get("account_email")??"").trim();
     const { error: linkError }=await createClient().rpc("link_barber_account",{target_barber_id:id,target_email:email});
-    if(linkError)return failAction(linkError,form,"account_email"); finishAction(`Cuenta ${email} vinculada o pendiente de su primer ingreso con Google.`);
+    if(linkError)return failAction(linkError,form,"account_email"); finishAction(`Correo ${email} asociado. Si la persona aún no tiene cuenta, debe registrarse con este correo; si ya tiene una, debe ingresar con su método habitual o restablecer su contraseña.`);
   }
 
   async function addCashier(event: FormEvent<HTMLFormElement>) {
@@ -629,15 +635,25 @@ export function AdminDashboard({
   function renderBarberActions(item: Row) {
     const invitation = pendingBarbers.find((pending) => String(pending.barber_profile_id) === item.id && String(pending.status) === "pending");
     const isActive = Boolean(item.active);
-    const accountStatus = item.user_id ? "Cuenta vinculada" : invitation ? `Invitado: ${String(invitation.email)}` : "Sin correo asociado";
+    const email = barberAccountEmail(item) || String(invitation?.email ?? "").trim();
+    const accountStatus = item.user_id ? `Cuenta vinculada${email ? ` · ${email}` : ""}` : invitation ? `Invitación pendiente · ${email}` : "Sin correo asociado";
     return <div className="dash-row-actions"><DashboardModal title={String(item.display_name)} eyebrow="FICHA DEL PELUQUERO" description={`${isActive ? "Activo" : "Inactivo"}. ${accountStatus}.`} triggerLabel="Ver ficha" triggerIcon={<Pencil />} variant="ghost">
+      <div className="barber-account-email" aria-label="Correo de acceso del peluquero">
+        <span>Correo de acceso</span>
+        <strong>{email || "Todavía no asociado"}</strong>
+        <p>{item.user_id
+          ? "Esta cuenta ya existe. Debe ingresar con su método habitual o restablecer su contraseña desde el inicio de sesión."
+          : invitation
+            ? "La invitación está pendiente. Debe crear su cuenta usando exactamente este correo."
+            : "Asocia el correo con el que creará su cuenta para activar el acceso de peluquero."}</p>
+      </div>
       <form className="admin-form" onSubmit={(event) => updateBarber(event, item.id)} acceptCharset="UTF-8">
         <label>Nombre público<input name="display_name" defaultValue={String(item.display_name)} required /></label>
         <label>Especialidades<input name="specialties" defaultValue={Array.isArray(item.specialties) ? item.specialties.join(", ") : ""} /></label>
         <label className="wide">Biografía<textarea name="bio" defaultValue={String(item.bio ?? "")} /></label>
         <button className="button button-dark wide" disabled={busy}>Guardar información</button>
       </form>
-      {!item.user_id && !invitation && <form className="link-account-form" onSubmit={(event) => linkBarber(event, item.id)}><input name="account_email" type="email" inputMode="email" aria-label="Correo Google del peluquero" placeholder="correo Google del peluquero" required /><button disabled={busy}>Guardar correo de invitación</button></form>}
+      {!item.user_id && !invitation && <form className="link-account-form" onSubmit={(event) => linkBarber(event, item.id)}><input name="account_email" type="email" inputMode="email" autoComplete="email" aria-label="Correo de acceso del peluquero" placeholder="correo@ejemplo.com" required /><button disabled={busy}>Guardar correo de invitación</button></form>}
       <div className="admin-record-actions"><button type="button" className="dash-action dash-action-ghost" disabled={busy} onClick={() => toggleBarber(item.id, !isActive)}><Power /><span>{isActive ? "Desactivar" : "Reactivar"}</span></button><AdminDeleteAction entity="barber" id={item.id} label={String(item.display_name)} disabled={busy} /></div>
     </DashboardModal></div>;
   }
@@ -755,8 +771,8 @@ export function AdminDashboard({
             <div className="dash-section-intro team-intro">
               <p>Gestiona al personal que trabaja en el negocio, organizado por rol y estado operativo.</p>
               <div className="team-create-actions">
-                <DashboardModal title="Crear peluquero" description="Verifica el correo antes de crear la ficha. El peluquero quedará como invitado hasta que inicie sesión con esa cuenta Google." triggerLabel="Nuevo peluquero" triggerIcon={<UserPlus/>}>
-                  <form className="admin-form" onSubmit={registerBarber} acceptCharset="UTF-8"><label>Correo Google<input name="email" type="email" inputMode="email" autoComplete="email" required/></label><label>Nombre público<input name="public_name" required/></label><label className="wide">Especialidades separadas por comas<input name="specialties" placeholder="Fades, Barba, Cortes clásicos"/></label><label className="wide">Biografía<textarea name="biography"/></label><button className="button button-dark wide" disabled={busy}>Crear nuevo peluquero</button></form>
+                <DashboardModal title="Crear peluquero" description="Registra el correo que usará. Si aún no tiene cuenta, podrá crearla con ese correo y contraseña o continuar con Google; el acceso de peluquero se activará al ingresar." triggerLabel="Nuevo peluquero" triggerIcon={<UserPlus/>}>
+                  <form className="admin-form" onSubmit={registerBarber} acceptCharset="UTF-8"><label>Correo de acceso<input name="email" type="email" inputMode="email" autoComplete="email" required/></label><label>Nombre público<input name="public_name" required/></label><label className="wide">Especialidades separadas por comas<input name="specialties" placeholder="Fades, Barba, Cortes clásicos"/></label><label className="wide">Biografía<textarea name="biography"/></label><button className="button button-dark wide" disabled={busy}>Crear nuevo peluquero</button></form>
                 </DashboardModal>
                 <DashboardModal title="Integrar nuevo cajero" description="La persona debe iniciar sesión con Google una vez antes de recibir acceso de caja." triggerLabel="Nuevo cajero" triggerIcon={<UserRoundCog/>}>
                   <form className="admin-form" onSubmit={addCashier} acceptCharset="UTF-8"><label className="wide">Correo de la cuenta Google<input name="email" type="email" inputMode="email" autoComplete="email" required/></label><button className="button button-dark wide" disabled={busy}>Habilitar acceso de caja</button></form>
@@ -767,7 +783,7 @@ export function AdminDashboard({
             <div className="team-role-grid">
             <section className="team-role-section">
               <header><div><Scissors/><span><small>ROL OPERATIVO</small><h2>Peluqueros</h2></span></div><b>{activeBarbers.length} activos</b></header>
-              <div className="admin-list editable-list team-list admin-managed-list">{activeBarbers.length ? activeBarbers.map((item) => { const invitation = pendingBarbers.find((pending) => String(pending.barber_profile_id) === item.id && String(pending.status) === "pending"); const accountStatus = item.user_id ? "Cuenta vinculada" : invitation ? `Invitado · ${String(invitation.email)}` : "Sin correo asociado"; return <article key={item.id}><div><strong>{String(item.display_name)}</strong><span><i className="team-status-dot" /> Activo · {Array.isArray(item.specialties) ? item.specialties.join(", ") : "Sin especialidades"} · {accountStatus}</span></div>{renderBarberActions(item)}</article>; }) : <p className="admin-help">No hay peluqueros activos.</p>}</div>
+              <div className="admin-list editable-list team-list admin-managed-list">{activeBarbers.length ? activeBarbers.map((item) => { const invitation = pendingBarbers.find((pending) => String(pending.barber_profile_id) === item.id && String(pending.status) === "pending"); const email = barberAccountEmail(item) || String(invitation?.email ?? "").trim(); const accountStatus = item.user_id ? `Cuenta vinculada · ${email || "correo no disponible"}` : invitation ? `Invitación pendiente · ${email}` : "Sin correo asociado"; return <article key={item.id}><div><strong>{String(item.display_name)}</strong><span><i className="team-status-dot" /> Activo · {Array.isArray(item.specialties) ? item.specialties.join(", ") : "Sin especialidades"} · {accountStatus}</span></div>{renderBarberActions(item)}</article>; }) : <p className="admin-help">No hay peluqueros activos.</p>}</div>
             </section>
 
             <section className="team-role-section">
@@ -780,7 +796,7 @@ export function AdminDashboard({
             <details className="inactive-team">
               <summary><span>Ver personal inactivo</span><b>{inactiveTeamCount}</b></summary>
               <div className="inactive-team-content">
-                <section><h3>Peluqueros inactivos</h3><div className="admin-list team-list admin-managed-list">{inactiveBarbers.length ? inactiveBarbers.map((item) => <article key={item.id}><div><strong>{String(item.display_name)}</strong><span>Inactivo · {Array.isArray(item.specialties) ? item.specialties.join(", ") : "Sin especialidades"}</span></div>{renderBarberActions(item)}</article>) : <p className="admin-help">No hay peluqueros inactivos.</p>}</div></section>
+                <section><h3>Peluqueros inactivos</h3><div className="admin-list team-list admin-managed-list">{inactiveBarbers.length ? inactiveBarbers.map((item) => { const invitation = pendingBarbers.find((pending) => String(pending.barber_profile_id) === item.id && String(pending.status) === "pending"); const email = barberAccountEmail(item) || String(invitation?.email ?? "").trim(); return <article key={item.id}><div><strong>{String(item.display_name)}</strong><span>Inactivo · {Array.isArray(item.specialties) ? item.specialties.join(", ") : "Sin especialidades"} · {email || "Sin correo asociado"}</span></div>{renderBarberActions(item)}</article>; }) : <p className="admin-help">No hay peluqueros inactivos.</p>}</div></section>
                 <section><h3>Cajeros inactivos</h3><div className="admin-list team-list">{inactiveCashiers.length ? inactiveCashiers.map((item)=>{const profile=item.profiles as Row|null;const email=String(profile?.email??"");return <article key={item.id}><div><strong>{String(profile?.full_name??profile?.email??"Cajero")}</strong><span>Inactivo · {email}</span></div><button disabled={busy||!email} onClick={()=>toggleCashier(email,true)}>Reactivar</button></article>}) : <p className="admin-help">No hay cajeros inactivos.</p>}</div></section>
               </div>
             </details>

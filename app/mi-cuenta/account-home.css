@@ -89,6 +89,28 @@
 .client-account-appointment-actions .inline-action button:hover { background: var(--account-inner); }
 .client-account-empty { margin: 16px 0 0; padding: clamp(16px, 2vw, 22px); color: var(--account-muted); border: 1px dashed var(--account-line); border-radius: 12px; background: var(--account-inner); }
 
+.client-account-works { margin-top: 16px; }
+.client-account-works-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.client-account-works-heading > div { display: grid; gap: 4px; }
+.client-account-works-heading p { margin: 0; color: var(--account-accent); font-size: 9px; font-weight: 900; letter-spacing: .14em; }
+.client-account-works-heading h2 { margin: 0; color: var(--account-text); font-size: 18px; line-height: 1.25; }
+.client-account-works-heading > a { min-height: 44px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; color: var(--account-accent); border: 1px solid var(--account-line); border-radius: 10px; background: var(--account-inner); font-size: 11px; font-weight: 750; text-decoration: none; }
+.client-account-works-heading > a:hover { border-color: var(--account-accent); }
+.client-account-works .work-carousel { gap: 8px; }
+.client-account-works .work-carousel-viewport { height: clamp(190px, 34vw, 285px); border: 1px solid var(--account-line); border-radius: 14px; background: var(--account-inner); }
+.client-account-works .work-carousel-slide { min-height: 44px; padding: clamp(15px, 3vw, 24px); background-position: center; background-size: cover; }
+.client-account-works .work-carousel-slide > span { font-size: clamp(16px, 2vw, 20px); }
+.client-account-works .work-carousel-slide > strong { color: var(--account-accent); }
+.client-account-works .work-carousel-controls { min-height: 44px; }
+.client-account-works .work-carousel-dots { gap: 2px; }
+.client-account-works .work-carousel-dots > button { position: relative; width: 44px; min-width: 44px; height: 44px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 999px; background: transparent; }
+.client-account-works .work-carousel-dots > button::before { width: 8px; height: 8px; border-radius: 999px; background: var(--account-line); content: ""; transition: width .2s ease,background-color .2s ease; }
+.client-account-works .work-carousel-dots > button.active { width: 44px; background: transparent; }
+.client-account-works .work-carousel-dots > button.active::before { width: 24px; background: var(--account-accent); }
+.client-account-works .work-carousel-arrows > button { width: 44px; height: 44px; color: var(--account-text); border-color: var(--account-line); background: var(--account-inner); }
+.client-account-works .work-carousel-arrows > button:last-child { color: #171a1f; border-color: var(--account-accent); background: var(--account-accent); }
+.client-account-works .work-carousel-empty { color: var(--account-muted); }
+
 .client-account-shortcuts { display: grid; gap: 3px; margin-top: 10px; }
 .client-account-shortcuts > a { display: flex; align-items: center; gap: 10px; padding: 5px; color: var(--account-text); border-radius: 9px; font-size: 14px; font-weight: 650; text-decoration: none; }
 .client-account-shortcuts > a:hover { background: var(--account-inner); }
@@ -102,6 +124,9 @@ body:has(.analytics-consent) .panel-theme .client-account-home { padding-bottom:
   .client-account-bar .brand strong { font-size: 12px; }
   .client-account-public { padding-inline: 7px; font-size: 12px; }
   .client-account-columns { grid-template-columns: minmax(0, 1fr); }
+  .client-account-works { margin-top: 12px; }
+  .client-account-works .work-carousel-viewport { height: min(62vw,270px); min-height: 205px; }
+  .client-account-works-heading > a { padding-inline: 8px; }
   .client-account-bar .client-header-actions { flex: none; }
   .panel-theme.panel-theme[data-panel-theme] .client-account-home { padding-bottom: 104px; }
   body:has(.analytics-consent) .panel-theme .client-account-home { padding-bottom: 224px; }

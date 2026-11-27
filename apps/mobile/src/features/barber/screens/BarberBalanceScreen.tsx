@@ -3,6 +3,7 @@ import { ThemedText as Text } from '@/components/ThemedText';
 import { Banknote, History, Sparkles } from 'lucide-react-native';
 
 import { AppShell } from '@/components/AppShell';
+import { FloatingPageHeader, useClientHeaderHeight } from '@/components/ClientPageHeader';
 import { Card, CardTitle, EmptyState, InlineMessage, LoadingState, PageHeading, StatCard, palette } from '@/components/ui';
 import { barberTabs } from '@/lib/navigation';
 import { useSession } from '@/lib/session';
@@ -16,6 +17,7 @@ type BalanceData = { earnings: Earning[]; monthEarnings: Earning[]; payouts: Pay
 
 export default function BarberBalanceScreen() {
   const { barber } = useSession();
+  const expandedHeaderHeight = useClientHeaderHeight(222);
   const barberId = barber?.id ?? '';
   const query = useRemoteData<BalanceData>(async () => {
     if (!barberId) throw new Error('No se encontró tu perfil de peluquero.');
@@ -45,7 +47,9 @@ export default function BarberBalanceScreen() {
   const monthProductCommission = monthProductEarnings.reduce((sum, item) => sum + Number(item.amount), 0);
 
   return (
-    <AppShell title="Balance económico" roleLabel="CONTROL PERSONAL" activeTab="balance" tabs={barberTabs} onRefresh={query.refresh} refreshing={query.loading}>
+    <AppShell title="Balance económico" roleLabel="CONTROL PERSONAL" activeTab="balance" tabs={barberTabs} onRefresh={query.refresh} refreshing={query.loading}
+      floatingHeaderHeight={expandedHeaderHeight}
+      floatingHeader={(scrollY) => <FloatingPageHeader scrollY={scrollY} expandedHeight={expandedHeaderHeight} eyebrow="CONTROL PERSONAL" title="Balance económico" description="Tus comisiones, incentivos y liquidaciones en un solo lugar." chatHref="/barber/chat" />}>
       <PageHeading eyebrow="Control personal" title="Balance económico" description="Revisa tus comisiones, incentivos y liquidaciones." />
       {query.error ? <InlineMessage>{query.error}</InlineMessage> : null}
       {!data && query.loading ? <LoadingState title="Cargando tu balance…" /> : null}

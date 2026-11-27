@@ -43,7 +43,9 @@ export function formatMoney(value: number | string | null | undefined) {
 export function formatDate(value: string, options: Intl.DateTimeFormatOptions = {}) {
   const hasDateStyle = Object.prototype.hasOwnProperty.call(options, 'dateStyle');
   const hasTimeStyle = Object.prototype.hasOwnProperty.call(options, 'timeStyle');
-  const defaults = hasDateStyle || hasTimeStyle ? {} : { dateStyle: 'medium' as const, timeStyle: 'short' as const };
+  const componentOptions = ['weekday', 'era', 'year', 'month', 'day', 'dayPeriod', 'hour', 'minute', 'second', 'fractionalSecondDigits', 'timeZoneName'] as const satisfies readonly (keyof Intl.DateTimeFormatOptions)[];
+  const hasExplicitComponents = componentOptions.some((component) => options[component] !== undefined);
+  const defaults = hasDateStyle || hasTimeStyle || hasExplicitComponents ? {} : { dateStyle: 'medium' as const, timeStyle: 'short' as const };
   return new Intl.DateTimeFormat('es-BO', { ...defaults, ...options }).format(new Date(value));
 }
 

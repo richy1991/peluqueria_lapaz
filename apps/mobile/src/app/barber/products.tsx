@@ -1,1 +1,5 @@
-export { default } from '@/features/barber/screens/BarberProductsScreen';
+import { Redirect } from 'expo-router';
+
+export default function BarberProductsRedirect() {
+  return <Redirect href="/barber" />;
+}
