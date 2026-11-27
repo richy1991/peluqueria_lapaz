@@ -2414,7 +2414,7 @@
 .panel-theme[data-panel-theme] .cashier-shell .cashier-welcome-action .cashier-workflow-launch { min-height: 40px; padding: 0 14px; border-radius: 11px; font-size: 11px; }
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-welcome .cashier-orb { color: #e7c5d9; background: rgba(211,175,199,.1); }
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-welcome-copy .eyebrow { color: #d5a9c2; }
-.panel-theme[data-panel-theme] .cashier-shell .cashier-queue { max-height: none; padding: 13px 16px; overflow: visible; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-queue { flex: 0 0 auto; min-height: 0; max-height: none; padding: 13px 16px; overflow: visible; }
 .panel-theme[data-panel-theme] .cashier-shell .cashier-queue > summary { min-height: 42px; display: flex; align-items: center; gap: 10px; }
 .panel-theme[data-panel-theme] .cashier-shell .cashier-queue > .admin-help { margin: 5px 0 10px; font-size: 10px; }
 .panel-theme[data-panel-theme] .cashier-shell .cashier-queue > .admin-list { max-height: min(54vh,520px); overflow: auto; overscroll-behavior: contain; }
