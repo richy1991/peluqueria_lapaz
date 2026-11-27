@@ -2421,7 +2421,7 @@
 .panel-theme[data-panel-theme] .cashier-shell :is(.cashier-workflow-content .admin-form,.cashier-pos-form) { min-width: 0; }
 .panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-content .admin-form label,
 .panel-theme[data-panel-theme] .cashier-shell .cashier-pos-form label { min-width: 0; display: grid; gap: 4px; color: #554651; font-size: 11px; font-weight: 650; }
-.panel-theme[data-panel-theme] .cashier-shell :is(.cashier-workflow-content .admin-form input:not([type="hidden"],[type="checkbox"],[type="radio"]),.cashier-workflow-content .admin-form select,.cashier-workflow-content .admin-form textarea,.cashier-pos-form input:not([type="hidden"],[type="checkbox"],[type="radio"]),.cashier-pos-form select,.cashier-pos-form textarea,.cashier-catalog-search,.cashier-client-picker) { min-width: 0; max-width: 100%; min-height: 38px; margin-top: 3px; padding: 8px 10px; border-radius: 10px; font-size: 13px; box-sizing: border-box; }
+.panel-theme[data-panel-theme] .cashier-shell :is(.cashier-workflow-content .admin-form input:not([type="hidden"],[type="checkbox"],[type="radio"]),.cashier-workflow-content .admin-form select,.cashier-workflow-content .admin-form textarea,.cashier-pos-form input:not([type="hidden"],[type="checkbox"],[type="radio"]),.cashier-pos-form select,.cashier-pos-form textarea,.cashier-client-picker) { min-width: 0; max-width: 100%; min-height: 38px; margin-top: 3px; padding: 8px 10px; border-radius: 10px; font-size: 13px; box-sizing: border-box; }
 .panel-theme[data-panel-theme] .cashier-shell :is(.cashier-client-modes button,.cashier-benefit-modes button,.cashier-choice-buttons button,.cashier-payment-methods button,.cashier-history-filters button,.cashier-add-line,.cashier-split-add,.cashier-option-toggle,.cashier-workflow-launch:not(.cashier-tool-card),.cashier-cart-clear) { min-height: 36px; padding-inline: 11px; border-radius: 10px; font-size: 10px; }
 .panel-theme[data-panel-theme] .cashier-shell :is(.cashier-workflow-content .button-dark,.cashier-service-payment > .button-dark,.cashier-checkout-button) { min-height: 42px; border-radius: 11px; font-size: 11px; box-shadow: 0 6px 15px rgba(99,56,79,.16); }
 .panel-theme[data-panel-theme] .cashier-shell :is(.cashier-pos-layout,.cashier-product-workspace .cashier-pos-layout) { grid-template-columns: minmax(0,1fr) minmax(300px,360px); align-items: start; gap: 12px; }
@@ -2538,7 +2538,7 @@
   .panel-theme[data-panel-theme] .cashier-shell .cashier-history .dash-row-actions { justify-content: flex-start; flex-wrap: wrap; }
   .panel-theme[data-panel-theme] .cashier-shell .cashier-ledger-table { overflow-x: auto; }
   .panel-theme[data-panel-theme] .cashier-shell .cashier-ledger-table .ledger-row { min-width: 650px; }
-  .panel-theme[data-panel-theme] .cashier-shell :is(.cashier-workflow-content .admin-form input:not([type="hidden"],[type="checkbox"],[type="radio"]),.cashier-workflow-content .admin-form select,.cashier-workflow-content .admin-form textarea,.cashier-pos-form input:not([type="hidden"],[type="checkbox"],[type="radio"]),.cashier-pos-form select,.cashier-pos-form textarea,.cashier-catalog-search,.cashier-client-picker) { min-height: 42px; font-size: 16px; }
+  .panel-theme[data-panel-theme] .cashier-shell :is(.cashier-workflow-content .admin-form input:not([type="hidden"],[type="checkbox"],[type="radio"]),.cashier-workflow-content .admin-form select,.cashier-workflow-content .admin-form textarea,.cashier-pos-form input:not([type="hidden"],[type="checkbox"],[type="radio"]),.cashier-pos-form select,.cashier-pos-form textarea,.cashier-client-picker) { min-height: 42px; font-size: 16px; }
 }
 @media (max-width: 520px) {
   .panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-content > .admin-form:not(.cashier-service-checkout) { grid-template-columns: minmax(0,1fr); }
@@ -2616,7 +2616,7 @@
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-dialog:is([data-size="default"],[data-size="large"]) .cashier-workflow-screen { border-color: rgba(238,220,237,.16); box-shadow: inset 0 1px rgba(255,255,255,.045); }
 .panel-theme[data-panel-theme] .cashier-shell .cashier-pos-form label.cashier-catalog-search { min-height: 40px; margin: 3px 0 9px; padding: 0 10px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--cashier-line); border-radius: 11px; }
 .panel-theme[data-panel-theme] .cashier-shell .cashier-pos-form label.cashier-catalog-search > svg { width: 16px; height: 16px; flex: none; }
-.panel-theme[data-panel-theme] .cashier-shell .cashier-pos-form label.cashier-catalog-search > input { min-width: 0; width: 100%; min-height: 34px; margin: 0; padding: 6px 3px; border: 0; border-radius: 0; background: transparent !important; box-shadow: none; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-pos-form label.cashier-catalog-search > input { min-width: 0; width: 100%; min-height: 34px !important; height: 34px; margin: 0 !important; padding: 6px 3px !important; border: 0; border-radius: 0; background: transparent !important; box-shadow: none; }
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-pos-form label.cashier-catalog-search { border-color: rgba(238,220,237,.18); background: rgba(57,48,63,.72); }
 .panel-theme[data-panel-theme] .cashier-shell .cashier-service-payment { grid-template-columns: minmax(0,1fr); }
 .panel-theme[data-panel-theme] .cashier-shell .cashier-service-payment > .cashier-payment-splits { grid-column: 1 / -1; width: 100%; }
@@ -2624,6 +2624,10 @@
 .panel-theme[data-panel-theme] .cashier-shell .cashier-product-workspace { flex: 0 0 auto; height: auto; min-height: 0; }
 .panel-theme[data-panel-theme] .cashier-shell .cashier-product-workspace .cashier-pos-layout { height: auto; min-height: 0; align-items: start; }
 .panel-theme[data-panel-theme] .cashier-shell .cashier-product-workspace .cashier-catalog { height: auto; min-height: 0; grid-template-rows: auto auto auto auto; overflow: visible; }
+@media (max-width: 760px) {
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-pos-form label.cashier-catalog-search { min-height: 42px; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-pos-form label.cashier-catalog-search > input { min-height: 42px !important; height: 42px; font-size: 16px; }
+}
 @media (max-width: 520px) {
   .cashier-shell .cashier-workflow-dialog:is([data-size="default"],[data-size="large"]) { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); border-radius: 16px; }
   .cashier-shell .cashier-workflow-dialog:is([data-size="default"],[data-size="large"]) .cashier-workflow-screen { max-height: calc(100dvh - 18px); }
