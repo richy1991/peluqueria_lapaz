@@ -2610,6 +2610,7 @@
   background: transparent;
   box-shadow: 0 28px 90px rgba(39,24,34,.3);
 }
+.cashier-shell .cashier-workflow-dialog[data-size="default"] { width: min(900px, calc(100vw - 32px)); }
 .cashier-shell .cashier-workflow-dialog:is([data-size="default"],[data-size="large"]) .cashier-workflow-screen { height: auto; max-height: calc(100dvh - 34px); border-radius: inherit; }
 .cashier-shell .cashier-workflow-dialog:is([data-size="default"],[data-size="large"]) .cashier-workflow-main { min-height: 0; max-height: calc(100dvh - 102px); padding: 14px clamp(14px,2.5vw,32px) 22px; }
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-dialog:is([data-size="default"],[data-size="large"]) { border-color: rgba(238,220,237,.2); box-shadow: 0 28px 90px rgba(8,6,12,.52); }
