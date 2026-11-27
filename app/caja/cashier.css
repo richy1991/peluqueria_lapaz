@@ -2758,3 +2758,86 @@
   .panel-theme[data-panel-theme] .cashier-shell .cashier-service-details .cashier-client-profile { grid-row: auto; }
   .panel-theme[data-panel-theme] .cashier-shell .cashier-client-results { width: 100%; max-height: min(210px, 34vh); }
 }
+
+/* El cobro de servicios usa una ventana de trabajo a pantalla completa. */
+.cashier-shell .cashier-workflow-dialog[data-size="window"] {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.cashier-shell .cashier-workflow-dialog[data-size="window"]::backdrop { background: rgba(35,25,35,.44); backdrop-filter: blur(5px); }
+.cashier-shell .cashier-workflow-dialog[data-size="window"] .cashier-workflow-screen {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+}
+.cashier-shell .cashier-workflow-dialog[data-size="window"] .cashier-workflow-header { flex: none; }
+.cashier-shell .cashier-workflow-dialog[data-size="window"] .cashier-workflow-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow: auto;
+  padding: 14px clamp(16px,3vw,46px) 24px;
+  overscroll-behavior: contain;
+}
+.cashier-shell .cashier-workflow-dialog[data-size="window"] .cashier-workflow-content { width: min(100%,1600px); margin-inline: auto; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-dialog[data-size="window"] { color-scheme: dark; }
+
+/* El selector de servicios abre una tarjeta ancha con precios legibles. */
+.panel-theme[data-panel-theme] .cashier-shell .cashier-service-details > .cashier-line-group:has(.cashier-service-choice .cashier-choice-menu[open]) { z-index: 70; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-service-choice .cashier-choice-menu[open] { z-index: 100; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-service-choice .cashier-choice-menu > .cashier-choice-options {
+  width: min(660px,calc(100vw - 32px));
+  max-width: none;
+  max-height: min(70dvh,640px);
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 7px;
+  padding: 10px;
+  border-radius: 17px;
+  background: rgba(255,250,249,.98);
+  backdrop-filter: blur(16px) saturate(1.12);
+}
+.panel-theme[data-panel-theme] .cashier-shell .cashier-service-choice .cashier-choice-options button {
+  min-height: 58px;
+  padding: 10px 12px;
+  align-content: center;
+  gap: 4px;
+  border-radius: 11px;
+}
+.panel-theme[data-panel-theme] .cashier-shell .cashier-service-choice .cashier-choice-options button strong { font-size: 13px; line-height: 1.25; white-space: normal; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-service-choice .cashier-choice-options button small { font-size: 11px; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-service-choice .cashier-choice-options { border-color: rgba(238,220,237,.2); background: rgba(48,39,52,.98); }
+
+/* El acceso a productos abre la página del punto de venta. */
+.panel-theme[data-panel-theme] .cashier-shell a.cashier-tool-card.cashier-tool-products {
+  color: #50354a;
+  border-color: rgba(255,255,255,.8);
+  background: linear-gradient(125deg,rgba(255,250,248,.94),rgba(237,232,244,.9));
+}
+.panel-theme[data-panel-theme] .cashier-shell a.cashier-tool-card.cashier-tool-products .cashier-tool-icon { color: #72506c; border-color: rgba(99,56,79,.14); background: rgba(171,147,187,.18); }
+.panel-theme[data-panel-theme] .cashier-shell a.cashier-tool-card.cashier-tool-products .cashier-tool-copy small { color: #91647e; }
+.panel-theme[data-panel-theme] .cashier-shell a.cashier-tool-card.cashier-tool-products .cashier-tool-action { color: #63384f; border-color: rgba(99,56,79,.14); background: rgba(255,255,255,.55); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell a.cashier-tool-card.cashier-tool-products { color: #f4edf3; border-color: rgba(238,220,237,.17); background: linear-gradient(125deg,rgba(68,57,78,.96),rgba(57,55,83,.94)); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell a.cashier-tool-card.cashier-tool-products .cashier-tool-copy :is(small,strong,span) { color: #f4edf3; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell a.cashier-tool-card.cashier-tool-products :is(.cashier-tool-icon,.cashier-tool-action) { color: #ead9e8; border-color: rgba(255,255,255,.15); background: rgba(255,255,255,.08); }
+.panel-theme[data-panel-theme] .cashier-shell a.cashier-tool-card.cashier-tool-products:focus-visible { outline: 3px solid #a36f90; outline-offset: 3px; }
+@media (max-width: 620px) {
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-service-choice .cashier-choice-menu > .cashier-choice-options { width: min(520px,calc(100vw - 24px)); max-height: min(72dvh,560px); grid-template-columns: minmax(0,1fr); }
+}

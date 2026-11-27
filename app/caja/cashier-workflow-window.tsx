@@ -12,7 +12,7 @@ type Props = {
   triggerContent?: ReactNode;
   triggerClassName?: string;
   variant?: "primary" | "secondary" | "ghost";
-  size?: "default" | "large" | "compact";
+  size?: "default" | "large" | "compact" | "window";
   children: ReactNode;
 };
 
