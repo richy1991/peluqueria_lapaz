@@ -2298,6 +2298,63 @@
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-pos-form :is(input,textarea,select)::placeholder { color: #c5b9c4 !important; opacity: 1; }
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-heading h1:focus { text-decoration-color: rgba(211,175,199,.72); }
 .panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-heading h1 { width: fit-content; max-width: 100%; }
+.cashier-shell .cashier-workflow-dialog[data-size="compact"] {
+  inset: 0;
+  width: min(500px, calc(100vw - 28px));
+  height: fit-content;
+  max-width: none;
+  max-height: calc(100dvh - 28px);
+  margin: auto;
+  overflow: visible;
+  border: 1px solid rgba(99,56,79,.18);
+  border-radius: 22px;
+  background: transparent;
+  box-shadow: 0 28px 90px rgba(39,24,34,.3);
+}
+.cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-screen {
+  width: 100%;
+  height: auto;
+  max-height: calc(100dvh - 30px);
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  border: 1px solid rgba(255,255,255,.62);
+  border-radius: 21px;
+  background: linear-gradient(145deg,rgba(255,250,248,.97),rgba(245,239,248,.96));
+  box-shadow: inset 0 1px rgba(255,255,255,.8);
+  backdrop-filter: blur(28px) saturate(1.15);
+}
+.cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-header {
+  min-height: 40px;
+  padding: 8px 9px 0;
+  display: flex;
+  justify-content: flex-end;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.cashier-shell .cashier-workflow-dialog[data-size="compact"] :is(.cashier-workflow-brand,.cashier-workflow-back) { display: none; }
+.cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-close { width: 32px; min-height: 32px; border-radius: 10px; }
+.cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-main { overflow: visible; padding: 0 22px 22px; }
+.cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-heading { width: 100%; margin: 0 0 17px; }
+.cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-heading h1 { font-size: 25px; }
+.cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-heading > span { margin-top: 5px; font-size: 12px; }
+.cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-content { width: 100%; }
+.cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-content > .admin-form { padding: 0; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; border: 0; background: transparent; box-shadow: none; }
+.cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-content .admin-form label { font-size: 11px; }
+.cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-content .admin-form input { min-height: 40px; margin-top: 5px; padding: 8px 10px; border-radius: 10px; font-size: 13px; }
+.cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-content .admin-form .button-dark { min-height: 40px; grid-column: 1 / -1; justify-self: end; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-dialog[data-size="compact"] { border-color: rgba(238,220,237,.22); box-shadow: 0 28px 90px rgba(8,6,12,.52); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-screen { border-color: rgba(238,220,237,.22); background: linear-gradient(145deg,rgba(50,41,57,.98),rgba(40,37,55,.98)); box-shadow: inset 0 1px rgba(255,255,255,.06); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-header { background: transparent; box-shadow: none; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-close { color: #f4edf3; border-color: rgba(238,220,237,.18); background: rgba(255,255,255,.07); }
+.cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-content > .admin-form { border-color: transparent; }
+@media (max-width: 520px) {
+  .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-main { padding: 0 16px 17px; }
+  .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-content > .admin-form { grid-template-columns: 1fr; gap: 9px; }
+  .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-content .admin-form .button-dark { width: 100%; justify-self: stretch; }
+}
 @media (prefers-reduced-motion: reduce) {
   .cashier-queue > summary::after { transition: none; }
 }
