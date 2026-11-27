@@ -2346,7 +2346,8 @@
 .panel-theme[data-panel-theme] .cashier-topbar .install-app-button { color: #fff8fc; border-color: rgba(255,255,255,.22); background: rgba(42,27,40,.18); }
 .panel-theme[data-panel-theme] .cashier-shell .cashier-content { max-width: 1480px; padding: 12px clamp(16px,3vw,40px) 42px; }
 .panel-theme[data-panel-theme] .cashier-shell .cashier-toolbar {
-  top: 66px;
+  position: static;
+  top: auto;
   min-height: 48px;
   margin: 0 0 13px;
   padding: 5px;
@@ -2519,7 +2520,7 @@
   .panel-theme[data-panel-theme] .cashier-shell .cashier-topbar-tools { grid-area: tools; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
   .panel-theme[data-panel-theme] .cashier-shell .cashier-user-menu { grid-area: user; }
   .panel-theme[data-panel-theme] .cashier-shell .cashier-content { padding: 10px 12px 34px; }
-  .panel-theme[data-panel-theme] .cashier-shell .cashier-toolbar { top: 104px; min-height: 44px; margin-bottom: 10px; border-radius: 14px; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-toolbar { min-height: 44px; margin-bottom: 10px; border-radius: 14px; }
   .panel-theme[data-panel-theme] .cashier-shell .cashier-dashboard-tools { grid-template-columns: 1fr; gap: 8px; }
   .panel-theme[data-panel-theme] .cashier-shell .cashier-tool-card,
   .panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-launch.cashier-tool-card { min-height: 74px; padding: 10px 12px; grid-template-columns: 36px minmax(0,1fr) 28px; gap: 9px; }
