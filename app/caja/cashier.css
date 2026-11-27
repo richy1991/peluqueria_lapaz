@@ -2292,8 +2292,8 @@
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-queue-count { color: #f4edf3; border-color: rgba(238,220,237,.17); background: rgba(255,255,255,.08); }
 .panel-theme[data-panel-theme="dark"] .cashier-shell :is(.cashier-choice-menu > summary::after,.cashier-queue > summary::after) { border-color: #d3afc7; }
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-content > .admin-form:not(.cashier-service-checkout) { border-color: rgba(238,220,237,.17); background: rgba(48,39,52,.72); box-shadow: 0 12px 30px rgba(8,6,12,.2), inset 0 1px rgba(255,255,255,.05); }
-.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-content .admin-form :is(input:not([type="hidden"],[type="checkbox"],[type="radio"]),textarea,select),
-.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-pos-form :is(input:not([type="hidden"],[type="checkbox"],[type="radio"]),textarea,select) { color: #f4edf3 !important; border-color: rgba(238,220,237,.2) !important; background-color: #39303f !important; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-content .admin-form :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="submit"]):not([type="button"]):not([type="reset"]),textarea,select),
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-pos-form :is(input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="submit"]):not([type="button"]):not([type="reset"]),textarea,select) { color: #f4edf3 !important; border-color: rgba(238,220,237,.2) !important; background-color: #39303f !important; }
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-content .admin-form :is(input,textarea,select)::placeholder,
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-pos-form :is(input,textarea,select)::placeholder { color: #c5b9c4 !important; opacity: 1; }
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-heading h1:focus { text-decoration-color: rgba(211,175,199,.72); }
