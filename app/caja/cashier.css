@@ -2298,6 +2298,252 @@
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-pos-form :is(input,textarea,select)::placeholder { color: #c5b9c4 !important; opacity: 1; }
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-heading h1:focus { text-decoration-color: rgba(211,175,199,.72); }
 .panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-heading h1 { width: fit-content; max-width: 100%; }
+/* Caja: superficies glass rosa/lavanda y acento ciruela, con una retícula compacta. */
+.panel-theme[data-panel-theme] .cashier-shell {
+  --cashier-ink: #4f354b;
+  --cashier-heading: #50354a;
+  --cashier-text: #493c4a;
+  --cashier-muted: #817481;
+  --cashier-accent: #63384f;
+  --cashier-rose: #d5afc7;
+  --cashier-lavender: #9687c8;
+  --cashier-line: rgba(99,56,79,.15);
+  --cashier-paper: rgba(255,250,249,.7);
+  --cashier-glass: rgba(255,250,249,.78);
+  color: var(--cashier-text);
+  background-color: #eee8ee;
+  background-image: radial-gradient(ellipse at 8% 10%,rgba(224,177,180,.46),transparent 35%),radial-gradient(ellipse at 92% 7%,rgba(174,170,213,.34),transparent 38%),radial-gradient(ellipse at 85% 94%,rgba(190,205,220,.28),transparent 38%),linear-gradient(132deg,#f4e7e6 0%,#eee8ef 54%,#e8eaf2 100%);
+  background-attachment: fixed;
+}
+.panel-theme[data-panel-theme="dark"] .cashier-shell {
+  --cashier-ink: #f4edf3;
+  --cashier-heading: #f4edf3;
+  --cashier-text: #eee5ed;
+  --cashier-muted: #c2b5c1;
+  --cashier-accent: #d3afc7;
+  --cashier-line: rgba(238,220,237,.17);
+  --cashier-paper: rgba(48,39,52,.76);
+  --cashier-glass: rgba(48,39,52,.84);
+  color: var(--cashier-text);
+  background-color: #241e29;
+  background-image: radial-gradient(ellipse at 8% 92%,rgba(128,76,105,.34),transparent 37%),radial-gradient(ellipse at 92% 7%,rgba(102,99,151,.3),transparent 38%),linear-gradient(132deg,#251e29 0%,#2e2635 56%,#272738 100%);
+  background-attachment: fixed;
+}
+.panel-theme[data-panel-theme] .cashier-shell .cashier-topbar {
+  min-height: 66px;
+  margin: 0;
+  padding: 8px clamp(16px,3vw,42px);
+  border: 0;
+  border-bottom: 1px solid rgba(255,255,255,.14);
+  border-radius: 0;
+  background: linear-gradient(108deg,#59344d 0%,#70445e 58%,#80566e 100%);
+  box-shadow: 0 7px 22px rgba(47,30,46,.18);
+  backdrop-filter: blur(20px) saturate(1.12);
+}
+.panel-theme[data-panel-theme] .cashier-topbar-tools .mode-switcher { border-color: rgba(255,255,255,.2); background: rgba(42,27,40,.2); }
+.panel-theme[data-panel-theme] .cashier-topbar-tools .mode-switcher a { color: rgba(255,248,253,.82); }
+.panel-theme[data-panel-theme] .cashier-topbar-tools .mode-switcher a.active { color: #56364e; background: #f6eaf0; }
+.panel-theme[data-panel-theme] .cashier-topbar .install-app-button { color: #fff8fc; border-color: rgba(255,255,255,.22); background: rgba(42,27,40,.18); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-content { max-width: 1480px; padding: 12px clamp(16px,3vw,40px) 42px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-toolbar {
+  top: 66px;
+  min-height: 48px;
+  margin: 0 0 13px;
+  padding: 5px;
+  gap: 8px;
+  border-color: rgba(255,255,255,.72);
+  border-radius: 999px;
+  background: rgba(255,250,249,.76);
+  box-shadow: 0 8px 24px rgba(67,46,62,.08),inset 0 1px rgba(255,255,255,.76);
+  backdrop-filter: blur(20px) saturate(1.12);
+}
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-toolbar { border-color: rgba(238,220,237,.16); background: rgba(45,37,51,.82); box-shadow: 0 8px 24px rgba(9,7,15,.2),inset 0 1px rgba(255,255,255,.045); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-desktop-nav a { min-height: 36px; padding: 0 13px; border-radius: 999px; color: #756877; font-size: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-desktop-nav a:hover { color: #56364e; background: rgba(99,56,79,.08); transform: none; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-desktop-nav a.active { color: #fff9fc; border-color: transparent; background: #63384f; box-shadow: 0 4px 12px rgba(78,43,67,.18); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-desktop-nav a.active svg { color: #f3dfe9; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-desktop-nav a { color: #c5b8c5; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-desktop-nav a:hover { color: #f4edf3; background: rgba(211,175,199,.1); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-desktop-nav a.active { color: #fff8fc; background: #704b66; }
+.panel-theme[data-panel-theme] .cashier-shell .dash-page-heading { margin: 3px 0 13px; gap: 12px; }
+.panel-theme[data-panel-theme] .cashier-shell .admin-title { gap: 11px; }
+.panel-theme[data-panel-theme] .cashier-shell .admin-title > svg { width: 38px; height: 38px; padding: 9px; border-color: rgba(99,56,79,.16); border-radius: 12px; color: #63384f; background: rgba(255,250,249,.74); }
+.panel-theme[data-panel-theme] .cashier-shell .admin-title p { color: #8d637b; font-size: 8px; letter-spacing: .1em; }
+.panel-theme[data-panel-theme] .cashier-shell .admin-title h1 { color: #50354a; font-size: clamp(25px,2.2vw,31px); font-weight: 580; letter-spacing: -.035em; line-height: 1.15; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .admin-title > svg { color: #e7c5d9; border-color: rgba(238,220,237,.18); background: rgba(48,39,52,.82); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .admin-title p { color: #d5a9c2; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .admin-title h1 { color: #f4edf3; }
+.panel-theme[data-panel-theme] .cashier-shell .admin-panel { padding: 16px; border-color: rgba(255,255,255,.64); border-radius: 17px; color: var(--cashier-text); background: var(--cashier-glass); box-shadow: 0 12px 30px rgba(69,48,64,.075),inset 0 1px rgba(255,255,255,.6); backdrop-filter: blur(18px) saturate(1.08); }
+.panel-theme[data-panel-theme] .cashier-shell .admin-panel :is(h2,h3,strong) { color: var(--cashier-heading); }
+.panel-theme[data-panel-theme] .cashier-shell .admin-panel :is(p,.admin-help,small) { color: var(--cashier-muted); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .admin-panel { border-color: rgba(238,220,237,.16); color: #eee5ed; background: rgba(48,39,52,.82); box-shadow: 0 12px 30px rgba(8,6,12,.2),inset 0 1px rgba(255,255,255,.045); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .admin-panel :is(h2,h3,strong) { color: #f4edf3; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .admin-panel :is(p,.admin-help,small) { color: #c2b5c1; }
+.panel-theme[data-panel-theme] .cashier-shell .dash-list-head { min-width: 0; gap: 12px; margin-bottom: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell .dash-list-head h2 { margin: 0; font-size: 20px; letter-spacing: -.025em; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-dashboard-tools { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin: 0 0 12px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-tool-card,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-launch.cashier-tool-card { min-height: 88px; padding: 12px 15px; grid-template-columns: 40px minmax(0,1fr) 30px; gap: 11px; border-color: rgba(99,56,79,.14); border-radius: 17px; color: #50354a; background: rgba(255,250,249,.78); box-shadow: 0 8px 22px rgba(70,49,66,.075),inset 0 1px rgba(255,255,255,.78); transform: none; transition: border-color .16s ease,box-shadow .16s ease,background .16s ease; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-tool-icon { width: 40px; height: 40px; border-color: rgba(99,56,79,.14); border-radius: 12px; color: #63384f; background: rgba(211,175,199,.22); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-tool-copy { gap: 2px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-tool-copy small { color: #91647e; font-size: 8px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-tool-copy strong { color: #50354a; font-size: 15px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-tool-copy > span { color: #817481; font-size: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-tool-action { width: 30px; height: 30px; justify-content: center; border: 1px solid rgba(99,56,79,.14); border-radius: 50%; color: #63384f; background: rgba(255,255,255,.45); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-tool-card.cashier-tool-cobrar { color: #fff9fc; border-color: rgba(99,56,79,.1); background: linear-gradient(112deg,#63384f,#7a506a); box-shadow: 0 10px 24px rgba(83,46,69,.18); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-tool-card.cashier-tool-cobrar :is(.cashier-tool-copy small,.cashier-tool-copy strong,.cashier-tool-copy > span,.cashier-tool-action) { color: #fff7fb; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-tool-card.cashier-tool-cobrar .cashier-tool-icon { color: #f5e8ef; border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.12); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-tool-card:hover,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-launch.cashier-tool-card:hover { border-color: rgba(99,56,79,.3); box-shadow: 0 12px 27px rgba(70,49,66,.14); transform: translateY(-1px); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-tool-card,
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-launch.cashier-tool-card { color: #f4edf3; border-color: rgba(238,220,237,.17); background: rgba(48,39,52,.84); box-shadow: 0 9px 24px rgba(8,6,12,.2),inset 0 1px rgba(255,255,255,.045); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-tool-copy :is(small,strong,span) { color: #f4edf3; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-tool-icon { color: #e7c5d9; border-color: rgba(238,220,237,.16); background: rgba(211,175,199,.1); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-tool-action { color: #f4edf3; border-color: rgba(238,220,237,.16); background: rgba(255,255,255,.05); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-tool-card.cashier-tool-cobrar { color: #fff9fc; background: linear-gradient(112deg,#63384f,#7a506a); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-compact-status { gap: 7px; margin: 0 0 11px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-compact-status span { padding: 6px 10px; border-color: var(--cashier-line); color: var(--cashier-muted); background: var(--cashier-paper); font-size: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-compact-status b { color: var(--cashier-accent); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-welcome { width: min(100%,900px); min-height: 0; margin: 16px auto 0; padding: 18px; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; align-items: center; gap: 14px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-welcome .cashier-orb { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid var(--cashier-line); border-radius: 13px; color: var(--cashier-accent); background: rgba(211,175,199,.18); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-welcome .cashier-orb svg { width: 19px; height: 19px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-welcome-copy .eyebrow { margin: 0 0 4px; color: #936c83; font-size: 8px; font-weight: 750; letter-spacing: .09em; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-welcome-copy h2 { margin: 0; font-size: 19px; line-height: 1.25; letter-spacing: -.025em; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-welcome-copy > p:last-child { margin: 4px 0 0; font-size: 11px; line-height: 1.45; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-welcome-action .cashier-workflow-launch { min-height: 40px; padding: 0 14px; border-radius: 11px; font-size: 11px; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-welcome .cashier-orb { color: #e7c5d9; background: rgba(211,175,199,.1); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-welcome-copy .eyebrow { color: #d5a9c2; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-queue { max-height: none; padding: 13px 16px; overflow: visible; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-queue > summary { min-height: 42px; display: flex; align-items: center; gap: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-queue > .admin-help { margin: 5px 0 10px; font-size: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-queue > .admin-list { max-height: min(54vh,520px); overflow: auto; overscroll-behavior: contain; }
+.panel-theme[data-panel-theme] .cashier-shell :is(.cashier-workflow-content .admin-form,.cashier-pos-form) { min-width: 0; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-content .admin-form label,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-pos-form label { min-width: 0; display: grid; gap: 4px; color: #554651; font-size: 11px; font-weight: 650; }
+.panel-theme[data-panel-theme] .cashier-shell :is(.cashier-workflow-content .admin-form input:not([type="hidden"],[type="checkbox"],[type="radio"]),.cashier-workflow-content .admin-form select,.cashier-workflow-content .admin-form textarea,.cashier-pos-form input:not([type="hidden"],[type="checkbox"],[type="radio"]),.cashier-pos-form select,.cashier-pos-form textarea,.cashier-catalog-search,.cashier-client-picker) { min-width: 0; max-width: 100%; min-height: 38px; margin-top: 3px; padding: 8px 10px; border-radius: 10px; font-size: 13px; box-sizing: border-box; }
+.panel-theme[data-panel-theme] .cashier-shell :is(.cashier-client-modes button,.cashier-benefit-modes button,.cashier-choice-buttons button,.cashier-payment-methods button,.cashier-history-filters button,.cashier-add-line,.cashier-split-add,.cashier-option-toggle,.cashier-workflow-launch:not(.cashier-tool-card),.cashier-cart-clear) { min-height: 36px; padding-inline: 11px; border-radius: 10px; font-size: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell :is(.cashier-workflow-content .button-dark,.cashier-service-payment > .button-dark,.cashier-checkout-button) { min-height: 42px; border-radius: 11px; font-size: 11px; box-shadow: 0 6px 15px rgba(99,56,79,.16); }
+.panel-theme[data-panel-theme] .cashier-shell :is(.cashier-pos-layout,.cashier-product-workspace .cashier-pos-layout) { grid-template-columns: minmax(0,1fr) minmax(300px,360px); align-items: start; gap: 12px; }
+.panel-theme[data-panel-theme] .cashier-shell :is(.cashier-catalog,.cashier-cart) { min-width: 0; padding: 14px; border-color: var(--cashier-line); border-radius: 15px; background: var(--cashier-glass); box-shadow: 0 8px 22px rgba(69,48,64,.06),inset 0 1px rgba(255,255,255,.5); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-catalog-heading h2,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-cart-heading h2 { font-size: 18px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-catalog-search { min-height: 39px; margin-bottom: 9px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-product-grid { grid-template-columns: repeat(auto-fill,minmax(142px,1fr)); gap: 8px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-cart { position: static; max-height: none; overflow: visible; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-cart-empty,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-catalog-empty { min-height: 112px; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell :is(.cashier-catalog,.cashier-cart,.cashier-product-tile,.cashier-cart-line) { border-color: rgba(238,220,237,.16); color: #f4edf3; background: rgba(48,39,52,.84); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-product-tile-copy :is(strong,span,b) { color: #f4edf3; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-reservations,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-ledger,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-team-panel,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-history { min-width: 0; padding: 16px; }
+.panel-theme[data-panel-theme] .cashier-shell :is(.cashier-reservation-overview,.cashier-settlement-overview) { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin: 12px 0; }
+.panel-theme[data-panel-theme] .cashier-shell :is(.cashier-reservation-overview article,.cashier-settlement-overview article,.cashier-ledger-summary article) { min-width: 0; min-height: 64px; padding: 10px 12px; border-color: var(--cashier-line); border-radius: 13px; background: rgba(255,255,255,.48); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell :is(.cashier-reservation-overview article,.cashier-settlement-overview article,.cashier-ledger-summary article) { border-color: rgba(238,220,237,.15); background: rgba(255,255,255,.045); }
+.panel-theme[data-panel-theme] .cashier-shell :is(.cashier-reservation-list,.cashier-barber-grid) { min-width: 0; display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,390px),1fr)); gap: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-reservation-list > article { min-width: 0; padding: 12px; border-color: var(--cashier-line); border-radius: 14px; background: var(--cashier-paper); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-reservation-list dl { min-width: 0; gap: 7px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-reservation-list dd { overflow-wrap: anywhere; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-reservation-list > article { border-color: rgba(238,220,237,.16); background: rgba(48,39,52,.82); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-ledger-summary { grid-template-columns: repeat(5,minmax(0,1fr)); gap: 8px; margin: 12px 0; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-ledger-summary article span,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-reservation-overview article span,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-settlement-overview article span { color: var(--cashier-muted); font-size: 9px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-ledger-summary article strong,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-reservation-overview article strong,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-settlement-overview article strong { color: var(--cashier-heading); font-size: 16px; font-variant-numeric: tabular-nums; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-ledger-table { min-width: 0; overflow: auto; border-color: var(--cashier-line); border-radius: 14px; background: rgba(255,250,249,.68); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-ledger-table .ledger-row { min-width: 720px; grid-template-columns: minmax(72px,.65fr) minmax(110px,.9fr) minmax(190px,2fr) minmax(80px,.65fr) minmax(90px,.75fr); gap: 10px; padding: 10px 12px; border-color: var(--cashier-line); font-size: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-ledger-table .ledger-head { color: #704d66; background: rgba(211,175,199,.2); font-size: 9px; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-ledger-table { border-color: rgba(238,220,237,.16); background: rgba(48,39,52,.82); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-ledger-table .ledger-head { color: #ecd9e7; background: rgba(211,175,199,.1); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-barber-card { min-width: 0; padding: 13px; grid-template-columns: 44px minmax(0,1fr); gap: 10px; border-color: var(--cashier-line); border-radius: 15px; color: var(--cashier-text); background: var(--cashier-glass); box-shadow: 0 8px 22px rgba(69,48,64,.06); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-barber-portrait { width: 44px; height: 44px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-barber-identity,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-barber-metrics { min-width: 0; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-barber-metrics { grid-column: 1 / -1; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-barber-card :is(.cashier-settlement-state,.cashier-barber-link) { grid-column: 1 / -1; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-barber-card { border-color: rgba(238,220,237,.16); color: #f4edf3; background: rgba(48,39,52,.82); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-history-filters { gap: 6px; margin: 10px 0; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-history .admin-list { display: grid; gap: 8px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-history .admin-list > article { min-width: 0; padding: 11px 13px; grid-template-columns: minmax(0,1fr) auto; gap: 10px; border-color: var(--cashier-line); border-radius: 13px; background: var(--cashier-paper); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-history .admin-list > article > div:first-child { min-width: 0; overflow-wrap: anywhere; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-history .admin-list > article :is(strong,span,small) { min-width: 0; overflow-wrap: anywhere; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-history .admin-list > article { border-color: rgba(238,220,237,.16); background: rgba(48,39,52,.82); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-screen { background-color: #eee8ee; background-image: radial-gradient(ellipse at 8% 10%,rgba(224,177,180,.4),transparent 35%),radial-gradient(ellipse at 92% 7%,rgba(174,170,213,.3),transparent 38%),linear-gradient(132deg,#f4e7e6 0%,#eee8ef 54%,#e8eaf2 100%); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-header { min-height: 56px; padding: 7px clamp(14px,3vw,34px); border-color: rgba(255,255,255,.16); background: linear-gradient(108deg,#59344d,#70445e 58%,#80566e); box-shadow: 0 5px 18px rgba(47,30,46,.14); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-brand .brand,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-brand .brand :is(a,span,strong,small) { color: #fff8fc !important; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-brand > span { color: #f3dfe9; border-color: rgba(255,255,255,.22); }
+.panel-theme[data-panel-theme] .cashier-shell :is(.cashier-workflow-back,.cashier-workflow-close) { min-height: 36px; border-color: rgba(255,255,255,.22); border-radius: 10px; color: #fff8fc; background: rgba(255,255,255,.09); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-close { width: 36px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-main { padding: 14px clamp(14px,2.5vw,32px) 26px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-heading { margin-bottom: 12px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-heading h1:focus { outline: 0; text-decoration: none; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-heading h1 { color: #50354a; font-size: clamp(23px,2.25vw,30px); line-height: 1.15; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-heading > span { color: #817481; font-size: 11px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-content { width: min(100%,1380px); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-screen { background-color: #241e29; background-image: radial-gradient(ellipse at 8% 92%,rgba(128,76,105,.32),transparent 37%),radial-gradient(ellipse at 92% 7%,rgba(102,99,151,.28),transparent 38%),linear-gradient(132deg,#251e29 0%,#2e2635 56%,#272738 100%); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-heading h1 { color: #f4edf3; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-heading > span { color: #c2b5c1; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell :is(.cashier-workflow-content .admin-form label,.cashier-pos-form label) { color: #eee5ed; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-client-fields,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-line-group,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-benefits,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-service-line,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-checkout-products,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-service-payment,
+.panel-theme[data-panel-theme] .cashier-shell .cashier-total-preview { min-width: 0; border-color: var(--cashier-line); border-radius: 14px; background: var(--cashier-paper); box-shadow: 0 7px 20px rgba(69,48,64,.055),inset 0 1px rgba(255,255,255,.42); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-service-details { min-width: 0; display: grid; align-content: start; gap: 9px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-content > .cashier-service-checkout { grid-template-columns: minmax(0,1.45fr) minmax(280px,.8fr); align-items: start; gap: 12px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-service-payment { position: sticky; top: 12px; min-width: 0; padding: 11px; gap: 9px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-service-payment > .cashier-total-preview { padding: 11px; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-service-payment > .cashier-total-preview > strong b { color: #63384f; font-size: 21px; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell :is(.cashier-client-fields,.cashier-line-group,.cashier-benefits,.cashier-service-line,.cashier-checkout-products,.cashier-service-payment,.cashier-total-preview) { border-color: rgba(238,220,237,.16); background: rgba(48,39,52,.84); box-shadow: 0 8px 22px rgba(8,6,12,.16),inset 0 1px rgba(255,255,255,.04); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-service-payment > .cashier-total-preview > strong b { color: #e4bfd5; }
+.panel-theme[data-panel-theme] .cashier-shell :is(.cashier-choice-field,.cashier-choice-menu) { position: relative; min-width: 0; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-choice-menu > summary { min-height: 39px; padding: 7px 34px 7px 10px; border-color: var(--cashier-line); border-radius: 10px; color: var(--cashier-text); background: rgba(255,255,255,.58); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-choice-menu > summary { border-color: rgba(238,220,237,.18); color: #f4edf3; background: rgba(57,48,63,.88); }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-choice-options { z-index: 90; max-height: min(280px,44vh); border-color: var(--cashier-line); border-radius: 12px; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-choice-options { background: #302836; }
+.panel-theme[data-panel-theme] .cashier-shell :is(.cashier-client-search,.cashier-client-picker) { position: relative; min-width: 0; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-client-results { z-index: 95; max-height: min(260px,42vh); }
+@media (max-width: 900px) {
+  .panel-theme[data-panel-theme] .cashier-shell :is(.cashier-pos-layout,.cashier-product-workspace .cashier-pos-layout) { grid-template-columns: minmax(0,1fr) minmax(270px,330px); }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-content > .cashier-service-checkout { grid-template-columns: minmax(0,1.2fr) minmax(260px,.9fr); }
+}
+@media (max-width: 760px) {
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-topbar { min-height: 0; padding: 8px 12px; grid-template-columns: minmax(0,1fr) auto; grid-template-areas: "brand user" "tools tools"; gap: 8px; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-topbar-brand { grid-area: brand; gap: 8px; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-topbar-tools { grid-area: tools; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-user-menu { grid-area: user; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-content { padding: 10px 12px 34px; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-toolbar { top: 104px; min-height: 44px; margin-bottom: 10px; border-radius: 14px; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-dashboard-tools { grid-template-columns: 1fr; gap: 8px; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-tool-card,
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-launch.cashier-tool-card { min-height: 74px; padding: 10px 12px; grid-template-columns: 36px minmax(0,1fr) 28px; gap: 9px; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-tool-icon { width: 36px; height: 36px; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-tool-copy strong { font-size: 14px; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-welcome { grid-template-columns: 38px minmax(0,1fr); gap: 10px; padding: 13px; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-welcome .cashier-orb { width: 38px; height: 38px; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-welcome-action { grid-column: 2; }
+  .panel-theme[data-panel-theme] .cashier-shell :is(.cashier-pos-layout,.cashier-product-workspace .cashier-pos-layout,.cashier-workflow-content > .cashier-service-checkout) { grid-template-columns: minmax(0,1fr); gap: 9px; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-service-payment { position: static; }
+  .panel-theme[data-panel-theme] .cashier-shell :is(.cashier-ledger-summary,.cashier-reservation-overview,.cashier-settlement-overview) { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-ledger-summary .ledger-grand-total { grid-column: 1 / -1; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-reservation-list { grid-template-columns: minmax(0,1fr); }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-history .admin-list > article { grid-template-columns: minmax(0,1fr); gap: 8px; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-history .dash-row-actions { justify-content: flex-start; flex-wrap: wrap; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-ledger-table { overflow-x: auto; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-ledger-table .ledger-row { min-width: 650px; }
+  .panel-theme[data-panel-theme] .cashier-shell :is(.cashier-workflow-content .admin-form input:not([type="hidden"],[type="checkbox"],[type="radio"]),.cashier-workflow-content .admin-form select,.cashier-workflow-content .admin-form textarea,.cashier-pos-form input:not([type="hidden"],[type="checkbox"],[type="radio"]),.cashier-pos-form select,.cashier-pos-form textarea,.cashier-catalog-search,.cashier-client-picker) { min-height: 42px; font-size: 16px; }
+}
+@media (max-width: 520px) {
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-content > .admin-form:not(.cashier-service-checkout) { grid-template-columns: minmax(0,1fr); }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-content > .admin-form:not(.cashier-service-checkout) > .wide { grid-column: auto; }
+  .panel-theme[data-panel-theme] .cashier-shell .cashier-ledger { padding: 12px; }
+}
 .cashier-shell .cashier-workflow-dialog[data-size="compact"] {
   inset: 0;
   width: min(500px, calc(100vw - 28px));
@@ -2337,7 +2583,7 @@
 .cashier-shell .cashier-workflow-dialog[data-size="compact"] :is(.cashier-workflow-brand,.cashier-workflow-back) { display: none; }
 .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-close { width: 32px; min-height: 32px; border-radius: 10px; }
 .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-main { overflow: visible; padding: 0 22px 22px; }
-.cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-heading { width: 100%; margin: 0 0 17px; }
+.cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-heading { width: 100%; margin: 0 0 17px; display: block; }
 .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-heading h1 { font-size: 25px; }
 .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-heading > span { margin-top: 5px; font-size: 12px; }
 .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-content { width: 100%; }
@@ -2349,7 +2595,7 @@
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-screen { border-color: rgba(238,220,237,.22); background: linear-gradient(145deg,rgba(50,41,57,.98),rgba(40,37,55,.98)); box-shadow: inset 0 1px rgba(255,255,255,.06); }
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-header { background: transparent; box-shadow: none; }
 .panel-theme[data-panel-theme="dark"] .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-close { color: #f4edf3; border-color: rgba(238,220,237,.18); background: rgba(255,255,255,.07); }
-.cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-content > .admin-form { border-color: transparent; }
+.panel-theme[data-panel-theme] .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-content > .admin-form { padding: 0; border: 0; background: transparent; box-shadow: none; }
 @media (max-width: 520px) {
   .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-main { padding: 0 16px 17px; }
   .cashier-shell .cashier-workflow-dialog[data-size="compact"] .cashier-workflow-content > .admin-form { grid-template-columns: 1fr; gap: 9px; }
