@@ -1,10 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
-  <filter id="fiber" x="0" y="0" width="100%" height="100%">
-    <feTurbulence type="fractalNoise" baseFrequency=".78" numOctaves="3" stitchTiles="stitch" seed="17"/>
-    <feColorMatrix type="saturate" values="0"/>
-    <feComponentTransfer>
-      <feFuncA type="table" tableValues="0 .16"/>
-    </feComponentTransfer>
-  </filter>
-  <rect width="240" height="240" fill="#596056" filter="url(#fiber)"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".72" numOctaves="3" stitchTiles="stitch" seed="23" />
+      <feColorMatrix type="saturate" values="0" />
+      <feComponentTransfer><feFuncA type="table" tableValues="0 .32" /></feComponentTransfer>
+    </filter>
+    <pattern id="paper" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M3 9h13m13 12h15M8 36h18m8-30h8M20 4v7m17 21v8M4 27v5m29-18v4" fill="none" stroke="#76515f" stroke-opacity=".12" stroke-width=".65" />
+      <circle cx="26" cy="8" r=".8" fill="#76515f" fill-opacity=".15" />
+      <circle cx="7" cy="18" r=".7" fill="#76515f" fill-opacity=".13" />
+      <circle cx="43" cy="40" r=".8" fill="#76515f" fill-opacity=".13" />
+    </pattern>
+  </defs>
+  <rect width="256" height="256" fill="#f5e9e5" />
+  <rect width="256" height="256" fill="url(#paper)" />
+  <rect width="256" height="256" filter="url(#grain)" opacity=".38" />
 </svg>

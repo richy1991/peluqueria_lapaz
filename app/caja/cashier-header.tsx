@@ -16,7 +16,7 @@ export function CashierHeader({ userName, userEmail, capabilities, shiftOpen }: 
 }) {
   const initials = userName.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("").toLocaleUpperCase("es") || "CJ";
 
-  return <header className="admin-header dash-header cashier-topbar">
+  return <header className="cashier-topbar" aria-label="Terminal de caja">
     <div className="cashier-topbar-brand">
       <Brand linked={false} />
       <span className="cashier-terminal-status"><i />{shiftOpen ? "Turno abierto" : "Turno cerrado"}</span>

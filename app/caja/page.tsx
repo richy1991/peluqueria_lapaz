@@ -31,10 +31,10 @@ export async function CashierPageView({ section }: { section: CashierSection }) 
   const historyStart = new Date(end); historyStart.setUTCDate(historyStart.getUTCDate() - 31);
   const visitHistoryStart = new Date(end); visitHistoryStart.setUTCDate(visitHistoryStart.getUTCDate() - 180);
   const requestTimestamp = new Date().getTime();
-  const [shift,services,barbers,products,clients,appointments,sales,earnings,expenses,payouts,productReservations] = await Promise.all([
+  const [shift,services,barbers,products,clients,appointments,sales,earnings,expenses,payouts,productReservations,todayServiceEntries] = await Promise.all([
     supabase.from("cash_shifts").select("*").eq("opened_by",user.id).eq("status","open").maybeSingle(),
     section === "servicios" ? supabase.from("services").select("id,name,price").eq("status","active").order("name") : Promise.resolve({ data: [] }),
-    ["servicios", "productos", "reservas", "liquidaciones"].includes(section) ? supabase.from("barber_profiles").select("id,display_name,commission_percent").eq("active",true).order("display_name") : Promise.resolve({ data: [] }),
+    ["servicios", "productos", "reservas", "liquidaciones"].includes(section) ? supabase.from("barber_profiles").select("id,display_name,photo_path,bio,specialties,commission_percent").eq("active",true).order("display_name") : Promise.resolve({ data: [] }),
     ["servicios", "productos"].includes(section) ? supabase.from("products").select("id,name,price,stock,incentive_percent,category,brand,presentation,image_path,image_paths").eq("status","active").gt("stock",0).order("name") : Promise.resolve({ data: [] }),
     ["servicios", "productos"].includes(section) ? supabase.from("profiles").select("id,full_name,email,phone,referral_code").eq("status","active").order("full_name").limit(300) : Promise.resolve({ data: [] }),
     section === "servicios" ? supabase.from("appointments").select("id,client_id,service_id,barber_id,status,starts_at,service_name_snapshot,profiles!appointments_client_id_fkey(full_name,email,referral_code),barber_profiles!appointments_barber_id_fkey(display_name),appointment_checkout_details(actual_service_id,extra_service_id,suggested_product_id,product_quantity,notes,submitted_at),appointment_service_items(service_id,position,name_snapshot,price_snapshot,duration_snapshot)").gte("starts_at",start.toISOString()).in("status",["pending_payment"]).order("starts_at") : Promise.resolve({ data: [] }),
@@ -43,7 +43,16 @@ export async function CashierPageView({ section }: { section: CashierSection }) 
     section === "liquidaciones" ? supabase.from("barber_expenses").select("id,barber_id,concept,amount,status,created_at,barber_profiles(display_name)").in("status",["pending","approved"]).lt("created_at",end.toISOString()).order("created_at",{ascending:false}) : Promise.resolve({ data: [] }),
     section === "liquidaciones" ? supabase.from("payouts").select("id,barber_id,barber_name_snapshot,period_start,period_end,commission_amount,incentive_amount,reimbursement_amount,deduction_amount,includes_accumulated_incentives,total_amount,status,paid_at,barber_profiles(display_name)").or(`status.eq.approved,and(status.eq.paid,paid_at.gte.${start.toISOString()},paid_at.lt.${end.toISOString()})`).order("created_at",{ascending:false}) : Promise.resolve({ data: [] }),
     supabase.from("product_reservations").select("id,client_id,product_id,quantity,price_snapshot,status,expires_at,created_at,profiles!product_reservations_client_id_fkey(full_name,email,phone,referral_code),products(name,brand,presentation,stock)").eq("status","reserved").order("created_at",{ascending:true}),
+    section === "liquidaciones" ? supabase.from("sales").select("sale_items(id,item_type,barber_id)").eq("status","paid").gte("paid_at",start.toISOString()).lt("paid_at",end.toISOString()) : Promise.resolve({ data: [] }),
   ]);
+  const servicesToday: Record<string, number> = {};
+  const todaySales = (todayServiceEntries.data ?? []) as Array<{ sale_items?: Array<{ item_type?: string; barber_id?: string | null }> | null }>;
+  for (const sale of todaySales) {
+    for (const item of sale.sale_items ?? []) {
+      if (item.item_type !== "service" || !item.barber_id) continue;
+      servicesToday[item.barber_id] = (servicesToday[item.barber_id] ?? 0) + 1;
+    }
+  }
   const visitHistory = ["servicios", "productos", "reservas"].includes(section)
     ? (await supabase.from("appointments").select("id,client_id,starts_at,status,service_name_snapshot,barber_name_snapshot").gte("starts_at", visitHistoryStart.toISOString()).lt("starts_at", end.toISOString()).in("status", ["completed", "pending_payment"]).order("starts_at", { ascending: false }).limit(1000)).data ?? []
     : [];
@@ -60,6 +69,7 @@ export async function CashierPageView({ section }: { section: CashierSection }) 
     visitHistory={visitHistory}
     sales={sales.data??[]}
     earnings={earnings.data??[]}
+    servicesToday={servicesToday}
     expenses={expenses.data??[]}
     payouts={payouts.data??[]}
     productReservations={(productReservations.data??[]).map(item => ({ ...item, is_expired: new Date(item.expires_at).getTime() <= requestTimestamp }))}
