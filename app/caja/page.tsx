@@ -21,7 +21,11 @@ export async function CashierPageView({ section }: { section: CashierSection }) 
   if (!user) redirect("/login");
   const capabilities = await getUserCapabilities(user.id);
   if (!capabilities.isCashier) notFound();
-  const { data: businessSettings } = await supabase.from("business_settings").select("timezone").eq("id", true).maybeSingle();
+  const [businessSettingsResult, operatorProfileResult] = await Promise.all([
+    supabase.from("business_settings").select("timezone").eq("id", true).maybeSingle(),
+    supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
+  ]);
+  const businessSettings = businessSettingsResult.data;
   const businessTimezone = String(businessSettings?.timezone ?? DEFAULT_BUSINESS_TIMEZONE);
   const { date: workDate, start, end } = businessDayRange(new Date(), businessTimezone);
   const historyStart = new Date(end); historyStart.setUTCDate(historyStart.getUTCDate() - 31);
@@ -44,6 +48,7 @@ export async function CashierPageView({ section }: { section: CashierSection }) 
     ? (await supabase.from("appointments").select("id,client_id,starts_at,status,service_name_snapshot,barber_name_snapshot").gte("starts_at", visitHistoryStart.toISOString()).lt("starts_at", end.toISOString()).in("status", ["completed", "pending_payment"]).order("starts_at", { ascending: false }).limit(1000)).data ?? []
     : [];
   return <PanelExperience chatInHeader><CashierPanel
+    userName={String(operatorProfileResult.data?.full_name ?? user.email?.split("@")[0] ?? "Caja")}
     userEmail={user.email??"Caja"}
     capabilities={capabilities}
     shift={shift.data}

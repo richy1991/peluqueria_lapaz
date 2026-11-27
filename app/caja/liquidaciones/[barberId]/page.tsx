@@ -16,7 +16,11 @@ export default async function SettlementPage({ params }: { params: Promise<{ bar
   const capabilities = await getUserCapabilities(user.id);
   if (!capabilities.isCashier) notFound();
 
-  const { data: businessSettings } = await supabase.from("business_settings").select("timezone").eq("id", true).maybeSingle();
+  const [businessSettingsResult, operatorProfileResult] = await Promise.all([
+    supabase.from("business_settings").select("timezone").eq("id", true).maybeSingle(),
+    supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
+  ]);
+  const businessSettings = businessSettingsResult.data;
   const businessTimezone = String(businessSettings?.timezone ?? DEFAULT_BUSINESS_TIMEZONE);
   const workDate = businessDateKey(new Date(), businessTimezone);
   const [barberResult, shiftResult, detailResult, historyResult] = await Promise.all([
@@ -30,6 +34,7 @@ export default async function SettlementPage({ params }: { params: Promise<{ bar
   if (detailResult.error) throw new Error(`No se pudo cargar la liquidación: ${detailResult.error.message}`);
 
   return <PanelExperience chatInHeader><CashierSettlementDetail
+    userName={String(operatorProfileResult.data?.full_name ?? user.email?.split("@")[0] ?? "Caja")}
     userEmail={user.email ?? "Caja"}
     capabilities={capabilities}
     shiftOpen={Boolean(shiftResult.data)}

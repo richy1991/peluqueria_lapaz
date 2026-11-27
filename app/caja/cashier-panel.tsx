@@ -6,15 +6,13 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Calculator, CirclePlus, Gift, History, LockKeyhole, PackageCheck, PackageOpen, Printer, ReceiptText, RotateCcw, Scissors, ShoppingBag, Trash2, WalletCards } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { CashierWorkflowWindow } from "./cashier-workflow-window";
-import { ModeSwitcher } from "@/components/mode-switcher";
-import { PanelMobileLogout, PanelThemeSelector } from "@/components/panel-experience";
 import { clearFormErrors, dispatchDashboardError, dispatchDashboardSuccess, reportFormError } from "@/lib/form-feedback";
 import { businessDateKey } from "@/lib/business-time";
 import { createClient } from "@/lib/supabase/client";
-import { CashierDesktopNavigation, CashierMobileNavigation, type CashierNavigationSection } from "./cashier-navigation";
-import { InstallAppButton } from "@/components/install-app-button";
+import { CashierDesktopNavigation, type CashierNavigationSection } from "./cashier-navigation";
 import { CashierProductSaleForm, PaymentSplits, type PaymentLine, useCashierPromotionQuote } from "./cashier-product-sale-form";
 import { CashierClientProfileCard } from "./cashier-client-profile";
+import { CashierHeader } from "./cashier-header";
 
 type Row = Record<string, unknown> & { id: string };
 type RewardQuote = { reward_id: string; barber_id: string; barber_name: string; balance: number; reward_name: string; points_cost: number; eligible_base: number; discount_amount: number };
@@ -22,7 +20,7 @@ type RedemptionQuote = { code: string; clientId: string; fingerprint: string; va
 type Capabilities = { isAdmin: boolean; isSuperadmin: boolean; isCashier: boolean; barber: { id: string; display_name: string } | null };
 type CashierSection = Exclude<CashierNavigationSection, "reservas">;
 type CashierRouteSection = CashierNavigationSection;
-type Props = { userEmail: string; capabilities: Capabilities; shift: Row | null; services: Row[]; barbers: Row[]; products: Row[]; clients: Row[]; appointments: Row[]; visitHistory: Row[]; sales: Row[]; earnings: Row[]; expenses: Row[]; payouts: Row[]; productReservations: Row[]; movements: Row[]; workDate: string; businessTimezone: string; section: CashierRouteSection };
+type Props = { userName: string; userEmail: string; capabilities: Capabilities; shift: Row | null; services: Row[]; barbers: Row[]; products: Row[]; clients: Row[]; appointments: Row[]; visitHistory: Row[]; sales: Row[]; earnings: Row[]; expenses: Row[]; payouts: Row[]; productReservations: Row[]; movements: Row[]; workDate: string; businessTimezone: string; section: CashierRouteSection };
 
 export function CashierPanel(props: Props) {
   const { userEmail, capabilities, shift, services, barbers, products, clients, appointments, visitHistory, sales, earnings, expenses, payouts, productReservations, movements, workDate, businessTimezone, section } = props;
@@ -168,8 +166,8 @@ export function CashierPanel(props: Props) {
   const titles: Record<CashierSection, string> = { servicios: "Cobro de servicios", productos: "Venta de productos", movimientos: "Libro diario", liquidaciones: "Liquidaciones diarias", historial: "Historial de ventas" };
 
   return <main className="admin-shell dash-workspace cashier-shell">
-    <header className="admin-header dash-header"><div className="dash-brand"><Brand linked={false} /><span className="dash-live"><i /> CAJA CONECTADA</span></div><InstallAppButton compact /><ModeSwitcher current="cashier" isAdmin={capabilities.isAdmin} hasBarber={Boolean(capabilities.barber)} isCashier showClient={false} /><div className="dash-user"><span className="dash-avatar">{userEmail.slice(0, 2).toUpperCase()}</span><span>{userEmail}<small>Operador de caja</small></span></div></header>
-    <div className="admin-layout cashier-layout"><section className="cashier-content"><div className="cashier-toolbar"><CashierDesktopNavigation section={section} reservationCount={productReservations.length} /><div className="cashier-toolbar-tools"><PanelThemeSelector compact /><PanelMobileLogout /></div></div><div className="dash-page-heading"><div className="admin-title"><WalletCards /><div><p>TERMINAL POS</p><h1>{section === "reservas" ? "Reservas de productos" : titles[section]}</h1></div></div><span className={`dash-status-pill ${shift ? "online" : "offline"}`}><i />{shift ? "Turno abierto" : "Turno cerrado"}</span></div>
+    <CashierHeader userName={props.userName} userEmail={userEmail} capabilities={capabilities} shiftOpen={Boolean(shift)} />
+    <div className="admin-layout cashier-layout"><section className="cashier-content"><div className="cashier-toolbar"><CashierDesktopNavigation section={section} reservationCount={productReservations.length} /></div><div className="dash-page-heading"><div className="admin-title"><WalletCards /><div><p>TERMINAL POS</p><h1>{section === "reservas" ? "Reservas de productos" : titles[section]}</h1></div></div><span className={`dash-status-pill ${shift ? "online" : "offline"}`}><i />{shift ? "Turno abierto" : "Turno cerrado"}</span></div>
         {error && <p className="admin-error">{error}</p>}{result && <div className="admin-message"><strong>Operación completada.</strong>{"receipt_id" in result && <Link href={`/comprobante/${String(result.receipt_id)}`}> Ver comprobante #{String(result.receipt_number)}</Link>}{Boolean(result.claim_code) && <span> Código: <b>{String(result.claim_code)}</b></span>}</div>}
         {!shift ? <OpenShift onSubmit={open} busy={busy} /> : <>
           {section === "servicios" && <ServiceDashboard appointments={appointments} visitHistory={visitHistory} clients={clients} services={services} barbers={barbers} products={products} sales={sales} reservations={productReservations} busy={busy} onSubmit={sell} />}
@@ -181,7 +179,6 @@ export function CashierPanel(props: Props) {
         </>}
       </section>
     </div>
-    <CashierMobileNavigation section={section} reservationCount={productReservations.length} />
   </main>;
 }
 
@@ -193,12 +190,12 @@ function ServiceDashboard({ appointments, visitHistory, clients, services, barbe
   const stockUnits = products.reduce((total, product) => total + Number(product.stock ?? 0), 0);
   return <><div className="cashier-compact-status"><span><b>{appointments.length}</b> en cola</span><span><b>{sales.filter(sale => Boolean(sale.paid_at)).length}</b> procesadas</span></div>
     <section className="cashier-dashboard-tools" aria-label="Acciones frecuentes">
-      <Link className="cashier-tool-card cashier-tool-products" href="/caja/productos"><span className="cashier-tool-icon"><ShoppingBag /></span><span className="cashier-tool-copy"><small>Punto de venta</small><strong>Vender productos</strong><span>{products.length} productos · {stockUnits} unidades disponibles</span></span><span className="cashier-tool-action">Abrir <ArrowRight /></span></Link>
-      <Link className="cashier-tool-card cashier-tool-reservations" href="/caja/reservas"><span className="cashier-tool-icon"><PackageCheck /></span><span className="cashier-tool-copy"><small>Retiro en local</small><strong>Reservas por entregar</strong><span>{reservations.length} pedido(s) pendiente(s)</span></span><span className="cashier-tool-action">Ver reservas <ArrowRight /></span>{reservations.length > 0 && <b className="cashier-tool-count">{reservations.length}</b>}</Link>
-      <Link className="cashier-tool-card cashier-tool-ledger" href="/caja/movimientos"><span className="cashier-tool-icon"><Calculator /></span><span className="cashier-tool-copy"><small>Control de turno</small><strong>Libro diario</strong><span>Ingresos, egresos y cierre de caja</span></span><span className="cashier-tool-action">Ver caja <ArrowRight /></span></Link>
+      <CashierWorkflowWindow title="Cobrar servicio" description="Atención sin reserva previa. Busca al cliente, añade servicios y define el pago." triggerLabel="Nuevo cobro de servicio" triggerIcon={<Scissors />} triggerClassName="cashier-tool-card cashier-tool-cobrar" triggerContent={<><span className="cashier-tool-icon"><Scissors /></span><span className="cashier-tool-copy"><small>Atención directa</small><strong>Nuevo cobro</strong><span>Cliente, servicios y pago</span></span><span className="cashier-tool-action" aria-hidden="true"><ArrowRight /></span></>} size="large"><ServiceSaleForm clients={clients} visitHistory={visitHistory} services={services} barbers={barbers} products={products} busy={busy} onSubmit={onSubmit} /></CashierWorkflowWindow>
+      <Link className="cashier-tool-card cashier-tool-products" href="/caja/productos" aria-label="Abrir venta de productos"><span className="cashier-tool-icon"><ShoppingBag /></span><span className="cashier-tool-copy"><small>Punto de venta</small><strong>Vender productos</strong><span>{products.length} productos · {stockUnits} unidades disponibles</span></span><span className="cashier-tool-action" aria-hidden="true"><ArrowRight /></span></Link>
+      <Link className="cashier-tool-card cashier-tool-reservations" href="/caja/reservas" aria-label={`Abrir reservas por entregar: ${reservations.length}`}><span className="cashier-tool-icon"><PackageCheck /></span><span className="cashier-tool-copy"><small>Retiro en local</small><strong>Reservas por entregar</strong><span>{reservations.length} pedido(s) pendiente(s)</span></span><span className="cashier-tool-action" aria-hidden="true"><ArrowRight /></span>{reservations.length > 0 && <b className="cashier-tool-count">{reservations.length}</b>}</Link>
+      <Link className="cashier-tool-card cashier-tool-ledger" href="/caja/movimientos" aria-label="Abrir libro diario"><span className="cashier-tool-icon"><Calculator /></span><span className="cashier-tool-copy"><small>Control de turno</small><strong>Libro diario</strong><span>Ingresos, egresos y cierre de caja</span></span><span className="cashier-tool-action" aria-hidden="true"><ArrowRight /></span></Link>
     </section>
-    <section className="admin-panel cashier-queue"><div className="dash-list-head"><div><small>ACTUALIZACIÓN AUTOMÁTICA</small><h2>Cobros pendientes</h2></div><ReceiptText /></div><p className="admin-help">Cuando el peluquero termina una atención, aparece aquí con los cambios y extras informados.</p><div className="admin-list">{appointments.length ? appointments.map(appointment => <QueueItem key={appointment.id} appointment={appointment} clients={clients} visitHistory={visitHistory} services={services} barbers={barbers} products={products} busy={busy} onSubmit={onSubmit} />) : <p className="admin-help">No hay cobros pendientes. Puedes registrar una atención sin reserva.</p>}</div></section>
-    <div className="cashier-quick-actions"><section className="admin-panel cashier-quick-action"><div><small>CLIENTE SIN RESERVA</small><h2>Cobro directo de servicio</h2><p>Busca una cuenta existente o registra un cliente nuevo. Para nuevos clientes, el comprobante generará su código y QR de vinculación.</p></div><CashierWorkflowWindow title="Cobrar servicio" description="Atención sin reserva previa." triggerLabel="Nuevo cobro" triggerIcon={<Scissors />} size="large"><ServiceSaleForm clients={clients} visitHistory={visitHistory} services={services} barbers={barbers} products={products} busy={busy} onSubmit={onSubmit} /></CashierWorkflowWindow></section></div></>;
+    <section className="admin-panel cashier-queue"><div className="dash-list-head"><div><small>ACTUALIZACIÓN AUTOMÁTICA</small><h2>Cobros pendientes</h2></div><ReceiptText /></div><p className="admin-help">Atenciones finalizadas que esperan revisión y pago.</p><div className="admin-list">{appointments.length ? appointments.map(appointment => <QueueItem key={appointment.id} appointment={appointment} clients={clients} visitHistory={visitHistory} services={services} barbers={barbers} products={products} busy={busy} onSubmit={onSubmit} />) : <p className="admin-help">No hay cobros pendientes. Usa “Nuevo cobro” para una atención directa.</p>}</div></section></>;
 }
 
 function QueueItem({ appointment, clients, visitHistory, services, barbers, products, busy, onSubmit }: { appointment: Row; clients: Row[]; visitHistory: Row[]; services: Row[]; barbers: Row[]; products: Row[]; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
@@ -414,7 +411,7 @@ function ProductDashboard({ products, barbers, clients, visitHistory, busy, onSu
     <div className="cashier-product-layout">
       <div className="cashier-product-copy"><div className="dash-list-head"><div><small>OPERACIÓN INDEPENDIENTE</small><h2>Registrar productos</h2></div><PackageOpen /></div><p className="admin-help">Agrega varios productos a una sola cuenta. El cliente suma 5 puntos por unidad; el peluquero asociado recibe Bs 5 por unidad.</p></div>
       <div className="cashier-product-stats"><span><strong>{products.length}</strong> productos disponibles</span><span><strong>{stockUnits}</strong> unidades en stock</span></div>
-      {products.length ? <CashierWorkflowWindow title="Registrar venta de productos" description="Busca artículos, arma el carrito y distribuye el cobro entre uno o varios medios." triggerLabel="Nueva venta" triggerIcon={<PackageOpen />} size="large"><CashierProductSaleForm products={products} barbers={barbers} clients={clients} visitHistory={visitHistory} busy={busy} onSubmit={onSubmit} /></CashierWorkflowWindow> : <div className="cashier-inline-empty"><strong>No hay productos disponibles para vender</strong><span>Revisa el inventario con Administración y vuelve a Caja cuando haya existencias.</span></div>}
+      {products.length ? <CashierWorkflowWindow title="Registrar venta de productos" description="Busca artículos, arma el carrito y distribuye el cobro entre efectivo, QR o ambos." triggerLabel="Nueva venta" triggerIcon={<PackageOpen />} size="large"><CashierProductSaleForm products={products} barbers={barbers} clients={clients} visitHistory={visitHistory} busy={busy} onSubmit={onSubmit} /></CashierWorkflowWindow> : <div className="cashier-inline-empty"><strong>No hay productos disponibles para vender</strong><span>Revisa el inventario con Administración y vuelve a Caja cuando haya existencias.</span></div>}
     </div>
   </section>;
 }
@@ -457,13 +454,13 @@ function MovementForm({ busy, onSubmit }: { busy: boolean; onSubmit: (event: For
   return <form className="admin-form cashier-movement-form" onSubmit={onSubmit}>
     <ChoiceButtons name="kind" label="Tipo de movimiento" value={kind} onChange={setKind} options={[{ value: "income", label: "Ingreso" }, { value: "expense", label: "Egreso" }, { value: "adjustment", label: "Ajuste" }]} />
     <label>Monto Bs<input name="amount" type="number" min="0.5" step="0.5" required /></label>
-    <ChoiceButtons name="method" label="Medio de pago" value={method} onChange={setMethod} options={[{ value: "cash", label: "Efectivo" }, { value: "qr", label: "QR" }, { value: "transfer", label: "Transferencia" }, { value: "card", label: "Tarjeta" }, { value: "other", label: "Otro" }]} />
+    <ChoiceButtons name="method" label="Medio de pago" value={method} onChange={setMethod} options={[{ value: "cash", label: "Efectivo" }, { value: "qr", label: "QR" }]} />
     <label>Glosa<input name="reason" required placeholder="Concepto y responsable" /></label>
     <button className="button button-dark wide" disabled={busy}>Registrar en libro diario</button>
   </form>;
 }
 function movementLabel(kind: string) { return ({ sale: "Venta", income: "Ingreso", expense: "Egreso", refund: "Devolución", adjustment: "Ajuste" } as Record<string, string>)[kind] ?? kind; }
-function paymentLabel(method: string) { return ({ cash: "Efectivo", qr: "QR", transfer: "Transferencia", card: "Tarjeta", other: "Otro" } as Record<string, string>)[method] ?? method; }
+function paymentLabel(method: string) { return ({ cash: "Efectivo", qr: "QR" } as Record<string, string>)[method] ?? method; }
 
 function Settlements({ barbers, payouts, pendingByBarber, workDate }: { barbers: Row[]; payouts: Row[]; pendingByBarber: Map<string, number>; workDate: string }) {
   const archivedPayouts = payouts.filter(payout => !barbers.some(barber => barber.id === payout.barber_id));

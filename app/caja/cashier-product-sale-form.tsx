@@ -14,9 +14,6 @@ type PromotionQuoteState = { code: string; subtotal: number; valid: boolean; dis
 const paymentMethods = [
   { id: "cash", label: "Efectivo", icon: Banknote },
   { id: "qr", label: "QR", icon: QrCode },
-  { id: "card", label: "Tarjeta" },
-  { id: "transfer", label: "Transferencia" },
-  { id: "other", label: "Otro" },
 ];
 
 export function useCashierPromotionQuote(code: string, subtotal: number) {

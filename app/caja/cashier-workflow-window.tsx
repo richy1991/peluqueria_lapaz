@@ -9,12 +9,14 @@ type Props = {
   description: string;
   triggerLabel: string;
   triggerIcon?: ReactNode;
+  triggerContent?: ReactNode;
+  triggerClassName?: string;
   variant?: "primary" | "secondary" | "ghost";
   size?: "default" | "large";
   children: ReactNode;
 };
 
-export function CashierWorkflowWindow({ title, description, triggerLabel, triggerIcon, variant = "secondary", size = "default", children }: Props) {
+export function CashierWorkflowWindow({ title, description, triggerLabel, triggerIcon, triggerContent, triggerClassName = "", variant = "secondary", size = "default", children }: Props) {
   const [open, setOpen] = useState(false);
   const [workflowError, setWorkflowError] = useState("");
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -49,8 +51,8 @@ export function CashierWorkflowWindow({ title, description, triggerLabel, trigge
   }, [open]);
 
   return <>
-    <button type="button" className={`cashier-workflow-launch ${variant}`} onClick={() => { setWorkflowError(""); setOpen(true); }}>
-      {triggerIcon}<span>{triggerLabel}</span>
+    <button type="button" aria-label={triggerLabel} className={`cashier-workflow-launch ${variant} ${triggerClassName}`} onClick={() => { setWorkflowError(""); setOpen(true); }}>
+      {triggerContent ?? <>{triggerIcon}<span>{triggerLabel}</span></>}
     </button>
     {open && <dialog ref={dialogRef} className="cashier-workflow-dialog" data-size={size} aria-labelledby="cashier-workflow-title" onCancel={event => { event.preventDefault(); setOpen(false); }}>
       <div className="cashier-workflow-screen">
