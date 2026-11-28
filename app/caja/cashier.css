@@ -2841,3 +2841,141 @@
 @media (max-width: 620px) {
   .panel-theme[data-panel-theme] .cashier-shell .cashier-service-choice .cashier-choice-menu > .cashier-choice-options { width: min(520px,calc(100vw - 24px)); max-height: min(72dvh,560px); grid-template-columns: minmax(0,1fr); }
 }
+
+/* Liquidación individual: saldos compactos, dos acordeones y dos acciones. */
+.panel-theme[data-panel-theme] .cashier-shell .settlement-detail-content {
+  width: 100%;
+  max-width: 1380px !important;
+  grid-template-columns: minmax(0,1fr);
+  align-items: start;
+  gap: 11px;
+}
+.panel-theme[data-panel-theme] .cashier-shell .settlement-detail-content > :is(.cashier-toolbar,.settlement-back,.dash-page-heading,.settlement-metrics,.settlement-accordions,.settlement-actions,.admin-error) { grid-column: 1; min-width: 0; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-detail-content > .cashier-toolbar { margin-bottom: 2px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-detail-content > .settlement-back { min-height: 32px; width: fit-content; margin: 0; font-size: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-detail-content > .dash-page-heading { margin: 0; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-metrics { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; margin: 0; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-metrics article { min-width: 0; min-height: 76px; padding: 11px 14px; display: grid; align-content: center; gap: 3px; border-radius: 15px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-metrics article span { font-size: 9px; font-weight: 750; text-transform: uppercase; letter-spacing: .045em; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-metrics article strong { font-size: 21px; line-height: 1.15; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-metrics article small { color: var(--cashier-muted); font-size: 9px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-metrics .net { background: linear-gradient(125deg,rgba(211,175,199,.32),rgba(190,187,217,.25)); }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordions { min-width: 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--cashier-line);
+  border-radius: 15px;
+  color: var(--cashier-ink);
+  background: var(--cashier-glass);
+  box-shadow: 0 8px 22px rgba(77,48,67,.055),inset 0 1px rgba(255,255,255,.68);
+  backdrop-filter: blur(18px) saturate(1.08);
+}
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion > summary { min-height: 70px; padding: 11px 13px; display: grid; grid-template-columns: 36px minmax(0,1fr) auto 20px; align-items: center; gap: 10px; list-style: none; cursor: pointer; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion > summary::-webkit-details-marker { display: none; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion-icon { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--cashier-line); border-radius: 11px; color: var(--cashier-ink); background: rgba(211,175,199,.16); }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion-icon svg { width: 17px; height: 17px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion-copy { min-width: 0; display: grid; gap: 2px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion-copy small { overflow: hidden; color: var(--cashier-muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion-copy strong { overflow: hidden; color: var(--cashier-heading); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion-total { color: var(--cashier-ink); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion-chevron { width: 16px; height: 16px; color: var(--cashier-muted); transition: transform .18s ease; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion[open] .settlement-accordion-chevron { transform: rotate(180deg); }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion .settlement-concept-list { max-height: min(44dvh,390px); margin: 0 12px 11px; overflow: auto; border: 1px solid var(--cashier-line); border-radius: 11px; background: rgba(255,250,248,.42); }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion .settlement-concept-list > article { min-height: 43px; padding: 8px 10px; border-bottom: 1px solid var(--cashier-line); }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion .settlement-concept-list > article:last-child { border-bottom: 0; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion .settlement-concept-list strong { color: var(--cashier-heading); font-size: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion .settlement-concept-list span { color: var(--cashier-muted); font-size: 9px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion .settlement-concept-list article > b { color: var(--cashier-ink); font-size: 10px; white-space: nowrap; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-accordion-empty { margin: 0; padding: 14px 11px; color: var(--cashier-muted); font-size: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-actions { min-width: 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-actions > .cashier-workflow-launch.settlement-action-card {
+  min-width: 0;
+  min-height: 88px;
+  margin: 0;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 13px;
+  border: 1px solid rgba(255,255,255,.74);
+  border-radius: 16px;
+  color: var(--cashier-heading);
+  text-align: left;
+  background: linear-gradient(130deg,rgba(255,250,248,.82),rgba(235,230,242,.74));
+  box-shadow: 0 8px 22px rgba(77,48,67,.06),inset 0 1px rgba(255,255,255,.72);
+  backdrop-filter: blur(18px) saturate(1.08);
+}
+.panel-theme[data-panel-theme] .cashier-shell .settlement-action-card > div { min-width: 0; display: grid; grid-template-columns: 38px minmax(0,1fr); align-items: center; gap: 3px 11px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-action-card > div > svg { grid-row: 1 / span 2; width: 36px; height: 36px; padding: 9px; border: 1px solid var(--cashier-line); border-radius: 11px; color: var(--cashier-ink); background: rgba(211,175,199,.17); }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-action-card > div > span { color: var(--cashier-accent); font-size: 9px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-action-card > div > strong { color: var(--cashier-heading); font-size: 13px; line-height: 1.2; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-action-card > div > small { grid-column: 2; color: var(--cashier-muted); font-size: 9px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-action-card > svg { width: 18px; height: 18px; flex: none; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-action-card.settlement-pay-card { background: linear-gradient(125deg,rgba(99,56,79,.96),rgba(126,76,103,.94)); color: #fff8f5; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-action-card.settlement-pay-card > div :is(svg,strong,span,small) { color: #fff8f5; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-action-card.settlement-pay-card > div > svg { border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.1); }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-action-card:focus-visible { outline: 3px solid #a36f90; outline-offset: 3px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-pay-form { grid-template-columns: minmax(0,1fr); gap: 11px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-pay-balances { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-pay-balances > div { min-width: 0; padding: 10px 12px; display: grid; gap: 4px; border: 1px solid var(--cashier-line); border-radius: 12px; background: rgba(255,250,248,.58); }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-pay-balances span { color: var(--cashier-muted); font-size: 9px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-pay-balances strong { color: var(--cashier-heading); font-size: 16px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-service-amount { display: grid; gap: 5px; color: var(--cashier-heading); font-size: 11px; font-weight: 700; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-service-amount input { width: min(100%,360px); min-height: 40px; margin: 0; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-service-amount small { color: var(--cashier-muted); font-size: 9px; font-weight: 450; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-pay-form .settlement-incentive-check { min-height: 52px; margin: 0; padding: 9px 11px; display: flex; align-items: center; gap: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-incentive-check > span { flex: 1; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-net-preview { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-pay-form > .cashier-payment-splits { min-width: 0; padding: 11px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-pay-form > .button-dark { width: fit-content; min-width: min(100%,270px); justify-self: end; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-history-modal { min-width: 0; display: grid; gap: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-history-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-history-filters button { min-height: 32px; padding: 0 10px; border: 1px solid var(--cashier-line); border-radius: 999px; color: var(--cashier-ink); background: rgba(255,250,248,.72); font-size: 9px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-history-filters button.active { color: #fff8f5; border-color: var(--cashier-ink); background: var(--cashier-ink); }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-history-table-wrap { max-height: min(55dvh,520px); overflow: auto; border: 1px solid var(--cashier-line); border-radius: 12px; background: rgba(255,250,248,.54); }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-history-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-history-table th { position: sticky; top: 0; z-index: 1; padding: 10px; color: var(--cashier-ink); text-align: left; background: rgba(211,175,199,.22); }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-history-table td { padding: 10px; border-top: 1px solid var(--cashier-line); color: var(--cashier-heading); white-space: nowrap; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-history-table td strong { color: var(--cashier-ink); }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-history-status { padding: 4px 7px; border-radius: 999px; color: #35734d; background: rgba(92,160,111,.13); font-size: 9px; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-history-status.approved { color: #8b6429; background: rgba(195,151,65,.15); }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-history-status.canceled { color: var(--cashier-muted); background: rgba(111,101,119,.11); }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-history-table .settlement-history-empty { padding: 24px 12px; color: var(--cashier-muted); text-align: center; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-history-count { margin: 0; color: var(--cashier-muted); font-size: 9px; text-align: right; }
+
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-accordion { border-color: rgba(238,220,237,.16); color: #f4edf3; background: rgba(48,39,52,.82); box-shadow: 0 8px 22px rgba(8,6,12,.12),inset 0 1px rgba(255,255,255,.045); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-accordion-icon,
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-pay-balances > div,
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-history-table-wrap,
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-history-filters button { border-color: rgba(238,220,237,.15); background: rgba(30,24,34,.48); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell :is(.settlement-accordion-copy strong,.settlement-accordion-total,.settlement-accordion .settlement-concept-list strong,.settlement-accordion .settlement-concept-list article > b,.settlement-pay-balances strong,.settlement-history-table td,.settlement-history-table td strong) { color: #f4edf3; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell :is(.settlement-accordion-copy small,.settlement-accordion-empty,.settlement-accordion .settlement-concept-list span,.settlement-pay-balances span,.settlement-history-count) { color: #c5b9c4; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-accordion .settlement-concept-list,
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-history-table-wrap { background: rgba(30,24,34,.36); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-accordion .settlement-concept-list > article,
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-history-table td { border-color: rgba(238,220,237,.1); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-metrics article small { color: #c5b9c4; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-metrics .net { background: linear-gradient(125deg,rgba(123,77,107,.35),rgba(75,68,111,.32)); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-actions > .cashier-workflow-launch.settlement-action-card { border-color: rgba(238,220,237,.16); color: #f4edf3; background: linear-gradient(125deg,rgba(55,46,61,.9),rgba(48,46,67,.88)); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-actions > .cashier-workflow-launch.settlement-pay-card { color: #271f2a; background: linear-gradient(125deg,#d2aec5,#bd9ab7); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-action-card.settlement-pay-card > div :is(svg,strong,span,small) { color: #271f2a; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-action-card.settlement-pay-card > div > svg { border-color: rgba(48,36,50,.17); background: rgba(48,36,50,.08); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-history-filters button { color: #f4edf3; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-history-filters button.active { color: #271f2a; border-color: #c69bb5; background: #c69bb5; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-history-table th { color: #f1e4ee; background: rgba(198,155,181,.16); }
+
+@media (max-width: 760px) {
+  .panel-theme[data-panel-theme] .cashier-shell .settlement-accordions,
+  .panel-theme[data-panel-theme] .cashier-shell .settlement-actions { grid-template-columns: minmax(0,1fr); }
+  .panel-theme[data-panel-theme] .cashier-shell .settlement-metrics article { min-height: 68px; padding: 9px; }
+  .panel-theme[data-panel-theme] .cashier-shell .settlement-metrics article strong { font-size: 17px; }
+}
+@media (max-width: 520px) {
+  .panel-theme[data-panel-theme] .cashier-shell .settlement-metrics { gap: 6px; }
+  .panel-theme[data-panel-theme] .cashier-shell .settlement-metrics article { padding: 8px 7px; }
+  .panel-theme[data-panel-theme] .cashier-shell .settlement-metrics article span { font-size: 8px; }
+  .panel-theme[data-panel-theme] .cashier-shell .settlement-metrics article strong { font-size: 14px; }
+  .panel-theme[data-panel-theme] .cashier-shell .settlement-pay-balances { grid-template-columns: minmax(0,1fr); }
+  .panel-theme[data-panel-theme] .cashier-shell .settlement-history-table { min-width: 600px; }
+}
