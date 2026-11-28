@@ -2912,9 +2912,9 @@
 .panel-theme[data-panel-theme] .cashier-shell .settlement-action-card > div > strong { color: var(--cashier-heading); font-size: 13px; line-height: 1.2; }
 .panel-theme[data-panel-theme] .cashier-shell .settlement-action-card > div > small { grid-column: 2; color: var(--cashier-muted); font-size: 9px; }
 .panel-theme[data-panel-theme] .cashier-shell .settlement-action-card > svg { width: 18px; height: 18px; flex: none; }
-.panel-theme[data-panel-theme] .cashier-shell .settlement-action-card.settlement-pay-card { background: linear-gradient(125deg,rgba(99,56,79,.96),rgba(126,76,103,.94)); color: #fff8f5; }
-.panel-theme[data-panel-theme] .cashier-shell .settlement-action-card.settlement-pay-card > div :is(svg,strong,span,small) { color: #fff8f5; }
-.panel-theme[data-panel-theme] .cashier-shell .settlement-action-card.settlement-pay-card > div > svg { border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.1); }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-actions > .cashier-workflow-launch.settlement-action-card.settlement-pay-card { background: linear-gradient(125deg,rgba(99,56,79,.96),rgba(126,76,103,.94)); color: #fff8f5; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-actions > .cashier-workflow-launch.settlement-action-card.settlement-pay-card > div :is(svg,strong,span,small) { color: #fff8f5; }
+.panel-theme[data-panel-theme] .cashier-shell .settlement-actions > .cashier-workflow-launch.settlement-action-card.settlement-pay-card > div > svg { border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.1); }
 .panel-theme[data-panel-theme] .cashier-shell .settlement-action-card:focus-visible { outline: 3px solid #a36f90; outline-offset: 3px; }
 .panel-theme[data-panel-theme] .cashier-shell .settlement-pay-form { grid-template-columns: minmax(0,1fr); gap: 11px; }
 .panel-theme[data-panel-theme] .cashier-shell .settlement-pay-balances { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
@@ -2959,8 +2959,8 @@
 .panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-metrics .net { background: linear-gradient(125deg,rgba(123,77,107,.35),rgba(75,68,111,.32)); }
 .panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-actions > .cashier-workflow-launch.settlement-action-card { border-color: rgba(238,220,237,.16); color: #f4edf3; background: linear-gradient(125deg,rgba(55,46,61,.9),rgba(48,46,67,.88)); }
 .panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-actions > .cashier-workflow-launch.settlement-pay-card { color: #271f2a; background: linear-gradient(125deg,#d2aec5,#bd9ab7); }
-.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-action-card.settlement-pay-card > div :is(svg,strong,span,small) { color: #271f2a; }
-.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-action-card.settlement-pay-card > div > svg { border-color: rgba(48,36,50,.17); background: rgba(48,36,50,.08); }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-actions > .cashier-workflow-launch.settlement-action-card.settlement-pay-card > div :is(svg,strong,span,small) { color: #271f2a; }
+.panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-actions > .cashier-workflow-launch.settlement-action-card.settlement-pay-card > div > svg { border-color: rgba(48,36,50,.17); background: rgba(48,36,50,.08); }
 .panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-history-filters button { color: #f4edf3; }
 .panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-history-filters button.active { color: #271f2a; border-color: #c69bb5; background: #c69bb5; }
 .panel-theme[data-panel-theme="dark"] .cashier-shell .settlement-history-table th { color: #f1e4ee; background: rgba(198,155,181,.16); }
